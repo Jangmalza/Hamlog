@@ -24,6 +24,23 @@
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'Menlo', monospace;
 }
 
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #101010;
+  --surface: #1c1c1c;
+  --surface-muted: #2a2a2a;
+  --surface-overlay: rgba(28, 28, 28, 0.86);
+  --surface-strong: rgba(28, 28, 28, 0.92);
+  --text: #e0e0e0;
+  --text-muted: #a0a0a0;
+  --accent: #2dd4bf;
+  --accent-strong: #14b8a6;
+  --accent-soft: rgba(45, 212, 191, 0.25);
+  --border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  --shadow-strong: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
 body {
   font-family: var(--font-body);
   color: var(--text);
@@ -134,6 +151,43 @@ body::before {
   border-radius: 12px;
   color: var(--text);
   font-style: italic;
+}
+
+.rich-content table,
+.tiptap-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.95rem;
+}
+
+.rich-content th,
+.rich-content td,
+.tiptap-editor th,
+.tiptap-editor td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.rich-content th,
+.tiptap-editor th {
+  background: var(--surface-muted);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rich-content mark,
+.tiptap-editor mark {
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 0 3px;
+  border-radius: 6px;
+}
+
+.tiptap-editor .selectedCell {
+  background: rgba(15, 118, 110, 0.12);
 }
 
 .rich-content pre,

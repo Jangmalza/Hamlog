@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { Post } from '../data/blogData';
-import type { CategoryNode } from '../utils/categoryTree';
+
 import type { PostDraft } from '../types/admin';
 import { useCategories } from './useCategories';
 import {

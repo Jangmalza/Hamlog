@@ -4,10 +4,18 @@ import { useEditor } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import Color from '@tiptap/extension-color';
+import FontFamily from '@tiptap/extension-font-family';
+import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
 import LinkExtension from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
+import TextStyle from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import { createLowlight, common } from 'lowlight';
 import AdminNav from '../components/admin/AdminNav';
@@ -19,24 +27,24 @@ import ProfileSection from '../components/admin/sections/ProfileSection';
 import { useCategoryManagement } from '../hooks/useCategoryManagement';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
 import { useEditorImageControls } from '../hooks/useEditorImageControls';
+import { usePostFilter } from '../hooks/usePostFilter';
+import { useDashboardStats } from '../hooks/useDashboardStats';
 import { useProfile } from '../hooks/useProfile';
+import { useTheme } from '../hooks/useTheme';
 import { uploadLocalImage } from '../api/uploadApi';
 import { usePostStore } from '../store/postStore';
+import { Sun, Moon } from 'lucide-react';
 import type { Post, PostInput, PostStatus } from '../data/blogData';
-import type { AdminSection, DashboardStats, PostDraft } from '../types/admin';
-import { formatAutosaveTime, formatDateTimeLocal, toIsoDateTime } from '../utils/adminDate';
+import type { AdminSection, PostDraft } from '../types/admin';
+import { formatDateTimeLocal, toIsoDateTime } from '../utils/adminDate';
 import {
   DEFAULT_CATEGORY,
-  normalizeCategoryKey,
   normalizeDraftCategory
 } from '../utils/category';
 import { stripHtml, sectionsToHtml } from '../utils/postContent';
 import { slugify } from '../utils/slugify';
-import {
-  getScheduledTimestamp,
-  isPostVisible,
-  normalizePostStatus
-} from '../utils/postStatus';
+import { normalizePostStatus } from '../utils/postStatus';
+import { FontSize } from '../editor/extensions/fontSize';
 
 const MAX_UPLOAD_MB = 8;
 const lowlight = createLowlight(common);
@@ -145,7 +153,10 @@ const AdminPage: React.FC = () => {
   const updatePost = usePostStore(state => state.updatePost);
   const deletePost = usePostStore(state => state.deletePost);
 
-  const [searchQuery, setSearchQuery] = useState('');
+
+
+  const { theme, toggleTheme } = useTheme();
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState<PostDraft>(() => toDraft());
   const [slugTouched, setSlugTouched] = useState(false);
@@ -218,6 +229,18 @@ const AdminPage: React.FC = () => {
   });
 
   const {
+    searchQuery,
+    setSearchQuery,
+    filterStatus,
+    setFilterStatus,
+    filterCategory,
+    setFilterCategory,
+    page,
+    setPage,
+    filteredPosts
+  } = usePostFilter({ posts, categoryTree });
+
+  const {
     profileDraft,
     stackInput,
     loading: profileLoading,
@@ -240,6 +263,11 @@ const AdminPage: React.FC = () => {
         codeBlock: false
       }),
       CodeBlockLowlight.configure({ lowlight }),
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: true }),
+      FontFamily,
+      FontSize,
       Underline,
       LinkExtension.configure({
         openOnClick: false
@@ -250,7 +278,11 @@ const AdminPage: React.FC = () => {
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph']
-      })
+      }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell
     ],
     content: draft.contentHtml || '',
     onUpdate: ({ editor }) => {
@@ -302,22 +334,6 @@ const AdminPage: React.FC = () => {
     syncEditorContent(draft.contentHtml);
   }, [editor, activeId]);
 
-  const filteredPosts = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return posts;
-    return posts.filter(post => {
-      const fields = [
-        post.title,
-        post.summary,
-        post.slug,
-        post.tags.join(' '),
-        post.series ?? '',
-        post.category ?? ''
-      ];
-      return fields.some(text => text.toLowerCase().includes(q));
-    });
-  }, [posts, searchQuery]);
-
   const contentStats = useMemo(() => {
     const plainText = stripHtml(draft.contentHtml || '');
     const readingMinutes = Math.max(1, Math.ceil(plainText.length / 450));
@@ -327,64 +343,7 @@ const AdminPage: React.FC = () => {
     };
   }, [draft.contentHtml]);
 
-  const dashboardStats = useMemo<DashboardStats>(() => {
-    const now = Date.now();
-    const statusCount: Record<PostStatus, number> = {
-      draft: 0,
-      scheduled: 0,
-      published: 0
-    };
-    const tagSet = new Set<string>();
-    const seriesSet = new Set<string>();
-    const categoryMap = new Map<string, number>();
-    const visiblePosts: Post[] = [];
-    const scheduledQueue: Array<{ post: Post; timestamp: number }> = [];
-
-    posts.forEach(post => {
-      const status = normalizePostStatus(post.status);
-      statusCount[status] += 1;
-      const category = normalizeDraftCategory(post.category ?? '', DEFAULT_CATEGORY);
-      categoryMap.set(category, (categoryMap.get(category) ?? 0) + 1);
-      post.tags.forEach(tag => tagSet.add(tag));
-      if (post.series) seriesSet.add(post.series);
-      if (isPostVisible(post, now)) {
-        visiblePosts.push(post);
-      }
-      if (status === 'scheduled') {
-        const timestamp = getScheduledTimestamp(post.scheduledAt);
-        if (timestamp && timestamp > now) {
-          scheduledQueue.push({ post, timestamp });
-        }
-      }
-    });
-
-    const topCategories = Array.from(categoryMap.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko'))
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-
-    const upcomingScheduled = scheduledQueue
-      .sort((a, b) => a.timestamp - b.timestamp)
-      .slice(0, 3)
-      .map(item => item.post);
-
-    const recentPublished = [...visiblePosts]
-      .sort(
-        (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-      )
-      .slice(0, 3);
-
-    return {
-      statusCount,
-      visibleCount: visiblePosts.length,
-      tagsCount: tagSet.size,
-      categoriesCount: categoryTree.allNames.length,
-      seriesCount: seriesSet.size,
-      topCategories,
-      upcomingScheduled,
-      recentPublished
-    };
-  }, [posts, categoryTree]);
+  const dashboardStats = useDashboardStats(posts, categoryTree);
 
   const syncEditorContent = (html: string) => {
     if (!editor) return;
@@ -668,62 +627,56 @@ const AdminPage: React.FC = () => {
   const showPostSidebar = activeSection === 'posts';
 
   return (
-    <div className="min-h-screen text-[var(--text)]">
-      <header className="border-b border-[color:var(--border)]">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-              관리자 워크스페이스
-            </p>
-            <h1 className="font-display text-2xl font-semibold">블로그 에디터</h1>
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
+      <header className="sticky top-0 z-10 border-b border-[color:var(--border)] bg-[var(--surface-overlay)] backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <h1 className="font-display text-xl font-bold text-[var(--accent)]">HamLog Admin</h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="rounded-full p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
+              aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            >
+              {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+            <Link
+              to="/"
+              className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)]"
+            >
+              사이트로 돌아가기
+            </Link>
           </div>
-          <Link
-            to="/"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] hover:text-[var(--accent-strong)]"
-          >
-            사이트로 돌아가기
-          </Link>
         </div>
       </header>
-
-      <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[320px_1fr]">
-        {showPostSidebar && restoreCandidate && (
-          <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--text)] lg:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                  임시 저장본 발견
-                </p>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">
-                  {lastAutosavedAt
-                    ? `${formatAutosaveTime(lastAutosavedAt)}에 저장된 초안이 있습니다.`
-                    : '저장된 초안이 있습니다.'}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleRestoreDraft}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
-                >
-                  복구
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDiscardRestore}
-                  className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)]"
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
+      <main
+        className={`mx-auto grid max-w-6xl gap-8 px-4 py-10 ${showPostSidebar ? 'lg:grid-cols-[320px_1fr]' : 'lg:grid-cols-1'}`}
+      >
+        <div className="col-span-full">
+          <AdminNav
+            activeSection={activeSection}
+            sections={ADMIN_SECTIONS}
+            onChange={(section) => setActiveSection(section)}
+          />
+        </div>
         <AdminSidebar
           show={showPostSidebar}
           searchQuery={searchQuery}
-          onSearchChange={(value) => setSearchQuery(value)}
+          onSearchChange={(value) => {
+            setSearchQuery(value);
+            setPage(1);
+          }}
+          filterStatus={filterStatus}
+          onFilterStatusChange={(value) => {
+            setFilterStatus(value);
+            setPage(1);
+          }}
+          filterCategory={filterCategory}
+          onFilterCategoryChange={(value) => {
+            setFilterCategory(value);
+            setPage(1);
+          }}
+          page={page}
+          onPageChange={setPage}
           onNew={handleNew}
           saving={saving}
           onSelect={handleSelect}
@@ -731,19 +684,18 @@ const AdminPage: React.FC = () => {
           activeId={activeId}
           loading={loading}
           error={error}
-          hasLoaded={hasLoaded}
-          onReload={() => void fetchPosts()}
-          totalCount={posts.length}
+          onReload={fetchPosts}
+          totalCount={filteredPosts.length}
           statusCount={dashboardStats.statusCount}
-          defaultCategory={DEFAULT_CATEGORY}
+          categories={categoryTree.allNames}
+          restoreCandidate={restoreCandidate}
+          onRestore={handleRestoreDraft}
+          onDiscardRestore={handleDiscardRestore}
+          editor={editor}
         />
 
         <section className="space-y-6">
-          <AdminNav
-            activeSection={activeSection}
-            sections={ADMIN_SECTIONS}
-            onChange={(section) => setActiveSection(section)}
-          />
+
 
           {activeSection === 'dashboard' && (
             <DashboardSection

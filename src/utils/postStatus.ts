@@ -21,11 +21,21 @@ export const isPostVisible = (post: Post, now: number = Date.now()) => {
 export const getPostStatusLabel = (status: PostStatus) => {
   switch (status) {
     case 'draft':
-      return '초안';
+      return {
+        label: '초안',
+        className: 'bg-[var(--surface-muted)] text-[var(--text-muted)]'
+      };
     case 'scheduled':
-      return '예약';
+      return {
+        label: '예약',
+        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
+      };
     case 'published':
     default:
-      return '발행';
+      return {
+        label: '발행',
+        className: 'bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+      };
   }
 };
+

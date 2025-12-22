@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
 import PostCard from './components/PostCard';
-import { siteMeta, topicHighlights } from './data/blogData';
+import { siteMeta } from './data/blogData';
 import { fetchCategories } from './api/categoryApi';
 import { fetchProfile } from './api/profileApi';
 import { usePostStore } from './store/postStore';
@@ -202,11 +202,10 @@ function App() {
           <button
             type="button"
             onClick={() => setSelectedCategory(isActive ? null : node.name)}
-            className={`flex flex-1 items-center justify-between rounded-2xl border px-3 py-2 text-sm transition ${
-              isActive
-                ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-                : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
-            }`}
+            className={`flex flex-1 items-center justify-between rounded-2xl border px-3 py-2 text-sm transition ${isActive
+              ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+              : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+              }`}
           >
             <span className="flex items-center gap-2">
               <span>{node.name}</span>
@@ -413,11 +412,10 @@ function App() {
                     <button
                       type="button"
                       onClick={() => setSelectedCategory(null)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-4 py-2 text-sm transition ${
-                        selectedCategory === null
-                          ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-                          : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
-                      }`}
+                      className={`flex w-full items-center justify-between rounded-2xl border px-4 py-2 text-sm transition ${selectedCategory === null
+                        ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                        : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         <span>분류 전체보기</span>
@@ -494,62 +492,7 @@ function App() {
             </div>
           </section>
 
-          <section id="topics" className="mx-auto max-w-5xl px-4 py-12">
-            <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-              <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                  주제
-                </p>
-                <h2 className="mt-2 font-display text-2xl font-semibold">
-                  진행 중인 주제
-                </h2>
-                <p className="mt-2 text-sm text-[var(--text-muted)]">
-                  요즘 계속 탐구하고 있는 영역을 정리했습니다.
-                </p>
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {topicHighlights.map(topic => (
-                    <div
-                      key={topic.title}
-                      className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4"
-                    >
-                      <h3 className="font-display text-sm font-semibold text-[var(--text)]">
-                        {topic.title}
-                      </h3>
-                      <p className="mt-2 text-xs text-[var(--text-muted)]">
-                        {topic.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="space-y-4 rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                  뉴스레터
-                </p>
-                <h3 className="font-display text-xl font-semibold">월간 레터</h3>
-                <p className="text-sm text-[var(--text-muted)]">
-                  실험과 읽은 것, 그리고 제품 인사이트를 간단히 공유합니다. 스팸은 없습니다.
-                </p>
-                <div className="flex flex-col gap-3">
-                  <input
-                    type="email"
-                    placeholder="이메일 주소"
-                    className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-soft)]"
-                  />
-                  <button
-                    type="button"
-                    className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
-                  >
-                    구독하기
-                  </button>
-                </div>
-                <p className="text-xs text-[var(--text-muted)]">
-                  아직 연동되지 않았어요. 추후 메일 서비스에 연결할 예정입니다.
-                </p>
-              </div>
-            </div>
-          </section>
         </main>
 
         <footer id="about" className="border-t border-[color:var(--border)]">
