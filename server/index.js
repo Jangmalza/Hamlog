@@ -26,6 +26,80 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
 app.use('/uploads', express.static(uploadDir));
 
+app.get('/rss.xml', async (req, res) => {
+  try {
+    const posts = await readPosts();
+    const profile = await readProfile();
+    const publishedPosts = posts
+      .filter(p => p.status === 'published')
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+    const baseUrl = 'https://hamlog.dev'; // Ask user or use placeholder? I'll use a placeholder or check config.
+    // Ideally should be configurable. I'll use localhost for dev/placeholder for now or use Host header.
+    // Better to use a variable. I'll define it.
+
+    // Simplest RSS 2.0
+    const items = publishedPosts.map(post => `
+    <item>
+      <title><![CDATA[${post.title}]]></title>
+      <link>${baseUrl}/posts/${post.slug}</link>
+      <guid>${baseUrl}/posts/${post.slug}</guid>
+      <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
+      <description><![CDATA[${post.summary}]]></description>
+      ${post.category ? `<category>${post.category}</category>` : ''}
+    </item>`).join('');
+
+    const rss = `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>${profile.title}</title>
+    <link>${baseUrl}</link>
+    <description>${profile.tagline}</description>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    ${items}
+  </channel>
+</rss>`;
+
+    res.set('Content-Type', 'text/xml');
+    res.send(rss);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating RSS');
+  }
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const posts = await readPosts();
+    const publishedPosts = posts.filter(p => p.status === 'published');
+    const baseUrl = 'https://hamlog.dev';
+
+    const urls = publishedPosts.map(post => `
+  <url>
+    <loc>${baseUrl}/posts/${post.slug}</loc>
+    <lastmod>${post.publishedAt}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('');
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  ${urls}
+</urlset>`;
+
+    res.set('Content-Type', 'text/xml');
+    res.send(sitemap);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating Sitemap');
+  }
+});
+
 const allowedSectionTypes = new Set([
   'heading',
   'paragraph',

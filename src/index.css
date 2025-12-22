@@ -74,8 +74,7 @@ body::before {
   gap: 16px;
 }
 
-.rich-content,
-.tiptap-editor {
+.rich-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -83,11 +82,25 @@ body::before {
 }
 
 .tiptap-editor {
+  display: block;
   min-height: 360px;
   padding: 24px;
   border-radius: 24px;
   background: var(--surface);
   outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  color: var(--text);
+}
+
+.tiptap-editor * {
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
 }
 
 .tiptap-editor .is-empty::before {
@@ -121,8 +134,11 @@ body::before {
 .rich-content p,
 .tiptap-editor p {
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: 1.6;
   color: var(--text-muted);
+  letter-spacing: -0.025em;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .rich-content ul,
@@ -208,8 +224,8 @@ body::before {
   font-family: var(--font-mono);
 }
 
-.rich-content :not(pre) > code,
-.tiptap-editor :not(pre) > code {
+.rich-content :not(pre)>code,
+.tiptap-editor :not(pre)>code {
   background: var(--surface-muted);
   padding: 2px 6px;
   border-radius: 8px;

@@ -377,9 +377,7 @@ function App() {
             <section id="spotlight" className="mx-auto max-w-5xl px-4 py-12">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                    추천
-                  </p>
+
                   <h2 className="mt-2 font-display text-2xl font-semibold">
                     추천 글
                   </h2>

@@ -7,6 +7,7 @@ import PostCard from '../components/PostCard';
 import { usePostStore } from '../store/postStore';
 import { formatDate } from '../utils/formatDate';
 import { isPostVisible } from '../utils/postStatus';
+import { Comments } from '../components/Comments';
 
 const PostPage: React.FC = () => {
   const { slug } = useParams();
@@ -193,6 +194,8 @@ const PostPage: React.FC = () => {
           )}
 
           <PostContent sections={post.sections} contentHtml={post.contentHtml} />
+
+          <Comments />
 
           {morePosts.length > 0 && (
             <section className="mt-16">

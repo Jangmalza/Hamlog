@@ -18,6 +18,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TextStyle from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import { createLowlight, common } from 'lowlight';
+import { SlashCommand, getSuggestionItems, renderItems } from '../editor/extensions/slashCommand';
 import AdminNav from '../components/admin/AdminNav';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import CategorySection from '../components/admin/sections/CategorySection';
@@ -282,7 +283,13 @@ const AdminPage: React.FC = () => {
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
-      TableCell
+      TableCell,
+      SlashCommand.configure({
+        suggestion: {
+          items: getSuggestionItems,
+          render: renderItems,
+        },
+      })
     ],
     content: draft.contentHtml || '',
     onUpdate: ({ editor }) => {
@@ -293,7 +300,7 @@ const AdminPage: React.FC = () => {
     },
     editorProps: {
       attributes: {
-        class: 'tiptap-editor'
+        class: 'tiptap-editor border-none shadow-none outline-none ring-0 focus:ring-0 focus:outline-none'
       },
       handlePaste,
       handleDrop
@@ -385,10 +392,7 @@ const AdminPage: React.FC = () => {
     });
   };
 
-  const handleSlugChange = (value: string) => {
-    setSlugTouched(true);
-    setDraft(prev => ({ ...prev, slug: value }));
-  };
+
 
   const handleStatusChange = (value: PostStatus) => {
     setDraft(prev => ({
@@ -768,7 +772,6 @@ const AdminPage: React.FC = () => {
               onTagBlur={handleTagBlur}
               onRemoveTag={removeTag}
               onTitleChange={handleTitleChange}
-              onSlugChange={handleSlugChange}
               onStatusChange={handleStatusChange}
               onSave={(message, statusOverride) =>
                 void handleSave(message, statusOverride)
