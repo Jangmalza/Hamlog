@@ -77,6 +77,15 @@ function App() {
     return Array.from(categorySet).sort();
   }, [sortedPosts]);
 
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    sortedPosts.forEach(post => {
+      const category = post.category ?? '미분류';
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    });
+    return counts;
+  }, [sortedPosts]);
+
   const filteredPosts = useMemo(() => {
     let result = sortedPosts;
 
@@ -274,77 +283,111 @@ function App() {
             </section>
           )}
 
-          <section className="border-y border-[color:var(--border)] bg-[var(--surface-overlay)]">
-            <div className="mx-auto max-w-5xl px-4 py-10">
-              <SearchAndFilter
-                onTagFilter={setSelectedTag}
-                availableTags={availableTags}
-                currentTag={selectedTag}
-                onCategoryFilter={setSelectedCategory}
-                availableCategories={availableCategories}
-                currentCategory={selectedCategory}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-              />
-            </div>
-          </section>
-
           <section id="writing" className="mx-auto max-w-5xl px-4 py-12">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                  최신
-                </p>
-                <h2 className="mt-2 font-display text-2xl font-semibold">전체 글</h2>
-              </div>
-              <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                {filteredPosts.length}개 결과
-              </span>
-            </div>
-
-            <div className="mt-8 grid gap-5">
-              {filteredPosts.map((post, index) => (
-                <PostCard key={post.id} post={post} variant="compact" index={index} />
-              ))}
-            </div>
-
-            {filteredPosts.length === 0 && hasLoaded && !loading && !error && (
-              <div className="mt-10 rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-8 text-center">
-                <h3 className="font-display text-lg font-semibold">조건에 맞는 글이 없어요</h3>
-                <p className="mt-2 text-sm text-[var(--text-muted)]">
-                  태그를 바꾸거나 검색어를 지우고 다시 확인해 보세요.
-                </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {selectedTag && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTag(null)}
-                      className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
-                    >
-                      태그 해제
-                    </button>
-                  )}
-                  {selectedCategory && (
+            <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+              <aside className="space-y-4">
+                <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] lg:sticky lg:top-6">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                      카테고리
+                    </p>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {availableCategories.length}개
+                    </span>
+                  </div>
+                  <div className="mt-4 space-y-2">
                     <button
                       type="button"
                       onClick={() => setSelectedCategory(null)}
-                      className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
+                      className={`flex w-full items-center justify-between rounded-2xl border px-4 py-2 text-sm transition ${
+                        selectedCategory === null
+                          ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                          : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+                      }`}
                     >
-                      카테고리 해제
+                      <span>전체</span>
+                      <span className="text-xs">{sortedPosts.length}</span>
                     </button>
-                  )}
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
-                    >
-                      검색 초기화
-                    </button>
-                  )}
+                    {availableCategories.map(category => {
+                      const count = categoryCounts.get(category) ?? 0;
+                      const isActive = selectedCategory === category;
+                      return (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() =>
+                            setSelectedCategory(isActive ? null : category)
+                          }
+                          className={`flex w-full items-center justify-between rounded-2xl border px-4 py-2 text-sm transition ${
+                            isActive
+                              ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                              : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+                          }`}
+                        >
+                          <span>{category}</span>
+                          <span className="text-xs">{count}</span>
+                        </button>
+                      );
+                    })}
+                    {availableCategories.length === 0 && (
+                      <p className="text-xs text-[var(--text-muted)]">
+                        등록된 카테고리가 없습니다.
+                      </p>
+                    )}
+                  </div>
                 </div>
+              </aside>
+
+              <div className="space-y-5">
+                {filteredPosts.length > 0 && (
+                  <div className="grid gap-5">
+                    {filteredPosts.map((post, index) => (
+                      <PostCard key={post.id} post={post} variant="compact" index={index} />
+                    ))}
+                  </div>
+                )}
+
+                {filteredPosts.length === 0 && hasLoaded && !loading && !error && (
+                  <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-8 text-center">
+                    <h3 className="font-display text-lg font-semibold">
+                      조건에 맞는 글이 없어요
+                    </h3>
+                    <p className="mt-2 text-sm text-[var(--text-muted)]">
+                      태그를 바꾸거나 검색어를 지우고 다시 확인해 보세요.
+                    </p>
+                    <div className="mt-6 flex flex-wrap justify-center gap-2">
+                      {selectedTag && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTag(null)}
+                          className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
+                        >
+                          태그 해제
+                        </button>
+                      )}
+                      {selectedCategory && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory(null)}
+                          className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
+                        >
+                          카테고리 해제
+                        </button>
+                      )}
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
+                        >
+                          검색 초기화
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </section>
 
           <section id="topics" className="mx-auto max-w-5xl px-4 py-12">
