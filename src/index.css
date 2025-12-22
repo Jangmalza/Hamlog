@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Nanum+Gothic:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #f7f4ef;
+  --surface: #ffffff;
+  --surface-muted: #f1ece5;
+  --surface-overlay: rgba(255, 255, 255, 0.86);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --text: #1d1916;
+  --text-muted: #5f5852;
+  --accent: #0f766e;
+  --accent-strong: #0a4a45;
+  --accent-soft: rgba(15, 118, 110, 0.25);
+  --border: rgba(29, 25, 22, 0.12);
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 24px 60px rgba(15, 23, 42, 0.16);
+  --font-body: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+  --font-display: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'Menlo', monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background-color: var(--bg);
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(600px circle at 10% -10%, rgba(15, 118, 110, 0.12), transparent 60%),
+    radial-gradient(500px circle at 90% 10%, rgba(241, 195, 89, 0.18), transparent 55%),
+    radial-gradient(500px circle at 15% 80%, rgba(12, 74, 110, 0.12), transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.post-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rich-content,
+.tiptap-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text);
+}
+
+.tiptap-editor {
+  min-height: 360px;
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--surface);
+  outline: none;
+}
+
+.tiptap-editor .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-muted);
+  pointer-events: none;
+  height: 0;
+}
+
+.rich-content h1,
+.tiptap-editor h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.rich-content h2,
+.tiptap-editor h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.rich-content h3,
+.tiptap-editor h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.rich-content p,
+.tiptap-editor p {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.rich-content ul,
+.rich-content ol,
+.tiptap-editor ul,
+.tiptap-editor ol {
+  padding-left: 20px;
+  color: var(--text-muted);
+}
+
+.rich-content ul,
+.tiptap-editor ul {
+  list-style: disc;
+}
+
+.rich-content ol,
+.tiptap-editor ol {
+  list-style: decimal;
+}
+
+.rich-content blockquote,
+.tiptap-editor blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  background: var(--surface-muted);
+  border-radius: 12px;
+  color: var(--text);
+  font-style: italic;
+}
+
+.rich-content pre,
+.tiptap-editor pre {
+  border-radius: 16px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow: hidden;
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.rich-content code,
+.tiptap-editor code {
+  font-family: var(--font-mono);
+}
+
+.rich-content a,
+.tiptap-editor a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+.rich-content hr,
+.tiptap-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+
+.rich-content img,
+.tiptap-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.rich-content img[data-size='full'],
+.tiptap-editor img[data-size='full'] {
+  width: 100%;
+}
+
+.rich-content img:not([data-size]):not([style]):not([width]),
+.tiptap-editor img:not([data-size]):not([style]):not([width]) {
+  width: 100%;
+}
+
+.rich-content img[data-size='small'],
+.tiptap-editor img[data-size='small'] {
+  width: 100%;
+  max-width: 360px;
+}
+
+.rich-content img[data-size='medium'],
+.tiptap-editor img[data-size='medium'] {
+  width: 100%;
+  max-width: 560px;
+}
+
+.rich-content img[data-size='large'],
+.tiptap-editor img[data-size='large'] {
+  width: 100%;
+  max-width: 820px;
+}
+
+.rich-content figure,
+.tiptap-editor figure {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.rich-content figcaption,
+.tiptap-editor figcaption {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.post-heading {
+  margin-top: 12px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.post-paragraph {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.post-list {
+  display: grid;
+  gap: 8px;
+  list-style: disc;
+  padding-left: 20px;
+  color: var(--text-muted);
+}
+
+.post-quote {
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  background: var(--surface-muted);
+  border-radius: 12px;
+  color: var(--text);
+  font-style: italic;
+}
+
+.post-callout {
+  border: 1px dashed var(--border);
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.post-image {
+  display: grid;
+  gap: 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.post-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.post-image-caption {
+  padding: 0 16px 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.post-code {
+  border-radius: 16px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow: hidden;
+}
+
+.post-code-label {
+  padding: 8px 16px;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.post-code pre {
+  margin: 0;
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.post-code code {
+  font-family: var(--font-mono);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.2);
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
