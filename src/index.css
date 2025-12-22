@@ -154,6 +154,57 @@ body::before {
   font-family: var(--font-mono);
 }
 
+.rich-content :not(pre) > code,
+.tiptap-editor :not(pre) > code {
+  background: var(--surface-muted);
+  padding: 2px 6px;
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.rich-content pre code.hljs,
+.tiptap-editor pre code.hljs {
+  color: #e2e8f0;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-title,
+.hljs-section {
+  color: #f472b6;
+}
+
+.hljs-string,
+.hljs-attribute,
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet {
+  color: #fbbf24;
+}
+
+.hljs-built_in,
+.hljs-type,
+.hljs-name {
+  color: #7dd3fc;
+}
+
+.hljs-meta,
+.hljs-link {
+  color: #c4b5fd;
+}
+
+.hljs-tag,
+.hljs-doctag {
+  color: #38bdf8;
+}
+
 .rich-content a,
 .tiptap-editor a {
   color: var(--accent-strong);

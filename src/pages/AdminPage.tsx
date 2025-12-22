@@ -1,19 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEditor } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Underline from '@tiptap/extension-underline';
 import LinkExtension from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
+import { createLowlight, common } from 'lowlight';
 import AdminNav from '../components/admin/AdminNav';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import CategorySection from '../components/admin/sections/CategorySection';
 import DashboardSection from '../components/admin/sections/DashboardSection';
 import PostEditorSection from '../components/admin/sections/PostEditorSection';
 import ProfileSection from '../components/admin/sections/ProfileSection';
-import { useCategories } from '../hooks/useCategories';
+import { useCategoryManagement } from '../hooks/useCategoryManagement';
+import { useDraftAutosave } from '../hooks/useDraftAutosave';
+import { useEditorImageControls } from '../hooks/useEditorImageControls';
 import { useProfile } from '../hooks/useProfile';
 import { uploadLocalImage } from '../api/uploadApi';
 import { usePostStore } from '../store/postStore';
@@ -21,12 +26,10 @@ import type { Post, PostInput, PostStatus } from '../data/blogData';
 import type { AdminSection, DashboardStats, PostDraft } from '../types/admin';
 import { formatAutosaveTime, formatDateTimeLocal, toIsoDateTime } from '../utils/adminDate';
 import {
+  DEFAULT_CATEGORY,
   normalizeCategoryKey,
-  normalizeCategoryName,
-  normalizeDraftCategory,
-  sortCategories
+  normalizeDraftCategory
 } from '../utils/category';
-import { extractImageWidth, parseImageWidthInput } from '../utils/editorImage';
 import { stripHtml, sectionsToHtml } from '../utils/postContent';
 import { slugify } from '../utils/slugify';
 import {
@@ -35,15 +38,8 @@ import {
   normalizePostStatus
 } from '../utils/postStatus';
 
-interface StoredDraft {
-  draft: PostDraft;
-  updatedAt: number;
-  activeId: string | null;
-}
-
-const STORAGE_KEY_PREFIX = 'hamlog:editor:draft:';
 const MAX_UPLOAD_MB = 8;
-const DEFAULT_CATEGORY = '미분류';
+const lowlight = createLowlight(common);
 const ADMIN_SECTIONS: Array<{ key: AdminSection; label: string }> = [
   { key: 'dashboard', label: '대시보드' },
   { key: 'posts', label: '글 관리' },
@@ -86,9 +82,6 @@ const CustomImage = Image.extend({
 
 const formatSeoKeywords = (keywords?: string[]) =>
   keywords && keywords.length > 0 ? keywords.join(', ') : '';
-
-const getStorageKey = (postId: string | null) =>
-  `${STORAGE_KEY_PREFIX}${postId ?? 'new'}`;
 
 const toDraft = (post?: Post): PostDraft => {
   if (!post) {
@@ -160,27 +153,69 @@ const AdminPage: React.FC = () => {
   const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
   const [tagInput, setTagInput] = useState('');
-  const [categoryInput, setCategoryInput] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadError, setUploadError] = useState('');
   const [previewMode, setPreviewMode] = useState(false);
-  const [imageWidthInput, setImageWidthInput] = useState('');
-  const [imageWidthError, setImageWidthError] = useState('');
-  const [restoreCandidate, setRestoreCandidate] = useState<StoredDraft | null>(null);
-  const [autosavePaused, setAutosavePaused] = useState(false);
-  const [lastAutosavedAt, setLastAutosavedAt] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const editorRef = useRef<Editor | null>(null);
 
   const {
-    categories,
-    loading: categoriesLoading,
-    saving: categorySaving,
-    error: categoriesError,
-    setError: setCategoriesError,
+    restoreCandidate,
+    autosavePaused,
+    setAutosavePaused,
+    lastAutosavedAt,
+    clearAutosave,
+    restoreDraft,
+    discardRestore
+  } = useDraftAutosave({ draft, activeId });
+
+  const {
+    fileInputRef,
+    uploadingImage,
+    uploadError,
+    imageWidthInput,
+    imageWidthError,
+    setImageWidthInput,
+    setImageWidthError,
+    uploadImageToEditor,
+    handleSelectionUpdate,
+    handlePaste,
+    handleDrop,
+    applyImageWidth,
+    clearImageWidth,
+    handleToolbarImageUpload,
+    handleInsertImageUrl
+  } = useEditorImageControls({
+    editorRef,
+    maxUploadMb: MAX_UPLOAD_MB,
+    uploadLocalImage
+  });
+
+  const setDraftCategory = useCallback((category: string) => {
+    setDraft(prev => ({ ...prev, category }));
+  }, []);
+
+  const {
+    categoriesLoading,
+    categorySaving,
+    categoriesError,
+    setCategoriesError,
     loadCategories,
-    addCategory,
-    removeCategory
-  } = useCategories();
+    categoryInput,
+    parentCategoryId,
+    setCategoryInput,
+    setParentCategoryId,
+    categoryTree,
+    parentOptions,
+    managedCategoryIds,
+    handleAddCategory,
+    handleUpdateCategory,
+    handleDeleteCategory,
+    handleReorderCategory
+  } = useCategoryManagement({
+    posts,
+    draftCategory: draft.category,
+    setDraftCategory,
+    refreshPosts: fetchPosts,
+    setNotice
+  });
 
   const {
     profileDraft,
@@ -201,8 +236,10 @@ const AdminPage: React.FC = () => {
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3]
-        }
+        },
+        codeBlock: false
       }),
+      CodeBlockLowlight.configure({ lowlight }),
       Underline,
       LinkExtension.configure({
         openOnClick: false
@@ -220,21 +257,20 @@ const AdminPage: React.FC = () => {
       setDraft(prev => ({ ...prev, contentHtml: editor.getHTML() }));
     },
     onSelectionUpdate: ({ editor }) => {
-      if (!editor.isActive('image')) {
-        setImageWidthInput('');
-        setImageWidthError('');
-        return;
-      }
-      const attrs = editor.getAttributes('image') as Record<string, string>;
-      setImageWidthInput(extractImageWidth(attrs));
-      setImageWidthError('');
+      handleSelectionUpdate(editor);
     },
     editorProps: {
       attributes: {
         class: 'tiptap-editor'
-      }
+      },
+      handlePaste,
+      handleDrop
     }
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   useEffect(() => {
     if (!hasLoaded && !loading) {
@@ -262,103 +298,9 @@ const AdminPage: React.FC = () => {
   }, [activeId, posts]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const key = getStorageKey(activeId);
-    const raw = window.localStorage.getItem(key);
-    if (!raw) {
-      setRestoreCandidate(null);
-      setAutosavePaused(false);
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as StoredDraft;
-      if (parsed?.draft) {
-        setRestoreCandidate(parsed);
-        setAutosavePaused(true);
-        setLastAutosavedAt(parsed.updatedAt);
-      } else {
-        setRestoreCandidate(null);
-        setAutosavePaused(false);
-      }
-    } catch {
-      setRestoreCandidate(null);
-      setAutosavePaused(false);
-    }
-  }, [activeId]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (autosavePaused) return;
-    const key = getStorageKey(activeId);
-    const timer = window.setTimeout(() => {
-      const payload: StoredDraft = {
-        draft,
-        updatedAt: Date.now(),
-        activeId
-      };
-      window.localStorage.setItem(key, JSON.stringify(payload));
-      setLastAutosavedAt(payload.updatedAt);
-    }, 900);
-
-    return () => window.clearTimeout(timer);
-  }, [draft, activeId, autosavePaused]);
-
-  useEffect(() => {
     if (!editor) return;
     syncEditorContent(draft.contentHtml);
   }, [editor, activeId]);
-
-  const availableCategories = useMemo(() => {
-    const categoryMap = new Map<string, string>();
-    categories.forEach(category => {
-      const normalized = normalizeDraftCategory(category, DEFAULT_CATEGORY);
-      const key = normalizeCategoryKey(normalized);
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, normalized);
-      }
-    });
-    posts.forEach(post => {
-      const normalized = normalizeDraftCategory(post.category ?? '', DEFAULT_CATEGORY);
-      const key = normalizeCategoryKey(normalized);
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, normalized);
-      }
-    });
-    const defaultKey = normalizeCategoryKey(DEFAULT_CATEGORY);
-    if (!categoryMap.has(defaultKey)) {
-      categoryMap.set(defaultKey, DEFAULT_CATEGORY);
-    }
-    return sortCategories(Array.from(categoryMap.values()));
-  }, [categories, posts]);
-
-  const managedCategories = useMemo(() => {
-    if (categories.length === 0) {
-      return availableCategories;
-    }
-    const categoryMap = new Map<string, string>();
-    categories.forEach(category => {
-      const normalized = normalizeDraftCategory(category, DEFAULT_CATEGORY);
-      const key = normalizeCategoryKey(normalized);
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, normalized);
-      }
-    });
-    const defaultKey = normalizeCategoryKey(DEFAULT_CATEGORY);
-    if (!categoryMap.has(defaultKey)) {
-      categoryMap.set(defaultKey, DEFAULT_CATEGORY);
-    }
-    return sortCategories(Array.from(categoryMap.values()));
-  }, [categories, availableCategories]);
-
-  const categoryUsage = useMemo(() => {
-    const usage = new Map<string, number>();
-    posts.forEach(post => {
-      const normalized = normalizeDraftCategory(post.category ?? '', DEFAULT_CATEGORY);
-      const key = normalizeCategoryKey(normalized);
-      usage.set(key, (usage.get(key) ?? 0) + 1);
-    });
-    return usage;
-  }, [posts]);
 
   const filteredPosts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -436,13 +378,13 @@ const AdminPage: React.FC = () => {
       statusCount,
       visibleCount: visiblePosts.length,
       tagsCount: tagSet.size,
-      categoriesCount: categoryMap.size,
+      categoriesCount: categoryTree.allNames.length,
       seriesCount: seriesSet.size,
       topCategories,
       upcomingScheduled,
       recentPublished
     };
-  }, [posts]);
+  }, [posts, categoryTree]);
 
   const syncEditorContent = (html: string) => {
     if (!editor) return;
@@ -529,93 +471,18 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const handleAddCategory = async () => {
-    if (categorySaving) return;
-    const normalized = normalizeCategoryName(categoryInput);
-    if (!normalized) {
-      setCategoriesError('카테고리 이름을 입력하세요.');
-      return;
-    }
-    const key = normalizeCategoryKey(normalized);
-    if (key === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-      setCategoriesError('기본 카테고리는 자동으로 포함됩니다.');
-      setCategoryInput('');
-      return;
-    }
-    const exists = availableCategories.some(
-      category => normalizeCategoryKey(category) === key
-    );
-    if (exists) {
-      setCategoriesError('이미 존재하는 카테고리입니다.');
-      setCategoryInput('');
-      return;
-    }
-    setCategoriesError('');
-    try {
-      await addCategory(normalized);
-      setCategoryInput('');
-      setNotice('카테고리를 추가했습니다.');
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : '카테고리 추가에 실패했습니다.';
-      setCategoriesError(message);
-    }
-  };
-
-  const handleDeleteCategory = async (category: string) => {
-    if (categorySaving) return;
-    const normalized = normalizeDraftCategory(category, DEFAULT_CATEGORY);
-    const key = normalizeCategoryKey(normalized);
-    if (key === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-      setCategoriesError('기본 카테고리는 삭제할 수 없습니다.');
-      return;
-    }
-    const count = categoryUsage.get(key) ?? 0;
-    const message =
-      count > 0
-        ? `"${normalized}" 카테고리를 삭제하면 ${count}개의 글이 미분류로 이동합니다. 계속할까요?`
-        : `"${normalized}" 카테고리를 삭제할까요?`;
-    if (!window.confirm(message)) return;
-    setCategoriesError('');
-    try {
-      await removeCategory(normalized);
-      if (normalizeCategoryKey(draft.category) === key) {
-        setDraft(prev => ({ ...prev, category: DEFAULT_CATEGORY }));
-      }
-      void fetchPosts();
-      setNotice('카테고리를 삭제했습니다.');
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : '카테고리 삭제에 실패했습니다.';
-      setCategoriesError(message);
-    }
-  };
-
-  const clearAutosave = (postId: string | null) => {
-    if (typeof window === 'undefined') return;
-    const key = getStorageKey(postId);
-    window.localStorage.removeItem(key);
-  };
-
   const handleRestoreDraft = () => {
-    if (!restoreCandidate) return;
-    setDraft(restoreCandidate.draft);
+    const restored = restoreDraft();
+    if (!restored) return;
+    setDraft(restored.draft);
     setSlugTouched(true);
     setNotice('임시 저장된 초안을 복구했습니다.');
-    setRestoreCandidate(null);
-    setAutosavePaused(false);
     setTagInput('');
-    syncEditorContent(restoreCandidate.draft.contentHtml);
+    syncEditorContent(restored.draft.contentHtml);
   };
 
   const handleDiscardRestore = () => {
-    clearAutosave(activeId);
-    setRestoreCandidate(null);
-    setAutosavePaused(false);
+    discardRestore();
   };
 
   const handleReset = () => {
@@ -630,99 +497,8 @@ const AdminPage: React.FC = () => {
     clearAutosave(activeId);
   };
 
-  const applyImageWidth = () => {
-    if (!editor) return;
-    if (!editor.isActive('image')) return;
-    const parsed = parseImageWidthInput(imageWidthInput);
-    if (parsed.kind === 'error') {
-      setImageWidthError(parsed.message);
-      return;
-    }
-
-    if (parsed.kind === 'clear') {
-      editor
-        .chain()
-        .focus()
-        .updateAttributes('image', {
-          dataWidth: null,
-          width: null,
-          style: null,
-          size: 'full'
-        })
-        .run();
-      setImageWidthInput('');
-      setImageWidthError('');
-      return;
-    }
-
-    editor
-      .chain()
-      .focus()
-      .updateAttributes('image', {
-        dataWidth: parsed.dataWidth,
-        width: parsed.widthAttr,
-        style: `width: ${parsed.cssValue};`,
-        size: 'custom'
-      })
-      .run();
-    setImageWidthInput(parsed.displayValue ?? parsed.cssValue);
-    setImageWidthError('');
-  };
-
-  const clearImageWidth = () => {
-    setImageWidthInput('');
-    setImageWidthError('');
-    if (!editor || !editor.isActive('image')) return;
-    editor
-      .chain()
-      .focus()
-      .updateAttributes('image', {
-        dataWidth: null,
-        width: null,
-        style: null,
-        size: 'full'
-      })
-      .run();
-  };
-
   const handleImageUpload = async (file: File) => {
-    setUploadError('');
-    if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-      setUploadError(`이미지는 ${MAX_UPLOAD_MB}MB 이하만 가능합니다.`);
-      return;
-    }
-
-    if (!editor) return;
-    setUploadingImage(true);
-    try {
-      const { url } = await uploadLocalImage(file);
-      const imageAttrs = { src: url, alt: file.name, size: 'full' };
-      editor
-        .chain()
-        .focus()
-        .setImage(imageAttrs)
-        .run();
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : '이미지 업로드에 실패했습니다.';
-      setUploadError(message);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleToolbarImageUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleInsertImageUrl = () => {
-    if (!editor) return;
-    const url = window.prompt('이미지 URL을 입력하세요');
-    if (!url) return;
-    const imageAttrs = { src: url, size: 'full' };
-    editor.chain().focus().setImage(imageAttrs).run();
+    await uploadImageToEditor(file);
   };
 
   const handleLink = () => {
@@ -995,16 +771,28 @@ const AdminPage: React.FC = () => {
 
           {activeSection === 'categories' && (
             <CategorySection
-              managedCategories={managedCategories}
-              categoryUsage={categoryUsage}
+              categoryTree={categoryTree}
+              managedCategoryIds={managedCategoryIds}
               categoriesLoading={categoriesLoading}
               categoriesError={categoriesError}
               categoryInput={categoryInput}
+              parentCategoryId={parentCategoryId}
+              parentOptions={parentOptions}
               onCategoryInputChange={(value) => {
                 setCategoryInput(value);
                 setCategoriesError('');
               }}
+              onParentCategoryChange={(value) => {
+                setParentCategoryId(value);
+                setCategoriesError('');
+              }}
               onAddCategory={() => void handleAddCategory()}
+              onUpdateCategory={(category, updates) =>
+                void handleUpdateCategory(category, updates)
+              }
+              onReorderCategory={(parentId, orderedIds) =>
+                void handleReorderCategory(parentId, orderedIds)
+              }
               onDeleteCategory={(category) => void handleDeleteCategory(category)}
               onReload={() => void loadCategories()}
               categorySaving={categorySaving}
@@ -1015,7 +803,7 @@ const AdminPage: React.FC = () => {
           {activeSection === 'posts' && (
             <PostEditorSection
               draft={draft}
-              availableCategories={availableCategories}
+              categoryTree={categoryTree}
               contentStats={contentStats}
               notice={notice}
               saving={saving}

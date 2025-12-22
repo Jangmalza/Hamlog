@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+import { requestJson } from './client';
 
 interface UploadResponse {
   url: string;
@@ -13,22 +13,9 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const contentType = response.headers.get('content-type') ?? '';
-    if (contentType.includes('application/json')) {
-      const payload = (await response.json()) as { message?: string };
-      throw new Error(payload.message || `Request failed with status ${response.status}`);
-    }
-    const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
-  }
-  return response.json() as Promise<T>;
-}
-
 export async function uploadLocalImage(file: File): Promise<UploadResponse> {
   const dataUrl = await fileToDataUrl(file);
-  const response = await fetch(`${API_BASE_URL}/uploads`, {
+  return requestJson<UploadResponse>('/uploads', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -38,6 +25,4 @@ export async function uploadLocalImage(file: File): Promise<UploadResponse> {
       filename: file.name
     })
   });
-
-  return handleResponse<UploadResponse>(response);
 }

@@ -1,49 +1,68 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+import type { Category } from '../types/category';
+import { requestJson } from './client';
 
 interface CategoryListResponse {
-  categories: string[];
+  categories: Category[];
   total: number;
 }
 
 interface CategoryMutationResponse {
-  categories: string[];
+  categories: Category[];
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const contentType = response.headers.get('content-type') ?? '';
-    if (contentType.includes('application/json')) {
-      const payload = (await response.json()) as { message?: string };
-      throw new Error(payload.message || `Request failed with status ${response.status}`);
-    }
-    const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
-  }
-  return response.json() as Promise<T>;
-}
-
-export async function fetchCategories(): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/categories`);
-  const data = await handleResponse<CategoryListResponse>(response);
+export async function fetchCategories(): Promise<Category[]> {
+  const data = await requestJson<CategoryListResponse>('/categories');
   return data.categories;
 }
 
-export async function createCategory(name: string): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/categories`, {
+export async function createCategory(name: string, parentId?: string | null): Promise<Category[]> {
+  const data = await requestJson<CategoryMutationResponse>('/categories', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ name })
+    body: JSON.stringify({ name, parentId: parentId || null })
   });
-  const data = await handleResponse<CategoryMutationResponse>(response);
   return data.categories;
 }
 
-export async function deleteCategory(name: string): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/categories/${encodeURIComponent(name)}`, {
-    method: 'DELETE'
+export async function deleteCategory(id: string): Promise<Category[]> {
+  const data = await requestJson<CategoryMutationResponse>(
+    `/categories/${encodeURIComponent(id)}`,
+    {
+      method: 'DELETE'
+    }
+  );
+  return data.categories;
+}
+
+export async function updateCategory(
+  id: string,
+  payload: { name?: string; parentId?: string | null }
+): Promise<Category[]> {
+  const data = await requestJson<CategoryMutationResponse>(
+    `/categories/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    }
+  );
+  return data.categories;
+}
+
+export async function reorderCategories(
+  parentId: string | null,
+  orderedIds: string[]
+): Promise<Category[]> {
+  const data = await requestJson<CategoryMutationResponse>('/categories/reorder', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ parentId: parentId || null, orderedIds })
   });
-  const data = await handleResponse<CategoryMutationResponse>(response);
   return data.categories;
 }

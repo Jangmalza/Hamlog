@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import PostContent from '../../PostContent';
 import type { PostStatus } from '../../../data/blogData';
 import type { PostDraft } from '../../../types/admin';
 import { formatAutosaveTime } from '../../../utils/adminDate';
+import type { CategoryNode, CategoryTreeResult } from '../../../utils/categoryTree';
+import { DEFAULT_CATEGORY, normalizeCategoryKey } from '../../../utils/category';
 
 interface ToolbarButtonProps {
   label: string;
@@ -15,7 +17,7 @@ interface ToolbarButtonProps {
 
 interface PostEditorSectionProps {
   draft: PostDraft;
-  availableCategories: string[];
+  categoryTree: CategoryTreeResult;
   contentStats: { chars: number; readingMinutes: number };
   notice: string;
   saving: boolean;
@@ -71,9 +73,22 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   </button>
 );
 
+const CODE_LANGUAGES = [
+  { value: 'plaintext', label: '기본' },
+  { value: 'bash', label: 'Bash' },
+  { value: 'css', label: 'CSS' },
+  { value: 'xml', label: 'HTML' },
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'json', label: 'JSON' },
+  { value: 'markdown', label: 'Markdown' },
+  { value: 'python', label: 'Python' },
+  { value: 'sql', label: 'SQL' }
+];
+
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   draft,
-  availableCategories,
+  categoryTree,
   contentStats,
   notice,
   saving,
@@ -116,6 +131,105 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
         ? 'h3'
         : 'paragraph';
   const isImageActive = editor?.isActive('image') ?? false;
+  const codeBlockLanguage =
+    (editor?.getAttributes('codeBlock') as { language?: string })?.language ??
+    'plaintext';
+  const isCodeBlockActive = editor?.isActive('codeBlock') ?? false;
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryQuery, setCategoryQuery] = useState('');
+  const [categoryExpanded, setCategoryExpanded] = useState<Record<string, boolean>>({});
+
+  const getNodePath = (node: CategoryNode) => {
+    const path: string[] = [];
+    let current: CategoryNode | undefined = node;
+    while (current) {
+      path.unshift(current.name);
+      current = current.parentId ? categoryTree.nodesById.get(current.parentId) : undefined;
+    }
+    return path.join(' > ');
+  };
+
+  const categoryPath = useMemo(() => {
+    const name = draft.category || DEFAULT_CATEGORY;
+    const key = normalizeCategoryKey(name);
+    const node = categoryTree.nodesByKey.get(key);
+    if (!node) return name;
+    return getNodePath(node);
+  }, [categoryTree, draft.category]);
+
+  const categoryResults = useMemo(() => {
+    const query = categoryQuery.trim().toLowerCase();
+    if (!query) return [];
+    return Array.from(categoryTree.nodesById.values())
+      .filter(node => node.name.toLowerCase().includes(query))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+      .map(node => ({ node, path: getNodePath(node) }));
+  }, [categoryQuery, categoryTree]);
+
+  const toggleCategoryNode = (id: string) => {
+    setCategoryExpanded(prev => {
+      const current = prev[id];
+      return { ...prev, [id]: current === undefined ? false : !current };
+    });
+  };
+
+  const selectCategory = (name: string) => {
+    updateDraft({ category: name });
+    setCategoryOpen(false);
+    setCategoryQuery('');
+  };
+
+  const renderCategoryNode = (node: CategoryNode, depth: number) => {
+    const hasChildren = node.children.length > 0;
+    const isExpanded = categoryExpanded[node.id] ?? true;
+    const isActive =
+      normalizeCategoryKey(draft.category || DEFAULT_CATEGORY) ===
+      normalizeCategoryKey(node.name);
+    const paddingLeft = depth * 14;
+
+    return (
+      <li key={node.id}>
+        <div className="flex items-center gap-2" style={{ paddingLeft }}>
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={() => toggleCategoryNode(node.id)}
+              className="flex h-4 w-4 items-center justify-center text-[var(--text-muted)]"
+              aria-label={`${node.name} 토글`}
+            >
+              <svg
+                className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M9 6l6 6-6 6" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ) : (
+            <span className="h-4 w-4" />
+          )}
+          <button
+            type="button"
+            onClick={() => selectCategory(node.name)}
+            className={`flex flex-1 items-center justify-between rounded-2xl border px-3 py-2 text-sm transition ${
+              isActive
+                ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+            }`}
+          >
+            <span>{node.name}</span>
+            <span className="text-xs">{node.count}</span>
+          </button>
+        </div>
+        {hasChildren && isExpanded && (
+          <ul className="mt-2 space-y-2">
+            {node.children.map(child => renderCategoryNode(child, depth + 1))}
+          </ul>
+        )}
+      </li>
+    );
+  };
 
   return (
     <>
@@ -352,19 +466,84 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
         <div className="mt-4 grid gap-3">
           <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
             카테고리
-            <input
-              list="category-options"
-              value={draft.category}
-              onChange={(event) => updateDraft({ category: event.target.value })}
-              placeholder="예: UI 아키텍처"
-              className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
-            />
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onClick={() => setCategoryOpen(prev => !prev)}
+                className="flex w-full items-center justify-between rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
+                aria-haspopup="listbox"
+                aria-expanded={categoryOpen}
+              >
+                <span>{categoryPath || DEFAULT_CATEGORY}</span>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M6 9l6 6 6-6" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {categoryOpen && (
+                <div className="absolute left-0 right-0 z-20 mt-2 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
+                  <div className="p-3">
+                    <input
+                      type="search"
+                      value={categoryQuery}
+                      onChange={(event) => setCategoryQuery(event.target.value)}
+                      placeholder="카테고리 검색"
+                      className="w-full rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-xs text-[var(--text)]"
+                    />
+                  </div>
+                  <div className="max-h-72 overflow-auto px-3 pb-3">
+                    <button
+                      type="button"
+                      onClick={() => selectCategory(DEFAULT_CATEGORY)}
+                      className={`mb-2 flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-sm transition ${
+                        normalizeCategoryKey(draft.category || DEFAULT_CATEGORY) ===
+                        normalizeCategoryKey(DEFAULT_CATEGORY)
+                          ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                          : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+                      }`}
+                    >
+                      <span>{DEFAULT_CATEGORY}</span>
+                    </button>
+                    {categoryQuery.trim() ? (
+                      <ul className="space-y-2" role="listbox">
+                        {categoryResults.map(result => (
+                          <li key={result.node.id}>
+                            <button
+                              type="button"
+                              onClick={() => selectCategory(result.node.name)}
+                              className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-left text-sm text-[var(--text)] hover:border-[color:var(--accent)]"
+                            >
+                              <p>{result.node.name}</p>
+                              <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                                {result.path}
+                              </p>
+                            </button>
+                          </li>
+                        ))}
+                        {categoryResults.length === 0 && (
+                          <li className="text-xs text-[var(--text-muted)]">
+                            검색 결과가 없습니다.
+                          </li>
+                        )}
+                      </ul>
+                    ) : (
+                      <ul className="space-y-2" role="listbox">
+                        {categoryTree.roots
+                          .filter(
+                            node =>
+                              normalizeCategoryKey(node.name) !==
+                              normalizeCategoryKey(DEFAULT_CATEGORY)
+                          )
+                          .map(node => renderCategoryNode(node, 0))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <span className="mt-2 block text-[11px] text-[var(--text-muted)]">
+              현재 선택: {categoryPath || DEFAULT_CATEGORY}
+            </span>
           </label>
-          <datalist id="category-options">
-            {availableCategories.map(category => (
-              <option key={category} value={category} />
-            ))}
-          </datalist>
           <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
             제목
             <input
@@ -421,6 +600,12 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               disabled={!editor}
             />
             <ToolbarButton
+              label="인라인"
+              onClick={() => editor?.chain().focus().toggleCode().run()}
+              active={editor?.isActive('code')}
+              disabled={!editor}
+            />
+            <ToolbarButton
               label="• 목록"
               onClick={() => editor?.chain().focus().toggleBulletList().run()}
               active={editor?.isActive('bulletList')}
@@ -462,6 +647,29 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               active={editor?.isActive('codeBlock')}
               disabled={!editor}
             />
+            {isCodeBlockActive && (
+              <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                언어
+                <select
+                  value={codeBlockLanguage}
+                  onChange={(event) => {
+                    if (!editor) return;
+                    editor
+                      .chain()
+                      .focus()
+                      .setCodeBlock({ language: event.target.value })
+                      .run();
+                  }}
+                  className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text)]"
+                >
+                  {CODE_LANGUAGES.map(language => (
+                    <option key={language.value} value={language.value}>
+                      {language.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <ToolbarButton
               label="구분선"
               onClick={() => editor?.chain().focus().setHorizontalRule().run()}

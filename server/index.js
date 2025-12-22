@@ -4,6 +4,11 @@ import { access, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
+import { createCategoryRouter } from './routes/categories.js';
+import { createPostRouter } from './routes/posts.js';
+import { createProfileRouter } from './routes/profile.js';
+import { createUploadRouter } from './routes/uploads.js';
+import { createHealthRouter } from './routes/health.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,9 +161,26 @@ function normalizeTags(tags) {
   return tags.map(tag => String(tag).trim()).filter(Boolean);
 }
 
+function normalizeCategoryName(value) {
+  return value !== undefined && value !== null ? String(value).trim() : '';
+}
+
 function normalizeCategory(category) {
-  const normalized = category ? String(category).trim() : '';
+  const normalized = normalizeCategoryName(category);
   return normalized || DEFAULT_CATEGORY;
+}
+
+function normalizeCategoryId(value) {
+  const normalized = normalizeCategoryName(value);
+  return normalized || '';
+}
+
+function normalizeCategoryOrder(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  if (parsed < 0) return null;
+  return Math.floor(parsed);
 }
 
 function normalizePostStatus(status) {
@@ -224,18 +246,120 @@ function normalizeCategoryKey(category) {
 function normalizeCategoryList(categories) {
   const list = Array.isArray(categories) ? categories : [];
   const categoryMap = new Map();
+  const idMap = new Map();
+  const normalizedList = [];
+  const sourceIndexById = new Map();
+
   list.forEach((item) => {
-    const normalized = normalizeCategory(item);
-    const key = normalizeCategoryKey(normalized);
-    if (!categoryMap.has(key)) {
-      categoryMap.set(key, normalized);
+    if (typeof item === 'string') {
+      const name = normalizeCategoryName(item);
+      if (!name) return;
+      const key = normalizeCategoryKey(name);
+      if (categoryMap.has(key)) return;
+      let id = randomUUID();
+      if (idMap.has(id)) {
+        id = randomUUID();
+      }
+      const next = { id, name, parentId: null, order: null };
+      categoryMap.set(key, next);
+      idMap.set(id, next);
+      normalizedList.push(next);
+      sourceIndexById.set(id, normalizedList.length - 1);
+      return;
     }
+    if (!item || typeof item !== 'object') return;
+    const name = normalizeCategoryName(item.name);
+    if (!name) return;
+    const key = normalizeCategoryKey(name);
+    if (categoryMap.has(key)) return;
+    let id = normalizeCategoryId(item.id);
+    if (!id || idMap.has(id)) {
+      id = randomUUID();
+    }
+    const parentId = normalizeCategoryId(item.parentId);
+    const order = normalizeCategoryOrder(item.order);
+    const next = { id, name, parentId: parentId || null, order };
+    categoryMap.set(key, next);
+    idMap.set(id, next);
+    normalizedList.push(next);
+    sourceIndexById.set(id, normalizedList.length - 1);
   });
+
   const defaultKey = normalizeCategoryKey(DEFAULT_CATEGORY);
   if (!categoryMap.has(defaultKey)) {
-    categoryMap.set(defaultKey, DEFAULT_CATEGORY);
+    const id = randomUUID();
+    const next = { id, name: DEFAULT_CATEGORY, parentId: null, order: null };
+    categoryMap.set(defaultKey, next);
+    idMap.set(id, next);
+    normalizedList.push(next);
+    sourceIndexById.set(id, normalizedList.length - 1);
   }
-  return Array.from(categoryMap.values());
+
+  const defaultEntry = categoryMap.get(defaultKey);
+  normalizedList.forEach((item) => {
+    const parentId = normalizeCategoryId(item.parentId);
+    if (!parentId || parentId === item.id || !idMap.has(parentId)) {
+      item.parentId = null;
+      return;
+    }
+    if (defaultEntry && parentId === defaultEntry.id) {
+      item.parentId = null;
+      return;
+    }
+    let cursor = parentId;
+    const visited = new Set([item.id]);
+    while (cursor) {
+      if (visited.has(cursor)) {
+        item.parentId = null;
+        return;
+      }
+      visited.add(cursor);
+      const parent = idMap.get(cursor);
+      cursor = parent?.parentId ? String(parent.parentId) : '';
+    }
+    item.parentId = parentId;
+  });
+
+  const groups = new Map();
+  normalizedList.forEach((item) => {
+    const key = item.parentId ?? '__root__';
+    const group = groups.get(key);
+    if (group) {
+      group.push(item);
+    } else {
+      groups.set(key, [item]);
+    }
+  });
+
+  groups.forEach((items) => {
+    const sorted = [...items].sort((a, b) => {
+      const orderA = Number.isFinite(a.order) ? a.order : Number.POSITIVE_INFINITY;
+      const orderB = Number.isFinite(b.order) ? b.order : Number.POSITIVE_INFINITY;
+      if (orderA !== orderB) return orderA - orderB;
+      const indexA = sourceIndexById.get(a.id) ?? 0;
+      const indexB = sourceIndexById.get(b.id) ?? 0;
+      return indexA - indexB;
+    });
+    sorted.forEach((item, index) => {
+      item.order = index;
+    });
+  });
+
+  return normalizedList;
+}
+
+function getNextCategoryOrder(categories, parentId) {
+  const normalizedParentId = parentId ?? null;
+  let maxOrder = -1;
+  categories.forEach((item) => {
+    const currentParent = item.parentId ?? null;
+    if (currentParent !== normalizedParentId) return;
+    const order = Number.isFinite(item.order) ? item.order : -1;
+    if (order > maxOrder) {
+      maxOrder = order;
+    }
+  });
+  return maxOrder + 1;
 }
 
 function normalizeStack(value) {
@@ -338,34 +462,50 @@ function mergeProfile(current, input) {
 }
 
 async function addCategoryIfMissing(category) {
-  const normalized = normalizeCategory(category);
-  const key = normalizeCategoryKey(normalized);
+  const name = normalizeCategoryName(category);
+  if (!name) return readCategories();
+  const key = normalizeCategoryKey(name);
   const categories = await readCategories();
-  if (categories.some(item => normalizeCategoryKey(item) === key)) {
+  if (categories.some(item => normalizeCategoryKey(item.name) === key)) {
     return categories;
   }
-  categories.push(normalized);
-  return writeCategories(categories);
+  const order = getNextCategoryOrder(categories, null);
+  const next = [...categories, { id: randomUUID(), name, parentId: null, order }];
+  return writeCategories(next);
 }
 
 async function removeCategoryByName(category) {
-  const normalized = normalizeCategory(category);
-  const key = normalizeCategoryKey(normalized);
-  const defaultKey = normalizeCategoryKey(DEFAULT_CATEGORY);
-  if (key === defaultKey) {
-    return { categories: await readCategories(), reassignedCount: 0, removed: false };
+  const normalized = normalizeCategoryName(category);
+  if (!normalized) {
+    return { categories: await readCategories(), reassignedCount: 0, removed: false, reparentedCount: 0 };
   }
   const categories = await readCategories();
-  const next = categories.filter(item => normalizeCategoryKey(item) !== key);
-  if (next.length === categories.length) {
-    return { categories, reassignedCount: 0, removed: false };
+  const key = normalizeCategoryKey(normalized);
+  const target =
+    categories.find(item => item.id === normalized) ??
+    categories.find(item => normalizeCategoryKey(item.name) === key);
+  if (!target) {
+    return { categories, reassignedCount: 0, removed: false, reparentedCount: 0 };
   }
-  await writeCategories(next);
+  const defaultKey = normalizeCategoryKey(DEFAULT_CATEGORY);
+  if (normalizeCategoryKey(target.name) === defaultKey) {
+    return { categories, reassignedCount: 0, removed: false, reparentedCount: 0 };
+  }
+  const next = categories.filter(item => item.id !== target.id);
+  let reparentedCount = 0;
+  const reparented = next.map((item) => {
+    if (item.parentId === target.id) {
+      reparentedCount += 1;
+      return { ...item, parentId: null, order: null };
+    }
+    return item;
+  });
+  const savedCategories = await writeCategories(reparented);
 
   const posts = await readPosts();
   let reassignedCount = 0;
   const updatedPosts = posts.map((post) => {
-    if (normalizeCategoryKey(post.category) === key) {
+    if (normalizeCategoryKey(post.category) === normalizeCategoryKey(target.name)) {
       reassignedCount += 1;
       return { ...post, category: DEFAULT_CATEGORY };
     }
@@ -374,7 +514,107 @@ async function removeCategoryByName(category) {
   if (reassignedCount > 0) {
     await writePosts(updatedPosts);
   }
-  return { categories: next, reassignedCount, removed: true };
+  return { categories: savedCategories, reassignedCount, removed: true, reparentedCount };
+}
+
+async function updateCategoryById(id, updates) {
+  const categories = await readCategories();
+  const targetIndex = categories.findIndex(item => item.id === id);
+  if (targetIndex < 0) {
+    return { categories, updated: false, reason: 'not_found' };
+  }
+
+  const target = categories[targetIndex];
+  const next = [...categories];
+  let nextName = target.name;
+  let nameChanged = false;
+
+  if (Object.prototype.hasOwnProperty.call(updates, 'name')) {
+    const normalized = normalizeCategoryName(updates.name);
+    if (!normalized) {
+      return { categories, updated: false, reason: 'name_required' };
+    }
+    if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
+      return { categories, updated: false, reason: 'default' };
+    }
+    const duplicate = categories.some(
+      item =>
+        item.id !== id &&
+        normalizeCategoryKey(item.name) === normalizeCategoryKey(normalized)
+    );
+    if (duplicate) {
+      return { categories, updated: false, reason: 'duplicate' };
+    }
+    nameChanged = normalizeCategoryKey(normalized) !== normalizeCategoryKey(target.name);
+    nextName = normalized;
+  }
+
+  let nextParentId = target.parentId ?? null;
+  let parentChanged = false;
+  if (Object.prototype.hasOwnProperty.call(updates, 'parentId')) {
+    const normalizedParentId = normalizeCategoryId(updates.parentId);
+    if (!normalizedParentId) {
+      nextParentId = null;
+    } else {
+      if (normalizedParentId === id) {
+        return { categories, updated: false, reason: 'self_parent' };
+      }
+      const parent = categories.find(item => item.id === normalizedParentId);
+      if (!parent) {
+        return { categories, updated: false, reason: 'parent_not_found' };
+      }
+      if (normalizeCategoryKey(parent.name) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
+        return { categories, updated: false, reason: 'parent_default' };
+      }
+      let cursor = normalizedParentId;
+      while (cursor) {
+        if (cursor === id) {
+          return { categories, updated: false, reason: 'cycle' };
+        }
+        const current = categories.find(item => item.id === cursor);
+        cursor = current?.parentId ? String(current.parentId) : '';
+      }
+      nextParentId = normalizedParentId;
+    }
+    parentChanged = nextParentId !== (target.parentId ?? null);
+  }
+
+  let nextOrder = Number.isFinite(target.order) ? target.order : 0;
+  if (parentChanged) {
+    const siblings = categories.filter(item => item.id !== id);
+    nextOrder = getNextCategoryOrder(siblings, nextParentId);
+  }
+
+  next[targetIndex] = {
+    ...target,
+    name: nextName,
+    parentId: nextParentId,
+    order: nextOrder
+  };
+  const savedCategories = await writeCategories(next);
+  let reassignedCount = 0;
+
+  if (nameChanged) {
+    const posts = await readPosts();
+    const updatedPosts = posts.map((post) => {
+      if (normalizeCategoryKey(post.category) === normalizeCategoryKey(target.name)) {
+        reassignedCount += 1;
+        return { ...post, category: nextName };
+      }
+      return post;
+    });
+    if (reassignedCount > 0) {
+      await writePosts(updatedPosts);
+    }
+  }
+
+  return {
+    categories: savedCategories,
+    updated: true,
+    reassignedCount,
+    previousName: target.name,
+    nextName
+  };
 }
 
 function normalizeContentHtml(contentHtml) {
@@ -697,348 +937,56 @@ function isLegacySeed(posts) {
   );
 }
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
-
-app.get('/api/categories', async (_req, res) => {
-  try {
-    const categories = await readCategories();
-    res.json({ categories, total: categories.length });
-  } catch (error) {
-    console.error('Failed to fetch categories', error);
-    res.status(500).json({ message: '카테고리를 불러오지 못했습니다.' });
-  }
-});
-
-app.post('/api/categories', async (req, res) => {
-  try {
-    const { name } = req.body ?? {};
-    const normalized = name ? String(name).trim() : '';
-    if (!normalized) {
-      return res.status(400).json({ message: '카테고리 이름이 필요합니다.' });
-    }
-    if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-      return res.status(409).json({ message: '이미 존재하는 카테고리입니다.' });
-    }
-    const categories = await readCategories();
-    const exists = categories.some(
-      category => normalizeCategoryKey(category) === normalizeCategoryKey(normalized)
-    );
-    if (exists) {
-      return res.status(409).json({ message: '이미 존재하는 카테고리입니다.' });
-    }
-    const next = await writeCategories([...categories, normalized]);
-    res.status(201).json({ categories: next });
-  } catch (error) {
-    console.error('Failed to create category', error);
-    res.status(500).json({ message: '카테고리 생성에 실패했습니다.' });
-  }
-});
-
-app.delete('/api/categories/:name', async (req, res) => {
-  try {
-    const { name } = req.params;
-    const normalized = name ? String(name).trim() : '';
-    if (!normalized) {
-      return res.status(400).json({ message: '카테고리 이름이 필요합니다.' });
-    }
-    if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-      return res.status(400).json({ message: '기본 카테고리는 삭제할 수 없습니다.' });
-    }
-    const result = await removeCategoryByName(normalized);
-    if (!result.removed) {
-      return res.status(404).json({ message: '카테고리를 찾을 수 없습니다.' });
-    }
-    res.json({ categories: result.categories, reassignedCount: result.reassignedCount });
-  } catch (error) {
-    console.error('Failed to delete category', error);
-    res.status(500).json({ message: '카테고리 삭제에 실패했습니다.' });
-  }
-});
-
-app.get('/api/profile', async (_req, res) => {
-  try {
-    const profile = await readProfile();
-    res.json({ profile });
-  } catch (error) {
-    console.error('Failed to fetch profile', error);
-    res.status(500).json({ message: '프로필을 불러오지 못했습니다.' });
-  }
-});
-
-app.put('/api/profile', async (req, res) => {
-  try {
-    const profile = await readProfile();
-    const next = mergeProfile(profile, req.body ?? {});
-    const saved = await writeProfile(next);
-    res.json({ profile: saved });
-  } catch (error) {
-    console.error('Failed to update profile', error);
-    res.status(500).json({ message: '프로필 저장에 실패했습니다.' });
-  }
-});
-
-app.get('/api/posts', async (_req, res) => {
-  try {
-    const posts = await readPosts();
-    res.json({ posts, total: posts.length });
-  } catch (error) {
-    console.error('Failed to fetch posts', error);
-    res.status(500).json({ message: '포스트를 불러오지 못했습니다.' });
-  }
-});
-
-app.post('/api/posts', async (req, res) => {
-  try {
-    const {
-      slug,
-      title,
-      summary,
-      contentHtml,
-      category,
-      status,
-      scheduledAt,
-      seo,
-      publishedAt,
-      readingTime,
-      tags,
-      series,
-      featured,
-      cover,
-      sections
-    } = req.body ?? {};
-
-    const normalizedSlug = slug ? String(slug).trim() : '';
-    const normalizedTitle = title ? String(title).trim() : '';
-
-    if (!normalizedSlug || !normalizedTitle) {
-      return res.status(400).json({ message: '슬러그와 제목이 필요합니다.' });
-    }
-
-    const normalizedSections = normalizeSections(sections);
-    const normalizedContentHtml = normalizeContentHtml(contentHtml);
-    const normalizedStatus = normalizePostStatus(status);
-    if (
-      normalizedStatus !== 'draft' &&
-      normalizedSections.length === 0 &&
-      !normalizedContentHtml
-    ) {
-      return res.status(400).json({ message: '본문 내용이 필요합니다.' });
-    }
-
-    const allPosts = await readPosts();
-    if (allPosts.some(post => post.slug === normalizedSlug)) {
-      return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
-    }
-
-    const normalizedTags = normalizeTags(tags);
-    const normalizedSeries = series ? String(series).trim() : '';
-    const normalizedCover = cover ? String(cover).trim() : '';
-    const normalizedReadingTime = readingTime ? String(readingTime).trim() : '';
-    const normalizedCategory = normalizeCategory(category);
-    const normalizedScheduledAt = normalizeScheduledAt(scheduledAt);
-    if (normalizedStatus === 'scheduled' && !normalizedScheduledAt) {
-      return res.status(400).json({ message: '예약 발행 날짜가 필요합니다.' });
-    }
-    const normalizedSeo = normalizeSeo(seo);
-    await addCategoryIfMissing(normalizedCategory);
-    const normalizedPublishedAt = publishedAt
-      ? String(publishedAt)
-      : new Date().toISOString().slice(0, 10);
-    const effectivePublishedAt =
-      normalizedStatus === 'scheduled' && normalizedScheduledAt
-        ? normalizedScheduledAt.slice(0, 10)
-        : normalizedPublishedAt;
-
-    const newPost = {
-      id: `post-${randomUUID()}`,
-      slug: normalizedSlug,
-      title: normalizedTitle,
-      summary: summary ? String(summary).trim() : '요약이 없습니다.',
-      category: normalizedCategory,
-      contentHtml: normalizedContentHtml || undefined,
-      publishedAt: effectivePublishedAt,
-      readingTime: normalizedReadingTime || '3분 읽기',
-      tags: normalizedTags,
-      series: normalizedSeries || undefined,
-      featured: Boolean(featured),
-      cover: normalizedCover || undefined,
-      status: normalizedStatus,
-      scheduledAt: normalizedScheduledAt || undefined,
-      seo: normalizedSeo,
-      sections: normalizedSections
-    };
-
-    const next = [newPost, ...allPosts];
-    await writePosts(next);
-
-    res.status(201).json(newPost);
-  } catch (error) {
-    console.error('Failed to create post', error);
-    res.status(500).json({ message: '포스트 생성에 실패했습니다.' });
-  }
-});
-
-app.put('/api/posts/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const allPosts = await readPosts();
-    const index = allPosts.findIndex(post => post.id === id);
-
-    if (index === -1) {
-      return res.status(404).json({ message: '포스트를 찾을 수 없습니다.' });
-    }
-
-    const existing = allPosts[index];
-    const {
-      slug,
-      title,
-      summary,
-      contentHtml,
-      category,
-      status,
-      scheduledAt,
-      seo,
-      publishedAt,
-      readingTime,
-      tags,
-      series,
-      featured,
-      cover,
-      sections
-    } = req.body ?? {};
-
-    const normalizedSlug = slug ? String(slug).trim() : existing.slug;
-    const normalizedTitle = title ? String(title).trim() : existing.title;
-
-    if (!normalizedSlug || !normalizedTitle) {
-      return res.status(400).json({ message: '슬러그와 제목이 필요합니다.' });
-    }
-
-    if (allPosts.some(post => post.slug === normalizedSlug && post.id !== id)) {
-      return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
-    }
-
-    const normalizedSections =
-      sections !== undefined ? normalizeSections(sections) : existing.sections ?? [];
-    const normalizedContentHtml =
-      contentHtml !== undefined
-        ? normalizeContentHtml(contentHtml)
-        : normalizeContentHtml(existing.contentHtml);
-    const normalizedStatus =
-      status !== undefined ? normalizePostStatus(status) : normalizePostStatus(existing.status);
-    if (
-      normalizedStatus !== 'draft' &&
-      normalizedSections.length === 0 &&
-      !normalizedContentHtml
-    ) {
-      return res.status(400).json({ message: '본문 내용이 필요합니다.' });
-    }
-
-    const normalizedSeries = series !== undefined ? String(series).trim() : '';
-    const normalizedCover = cover !== undefined ? String(cover).trim() : '';
-    const normalizedReadingTime = readingTime ? String(readingTime).trim() : '';
-    const normalizedCategory =
-      category !== undefined ? normalizeCategory(category) : normalizeCategory(existing.category);
-    const normalizedScheduledAt =
-      scheduledAt !== undefined
-        ? normalizeScheduledAt(scheduledAt)
-        : normalizeScheduledAt(existing.scheduledAt);
-    if (normalizedStatus === 'scheduled' && !normalizedScheduledAt) {
-      return res.status(400).json({ message: '예약 발행 날짜가 필요합니다.' });
-    }
-    const normalizedSeo = seo !== undefined ? normalizeSeo(seo) : normalizeSeo(existing.seo);
-    await addCategoryIfMissing(normalizedCategory);
-    const normalizedPublishedAt =
-      publishedAt !== undefined ? String(publishedAt) : existing.publishedAt;
-    const effectivePublishedAt =
-      normalizedStatus === 'scheduled' && normalizedScheduledAt
-        ? normalizedScheduledAt.slice(0, 10)
-        : normalizedPublishedAt;
-
-    const updated = {
-      ...existing,
-      slug: normalizedSlug,
-      title: normalizedTitle,
-      summary: summary !== undefined ? String(summary).trim() : existing.summary,
-      category: normalizedCategory,
-      contentHtml: normalizedContentHtml || undefined,
-      publishedAt: effectivePublishedAt,
-      readingTime: normalizedReadingTime || existing.readingTime,
-      tags: tags !== undefined ? normalizeTags(tags) : existing.tags,
-      series: series !== undefined ? normalizedSeries || undefined : existing.series,
-      featured: featured !== undefined ? Boolean(featured) : existing.featured,
-      cover: cover !== undefined ? normalizedCover || undefined : existing.cover,
-      status: normalizedStatus,
-      scheduledAt: normalizedScheduledAt || undefined,
-      seo: normalizedSeo,
-      sections: normalizedSections
-    };
-
-    allPosts[index] = updated;
-    await writePosts(allPosts);
-
-    res.json(updated);
-  } catch (error) {
-    console.error('Failed to update post', error);
-    res.status(500).json({ message: '포스트 수정에 실패했습니다.' });
-  }
-});
-
-app.delete('/api/posts/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const allPosts = await readPosts();
-    const next = allPosts.filter(post => post.id !== id);
-
-    if (next.length === allPosts.length) {
-      return res.status(404).json({ message: '포스트를 찾을 수 없습니다.' });
-    }
-
-    await writePosts(next);
-    res.status(204).send();
-  } catch (error) {
-    console.error('Failed to delete post', error);
-    res.status(500).json({ message: '포스트 삭제에 실패했습니다.' });
-  }
-});
-
-app.post('/api/uploads', async (req, res) => {
-  try {
-    const { dataUrl } = req.body ?? {};
-    const parsed = parseDataUrl(dataUrl);
-
-    if (!parsed) {
-      return res.status(400).json({ message: '이미지 데이터가 올바르지 않습니다.' });
-    }
-
-    const extension = allowedImageTypes.get(parsed.mime);
-    if (!extension) {
-      return res.status(400).json({ message: '지원하지 않는 이미지 형식입니다.' });
-    }
-
-    if (!parsed.buffer.length) {
-      return res.status(400).json({ message: '빈 파일은 업로드할 수 없습니다.' });
-    }
-
-    if (parsed.buffer.length > MAX_UPLOAD_BYTES) {
-      return res.status(413).json({ message: '이미지 용량이 너무 큽니다.' });
-    }
-
-    await ensureUploadDir();
-    const filename = `upload-${Date.now()}-${randomUUID()}.${extension}`;
-    await writeFile(path.join(uploadDir, filename), parsed.buffer);
-
-    res.status(201).json({
-      url: `/uploads/${filename}`,
-      filename
-    });
-  } catch (error) {
-    console.error('Failed to upload image', error);
-    res.status(500).json({ message: '이미지 업로드에 실패했습니다.' });
-  }
-});
+app.use('/api', createHealthRouter());
+app.use(
+  '/api/categories',
+  createCategoryRouter({
+    readCategories,
+    writeCategories,
+    removeCategoryByName,
+    updateCategoryById,
+    normalizeCategoryName,
+    normalizeCategoryKey,
+    normalizeCategoryId,
+    getNextCategoryOrder,
+    DEFAULT_CATEGORY
+  })
+);
+app.use(
+  '/api/profile',
+  createProfileRouter({
+    readProfile,
+    writeProfile,
+    mergeProfile
+  })
+);
+app.use(
+  '/api/posts',
+  createPostRouter({
+    readPosts,
+    writePosts,
+    addCategoryIfMissing,
+    normalizeCategory,
+    normalizePostStatus,
+    normalizeScheduledAt,
+    normalizeSeo,
+    normalizeTags,
+    normalizeSections,
+    normalizeContentHtml
+  })
+);
+app.use(
+  '/api/uploads',
+  createUploadRouter({
+    parseDataUrl,
+    allowedImageTypes,
+    MAX_UPLOAD_BYTES,
+    ensureUploadDir,
+    writeFile,
+    path,
+    uploadDir
+  })
+);
 
 async function start() {
   try {

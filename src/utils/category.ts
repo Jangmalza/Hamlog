@@ -1,3 +1,5 @@
+export const DEFAULT_CATEGORY = '미분류';
+
 export const normalizeCategoryName = (value: string) => value.trim();
 
 export const normalizeCategoryKey = (value: string) =>

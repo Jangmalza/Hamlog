@@ -1,18 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
-import SearchAndFilter from './components/SearchAndFilter';
 import PostCard from './components/PostCard';
 import { siteMeta, topicHighlights } from './data/blogData';
+import { fetchCategories } from './api/categoryApi';
 import { fetchProfile } from './api/profileApi';
 import { usePostStore } from './store/postStore';
+import type { Category } from './types/category';
+import { DEFAULT_CATEGORY, normalizeCategoryKey } from './utils/category';
+import { buildCategoryTree } from './utils/categoryTree';
+import type { CategoryNode } from './utils/categoryTree';
 import { isPostVisible } from './utils/postStatus';
+
+const NEW_BADGE_DAYS = 7;
 
 function App() {
   const [profile, setProfile] = useState(siteMeta);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [managedCategories, setManagedCategories] = useState<Category[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const posts = usePostStore(state => state.posts);
   const loading = usePostStore(state => state.loading);
   const error = usePostStore(state => state.error);
@@ -38,6 +46,24 @@ function App() {
       }
     };
     void loadProfile();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadCategories = async () => {
+      try {
+        const list = await fetchCategories();
+        if (isActive) {
+          setManagedCategories(list);
+        }
+      } catch (error) {
+        console.error('Failed to load categories', error);
+      }
+    };
+    void loadCategories();
     return () => {
       isActive = false;
     };
@@ -71,26 +97,48 @@ function App() {
     return Array.from(tagSet).sort();
   }, [sortedPosts]);
 
-  const availableCategories = useMemo(() => {
-    const categorySet = new Set<string>();
-    sortedPosts.forEach(post => categorySet.add(post.category ?? '미분류'));
-    return Array.from(categorySet).sort();
-  }, [sortedPosts]);
+  const newSince = useMemo(
+    () => Date.now() - NEW_BADGE_DAYS * 24 * 60 * 60 * 1000,
+    []
+  );
 
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    sortedPosts.forEach(post => {
-      const category = post.category ?? '미분류';
-      counts.set(category, (counts.get(category) ?? 0) + 1);
-    });
-    return counts;
-  }, [sortedPosts]);
+  const categoryTree = useMemo(
+    () =>
+      buildCategoryTree({
+        categories: managedCategories,
+        posts: visiblePosts,
+        defaultCategory: DEFAULT_CATEGORY,
+        newSince
+      }),
+    [managedCategories, visiblePosts, newSince]
+  );
+
+  const selectedCategoryKeys = useMemo(() => {
+    if (!selectedCategory) return null;
+    const key = normalizeCategoryKey(selectedCategory);
+    const node = categoryTree.nodesByKey.get(key);
+    const keys = new Set<string>();
+    const collect = (target: CategoryNode) => {
+      keys.add(normalizeCategoryKey(target.name));
+      target.children.forEach(child => collect(child));
+    };
+    if (node) {
+      collect(node);
+    } else {
+      keys.add(key);
+    }
+    return keys;
+  }, [selectedCategory, categoryTree]);
 
   const filteredPosts = useMemo(() => {
     let result = sortedPosts;
 
-    if (selectedCategory) {
-      result = result.filter(post => (post.category ?? '미분류') === selectedCategory);
+    if (selectedCategoryKeys) {
+      result = result.filter(post =>
+        selectedCategoryKeys.has(
+          normalizeCategoryKey(post.category ?? DEFAULT_CATEGORY)
+        )
+      );
     }
 
     if (selectedTag) {
@@ -112,7 +160,73 @@ function App() {
     }
 
     return result;
-  }, [sortedPosts, selectedCategory, selectedTag, searchQuery]);
+  }, [sortedPosts, selectedCategoryKeys, selectedTag, searchQuery]);
+
+  const toggleCategory = (id: string) => {
+    setExpandedCategories(prev => {
+      const current = prev[id];
+      return { ...prev, [id]: current === undefined ? false : !current };
+    });
+  };
+
+  const renderCategoryNode = (node: CategoryNode, depth: number) => {
+    const hasChildren = node.children.length > 0;
+    const isExpanded = expandedCategories[node.id] ?? true;
+    const isActive =
+      selectedCategory &&
+      normalizeCategoryKey(selectedCategory) === normalizeCategoryKey(node.name);
+    const paddingLeft = depth * 14;
+
+    return (
+      <li key={node.id}>
+        <div className="flex items-center gap-2" style={{ paddingLeft }}>
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={() => toggleCategory(node.id)}
+              className="flex h-4 w-4 items-center justify-center text-[var(--text-muted)]"
+              aria-label={`${node.name} 토글`}
+            >
+              <svg
+                className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M9 6l6 6-6 6" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ) : (
+            <span className="h-4 w-4" />
+          )}
+          <button
+            type="button"
+            onClick={() => setSelectedCategory(isActive ? null : node.name)}
+            className={`flex flex-1 items-center justify-between rounded-2xl border px-3 py-2 text-sm transition ${
+              isActive
+                ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span>{node.name}</span>
+              {node.hasNew && (
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-semibold text-white">
+                  N
+                </span>
+              )}
+            </span>
+            <span className="text-xs">{node.count}</span>
+          </button>
+        </div>
+        {hasChildren && isExpanded && (
+          <ul className="mt-2 space-y-2">
+            {node.children.map(child => renderCategoryNode(child, depth + 1))}
+          </ul>
+        )}
+      </li>
+    );
+  };
 
   return (
     <ErrorBoundary>
@@ -179,7 +293,7 @@ function App() {
                   <div>
                     <dt className="uppercase tracking-[0.2em]">카테고리</dt>
                     <dd className="mt-1 text-lg font-semibold text-[var(--text)]">
-                      {availableCategories.length}
+                      {categoryTree.allNames.length}
                     </dd>
                   </div>
                   <div>
@@ -292,10 +406,10 @@ function App() {
                       카테고리
                     </p>
                     <span className="text-xs text-[var(--text-muted)]">
-                      {availableCategories.length}개
+                      {categoryTree.allNames.length}개
                     </span>
                   </div>
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-4 space-y-3">
                     <button
                       type="button"
                       onClick={() => setSelectedCategory(null)}
@@ -305,31 +419,21 @@ function App() {
                           : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
                       }`}
                     >
-                      <span>전체</span>
-                      <span className="text-xs">{sortedPosts.length}</span>
+                      <span className="flex items-center gap-2">
+                        <span>분류 전체보기</span>
+                        {categoryTree.hasNew && (
+                          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-semibold text-white">
+                            N
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs">{categoryTree.totalCount}</span>
                     </button>
-                    {availableCategories.map(category => {
-                      const count = categoryCounts.get(category) ?? 0;
-                      const isActive = selectedCategory === category;
-                      return (
-                        <button
-                          key={category}
-                          type="button"
-                          onClick={() =>
-                            setSelectedCategory(isActive ? null : category)
-                          }
-                          className={`flex w-full items-center justify-between rounded-2xl border px-4 py-2 text-sm transition ${
-                            isActive
-                              ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-                              : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
-                          }`}
-                        >
-                          <span>{category}</span>
-                          <span className="text-xs">{count}</span>
-                        </button>
-                      );
-                    })}
-                    {availableCategories.length === 0 && (
+                    {categoryTree.roots.length > 0 ? (
+                      <ul className="space-y-2">
+                        {categoryTree.roots.map(node => renderCategoryNode(node, 0))}
+                      </ul>
+                    ) : (
                       <p className="text-xs text-[var(--text-muted)]">
                         등록된 카테고리가 없습니다.
                       </p>
