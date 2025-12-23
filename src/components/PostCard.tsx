@@ -28,7 +28,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
               loading="lazy"
             />
             <span className="absolute left-4 top-4 rounded-full bg-[var(--surface-strong)] px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-[var(--text-muted)]">
-              {post.series ?? '추천'}
+              {post.category ?? '미분류'}
             </span>
           </div>
         )}

@@ -7,6 +7,7 @@ export interface SiteMeta {
     location: string;
     profileImage: string;
     email: string;
+    siteUrl: string;
     social: {
         github?: string;
         linkedin?: string;

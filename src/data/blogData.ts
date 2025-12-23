@@ -11,6 +11,7 @@ export const siteMeta: SiteMeta = {
   location: 'Location',
   profileImage: '',
   email: '',
+  siteUrl: 'http://localhost:5173',
   social: {
     github: '',
     linkedin: '',

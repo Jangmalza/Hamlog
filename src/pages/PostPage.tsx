@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Calendar, Clock, BookOpen, ChevronLeft } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PostContent from '../components/PostContent';
@@ -8,16 +9,26 @@ import { usePostStore } from '../store/postStore';
 import { formatDate } from '../utils/formatDate';
 import { isPostVisible } from '../utils/postStatus';
 import { Comments } from '../components/Comments';
+import { CategorySidebar } from '../components/CategorySidebar';
+import { fetchCategories } from '../api/categoryApi';
+import type { Category } from '../types/category';
+import { DEFAULT_CATEGORY } from '../utils/category';
+import { buildCategoryTree } from '../utils/categoryTree';
+import { useSeo } from '../hooks/useSeo';
 
 const PostPage: React.FC = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const posts = usePostStore(state => state.posts);
   const loading = usePostStore(state => state.loading);
   const error = usePostStore(state => state.error);
   const hasLoaded = usePostStore(state => state.hasLoaded);
   const fetchPosts = usePostStore(state => state.fetchPosts);
-  const visiblePosts = posts.filter(post => isPostVisible(post));
-  const post = visiblePosts.find(item => item.slug === slug);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchCategories().then(setCategories).catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (!hasLoaded && !loading) {
@@ -25,59 +36,27 @@ const PostPage: React.FC = () => {
     }
   }, [hasLoaded, loading, fetchPosts]);
 
-  useEffect(() => {
-    if (!post || typeof document === 'undefined') return;
-    const seoTitle = post.seo?.title ?? post.title;
-    const seoDescription = post.seo?.description ?? post.summary;
-    const seoImage = post.seo?.ogImage ?? post.cover ?? '';
-    const seoKeywords = post.seo?.keywords?.join(', ') ?? '';
-    const canonicalUrl = post.seo?.canonicalUrl ?? window.location.href;
+  const visiblePosts = useMemo(() => posts.filter(post => isPostVisible(post)), [posts]);
+  const post = useMemo(() => visiblePosts.find(item => item.slug === slug), [visiblePosts, slug]);
 
-    document.title = seoTitle;
+  const categoryTree = useMemo(
+    () =>
+      buildCategoryTree({
+        categories,
+        posts: visiblePosts,
+        defaultCategory: DEFAULT_CATEGORY,
+      }),
+    [categories, visiblePosts]
+  );
 
-    const setMetaTag = (key: string, content: string, attr: 'name' | 'property') => {
-      const selector = `meta[${attr}="${key}"]`;
-      let element = document.head.querySelector(selector) as HTMLMetaElement | null;
-      if (!content) {
-        if (element) element.remove();
-        return;
-      }
-      if (!element) {
-        element = document.createElement('meta');
-        element.setAttribute(attr, key);
-        document.head.appendChild(element);
-      }
-      element.setAttribute('content', content);
-    };
-
-    const setLinkTag = (rel: string, href: string) => {
-      const selector = `link[rel="${rel}"]`;
-      let element = document.head.querySelector(selector) as HTMLLinkElement | null;
-      if (!href) {
-        if (element) element.remove();
-        return;
-      }
-      if (!element) {
-        element = document.createElement('link');
-        element.setAttribute('rel', rel);
-        document.head.appendChild(element);
-      }
-      element.setAttribute('href', href);
-    };
-
-    setMetaTag('description', seoDescription, 'name');
-    setMetaTag('keywords', seoKeywords, 'name');
-    setMetaTag('og:title', seoTitle, 'property');
-    setMetaTag('og:description', seoDescription, 'property');
-    setMetaTag('og:image', seoImage, 'property');
-    setMetaTag('og:type', 'article', 'property');
-    setMetaTag('og:url', canonicalUrl, 'property');
-    setMetaTag('twitter:card', seoImage ? 'summary_large_image' : 'summary', 'name');
-    setMetaTag('twitter:title', seoTitle, 'name');
-    setMetaTag('twitter:description', seoDescription, 'name');
-    setMetaTag('twitter:image', seoImage, 'name');
-    setLinkTag('canonical', canonicalUrl);
-  }, [post]);
+  useSeo({
+    title: post?.seo?.title ?? post?.title,
+    description: post?.seo?.description ?? post?.summary,
+    image: post?.seo?.ogImage ?? post?.cover,
+    keywords: post?.seo?.keywords,
+    url: post?.seo?.canonicalUrl,
+    type: 'article',
+  });
 
   if (!hasLoaded && posts.length === 0) {
     return (
@@ -145,77 +124,115 @@ const PostPage: React.FC = () => {
   return (
     <ErrorBoundary>
       <div className="min-h-screen text-[var(--text)]">
-        <header className="border-b border-[color:var(--border)]">
-          <div className="mx-auto max-w-3xl px-4 py-10">
+        <div className="mx-auto max-w-6xl px-4 py-12 grid gap-12 lg:grid-cols-[280px_minmax(0,1fr)]">
+          {/* Sidebar */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-8">
+              <CategorySidebar
+                categoryTree={categoryTree}
+                selectedCategory={post.category ?? null}
+                onSelectCategory={(category) => {
+                  if (category) {
+                    navigate(`/?category=${category}`);
+                  } else {
+                    navigate('/');
+                  }
+                }}
+              />
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="min-w-0">
             <Link
               to="/"
-              className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
+              className="group mb-8 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--accent)]"
             >
-              목록으로 돌아가기
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              메인화면으로 돌아가기
             </Link>
-            <h1 className="mt-4 font-display text-3xl font-semibold leading-tight sm:text-4xl">
-              {post.title}
-            </h1>
-            <p className="mt-4 text-base text-[var(--text-muted)]">
-              {post.summary}
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-              <span>{formatDate(post.publishedAt)}</span>
-              <span>|</span>
-              <span>{post.readingTime}</span>
-              {post.series && (
-                <>
-                  <span>|</span>
-                  <span>{post.series}</span>
-                </>
+
+            <article>
+              <header className="mb-10">
+                <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    {formatDate(post.publishedAt)}
+                  </span>
+                  <span className="opacity-30">|</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    {post.readingTime}
+                  </span>
+                  {post.series && (
+                    <>
+                      <span className="opacity-30">|</span>
+                      <span className="inline-flex items-center gap-1.5 text-[var(--accent-strong)] font-medium">
+                        <BookOpen className="h-4 w-4" />
+                        {post.series}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <h1 className="mt-6 font-display text-3xl font-bold leading-tight tracking-tight text-[var(--text)] sm:text-4xl lg:text-5xl">
+                  {post.title}
+                </h1>
+
+                <p className="mt-6 text-xl leading-relaxed text-[var(--text-muted)]">
+                  {post.summary}
+                </p>
+
+                <div className="mt-8 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
+                    {post.category ?? '미분류'}
+                  </span>
+                  {post.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </header>
+
+              {post.cover && (
+                <div className="mb-12 overflow-hidden rounded-3xl border border-[color:var(--border)] shadow-[var(--shadow)]">
+                  <img src={post.cover} alt={post.title} className="w-full object-cover" />
+                </div>
               )}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-medium text-[var(--accent-strong)]">
-                {post.category ?? '미분류'}
-              </span>
-              {post.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </header>
 
-        <main className="mx-auto max-w-3xl px-4 py-10">
-          {post.cover && (
-            <div className="mb-10 overflow-hidden rounded-3xl border border-[color:var(--border)] shadow-[var(--shadow)]">
-              <img src={post.cover} alt={post.title} className="h-64 w-full object-cover sm:h-80" />
-            </div>
-          )}
-
-          <PostContent sections={post.sections} contentHtml={post.contentHtml} />
-
-          <Comments />
-
-          {morePosts.length > 0 && (
-            <section className="mt-16">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-lg font-semibold">다른 글</h2>
-                <Link
-                  to="/"
-                  className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]"
-                >
-                  전체 보기
-                </Link>
+              <div className="prose prose-lg max-w-none">
+                <PostContent sections={post.sections} contentHtml={post.contentHtml} />
               </div>
-              <div className="mt-6 grid gap-5">
-                {morePosts.map((item, index) => (
-                  <PostCard key={item.id} post={item} variant="compact" index={index} />
-                ))}
-              </div>
-            </section>
-          )}
-        </main>
+
+              <hr className="my-12 border-[color:var(--border)]" />
+
+              <Comments postId={post.id} />
+            </article>
+
+            {morePosts.length > 0 && (
+              <section className="mt-20 border-t border-[color:var(--border)] pt-12">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="font-display text-2xl font-bold">다른 글 읽기</h2>
+                  <Link
+                    to="/"
+                    className="text-sm font-semibold text-[var(--accent-strong)] hover:underline"
+                  >
+                    전체 보기 &rarr;
+                  </Link>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {morePosts.map((item, index) => (
+                    <PostCard key={item.id} post={item} variant="compact" index={index} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </main>
+        </div>
       </div>
     </ErrorBoundary>
   );

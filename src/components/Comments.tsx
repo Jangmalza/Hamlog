@@ -1,65 +1,211 @@
-import React, { useEffect, useRef } from 'react';
-import { useTheme } from '../hooks/useTheme';
+import React, { useEffect, useState } from 'react';
+import { formatDate } from '../utils/formatDate';
+import type { Comment } from '../types/comment';
 
-export const Comments: React.FC = () => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const { theme } = useTheme();
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+
+interface CommentsProps {
+    postId: string;
+}
+
+export const Comments: React.FC<CommentsProps> = ({ postId }) => {
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Form State
+    const [author, setAuthor] = useState('');
+    const [password, setPassword] = useState('');
+    const [content, setContent] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    // Delete State
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
 
     useEffect(() => {
-        if (!containerRef.current) return;
-
-        const script = document.createElement('script');
-        script.src = 'https://giscus.app/client.js';
-        script.setAttribute('data-repo', 'Jangmalza/Hamlog');
-        script.setAttribute('data-repo-id', 'R_kgDONXz_Yw'); // You might need to find this or ask user to provide, but I'll use a placeholder or try to fetch?
-        // Actually, giscus needs repo-id. I'll use the repo name and Category ID.
-        // If I don't have the IDs, I might need to ask the user or just use the repo name and let giscus handle it if possible (repo-id is mandatory though).
-        // Wait, I don't have the repo ID. I should probably ask the user for it or use a script that just loads it if I can't get it.
-        // But standard giscus snippet includes IDs.
-        // I will put a placeholder or use the repo name and "General" category.
-        // For now, I will use valid attributes compatible with automatic setups if possible, or just the repo.
-        // Actually, strict Giscus config requires IDs.
-        // I will implementation a component that uses the giscus-react if installed, or just the script.
-        // Since I can't install packages easily without user confirmation, standard script approach is better.
-
-        // I will use a known working config or ask user. 
-        // Wait, user said "1,2,3 proceed".
-        // I will set it up with 'Jangmalza/Hamlog' and category 'General'.
-        // I'll assume standard mappings.
-
-        script.setAttribute('data-category', 'General');
-        script.setAttribute('data-category-id', 'DIC_kwDONXz_Y84Ck3tK'); // Placeholder
-        script.setAttribute('data-mapping', 'pathname');
-        script.setAttribute('data-strict', '0');
-        script.setAttribute('data-reactions-enabled', '1');
-        script.setAttribute('data-emit-metadata', '0');
-        script.setAttribute('data-input-position', 'top');
-        script.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
-        script.setAttribute('data-lang', 'ko');
-        script.crossOrigin = 'anonymous';
-        script.async = true;
-
-        // Remove existing children to prevent duplicates if any
-        while (containerRef.current.firstChild) {
-            containerRef.current.removeChild(containerRef.current.firstChild);
+        if (postId) {
+            fetchComments();
         }
+    }, [postId]);
 
-        containerRef.current.appendChild(script);
-    }, [theme]); // Re-run if theme changes? Script might need reload or postMessage. 
-    // Giscus supports changing theme via postMessage.
+    const fetchComments = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/comments?postId=${postId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data.comments || []);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // Effect for theme update without reload
-    useEffect(() => {
-        const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
-        if (!iframe) return;
-        iframe.contentWindow?.postMessage(
-            { giscus: { setConfig: { theme: theme === 'dark' ? 'dark' : 'light' } } },
-            'https://giscus.app'
-        );
-    }, [theme]);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!author || !password || !content) return;
 
-    // However, the first effect mounting the script is simpler for initial load.
-    // Ideally we use @giscus/react but I'll use vanilla script for zero-dep.
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API_BASE}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId, author, password, content })
+            });
+            if (res.ok) {
+                await fetchComments();
+                setAuthor('');
+                setPassword('');
+                setContent('');
+            } else {
+                alert('댓글 등록에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('오류가 발생했습니다.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
-    return <div ref={containerRef} className="mt-16 w-full" />;
+    const handleDelete = async () => {
+        if (!deleteTargetId || !deletePassword) return;
+
+        setDeleting(true);
+        setDeleteError('');
+        try {
+            const res = await fetch(`${API_BASE}/comments/${deleteTargetId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: deletePassword })
+            });
+            if (res.ok) {
+                setDeleteTargetId(null);
+                setDeletePassword('');
+                await fetchComments();
+            } else {
+                const data = await res.json();
+                setDeleteError(data.message || '삭제 실패');
+            }
+        } catch (error) {
+            setDeleteError('오류가 발생했습니다.');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <div className="mt-16 border-t border-[var(--border)] pt-10">
+            <h3 className="font-display text-xl font-semibold mb-6">
+                댓글 {comments.length}
+            </h3>
+
+            {/* List */}
+            <div className="space-y-6 mb-10">
+                {loading ? (
+                    <p className="text-sm text-[var(--text-muted)]">불러오는 중...</p>
+                ) : comments.length > 0 ? (
+                    comments.map(comment => (
+                        <div key={comment.id} className="group">
+                            <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-2">
+                                <span className="font-semibold text-[var(--text)]">{comment.author}</span>
+                                <div className="flex items-center gap-2">
+                                    <span>{formatDate(comment.createdAt)}</span>
+                                    <button
+                                        onClick={() => {
+                                            setDeleteTargetId(comment.id);
+                                            setDeletePassword('');
+                                            setDeleteError('');
+                                        }}
+                                        className="text-[10px] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:text-[var(--accent-strong)]"
+                                    >
+                                        삭제
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-sm text-[var(--text-muted)]">첫 번째 댓글을 남겨보세요.</p>
+                )}
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4 bg-[var(--surface-muted)] p-6 rounded-2xl">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">댓글 쓰기</h4>
+                <div className="grid grid-cols-2 gap-4">
+                    <input
+                        type="text"
+                        placeholder="이름"
+                        value={author}
+                        onChange={e => setAuthor(e.target.value)}
+                        className="w-full bg-[var(--bg)] border border-[var(--border)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]"
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="비밀번호"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="w-full bg-[var(--bg)] border border-[var(--border)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]"
+                        required
+                    />
+                </div>
+                <textarea
+                    placeholder="내용을 입력하세요..."
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
+                    className="w-full bg-[var(--bg)] border border-[var(--border)] rounded px-3 py-2 text-sm h-24 resize-none focus:outline-none focus:border-[var(--accent)]"
+                    required
+                />
+                <div className="flex justify-end">
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="bg-[var(--text)] text-[var(--bg)] px-4 py-2 rounded text-xs font-bold uppercase tracking-wider hover:opacity-80 disabled:opacity-50"
+                    >
+                        {submitting ? '등록 중...' : '등록'}
+                    </button>
+                </div>
+            </form>
+
+            {/* Delete Modal (Simple Inline) */}
+            {deleteTargetId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-[var(--bg)] rounded-xl p-6 w-full max-w-xs shadow-2xl border border-[var(--border)]">
+                        <h4 className="text-sm font-semibold mb-4">댓글 삭제</h4>
+                        <input
+                            type="password"
+                            placeholder="비밀번호 입력"
+                            value={deletePassword}
+                            onChange={e => setDeletePassword(e.target.value)}
+                            className="w-full bg-[var(--surface-muted)] border border-[var(--border)] rounded px-3 py-2 text-sm mb-2 focus:outline-none"
+                            autoFocus
+                        />
+                        {deleteError && <p className="text-xs text-red-500 mb-2">{deleteError}</p>}
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={() => setDeleteTargetId(null)}
+                                className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)]"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="px-3 py-1.5 bg-red-500 text-white rounded text-xs hover:bg-red-600 disabled:opacity-50"
+                            >
+                                {deleting ? '삭제 중...' : '삭제'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 };

@@ -70,15 +70,11 @@ body::before {
 }
 
 .post-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: block;
 }
 
 .rich-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: block;
   color: var(--text);
 }
 
@@ -114,32 +110,43 @@ body::before {
 
 .rich-content h1,
 .tiptap-editor h1 {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.25rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.3;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
 }
 
 .rich-content h2,
 .tiptap-editor h2 {
-  font-size: 1.6rem;
-  font-weight: 600;
+  font-size: 1.75rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.3;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--text);
 }
 
 .rich-content h3,
 .tiptap-editor h3 {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text);
 }
 
 .rich-content p,
 .tiptap-editor p {
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 1.05rem;
+  line-height: 1.8;
   color: var(--text-muted);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.01em;
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: 0.25rem;
+  word-break: keep-all;
 }
 
 .rich-content ul,
@@ -162,12 +169,15 @@ body::before {
 
 .rich-content blockquote,
 .tiptap-editor blockquote {
-  border-left: 3px solid var(--accent);
-  padding: 12px 16px;
+  border-left: 4px solid var(--accent);
+  padding: 1.5rem 2rem;
   background: var(--surface-muted);
-  border-radius: 12px;
+  border-radius: 0 16px 16px 0;
   color: var(--text);
   font-style: italic;
+  font-size: 1.1rem;
+  margin: 2rem 0;
+  line-height: 1.7;
 }
 
 .rich-content table,
@@ -351,6 +361,7 @@ body::before {
   font-size: 1rem;
   line-height: 1.75;
   color: var(--text-muted);
+  margin-bottom: 0.25rem;
 }
 
 .post-list {

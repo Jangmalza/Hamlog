@@ -1,11 +1,9 @@
 import express from 'express';
 
-export const createHealthRouter = () => {
-  const router = express.Router();
+const router = express.Router();
 
-  router.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
-  });
+router.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
 
-  return router;
-};
+export const healthRouter = router;
