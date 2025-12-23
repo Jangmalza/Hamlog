@@ -1,0 +1,63 @@
+export interface SiteMeta {
+    title: string;
+    name: string;
+    role: string;
+    tagline: string;
+    description: string;
+    location: string;
+    profileImage: string;
+    email: string;
+    social: {
+        github?: string;
+        linkedin?: string;
+        twitter?: string;
+        instagram?: string;
+    };
+    stack: string[];
+    now: string;
+}
+
+export interface TopicHighlight {
+    title: string;
+    description: string;
+}
+
+export type PostSection =
+    | { type: 'heading'; content: string }
+    | { type: 'paragraph'; content: string }
+    | { type: 'list'; content: string[] }
+    | { type: 'code'; content: string; language?: string }
+    | { type: 'quote'; content: string }
+    | { type: 'callout'; content: string }
+    | { type: 'image'; content: string; alt?: string; caption?: string };
+
+export type PostStatus = 'draft' | 'scheduled' | 'published';
+
+export interface PostSeo {
+    title?: string;
+    description?: string;
+    ogImage?: string;
+    canonicalUrl?: string;
+    keywords?: string[];
+}
+
+export interface Post {
+    id: string;
+    slug: string;
+    title: string;
+    summary: string;
+    category?: string;
+    contentHtml?: string;
+    publishedAt: string;
+    readingTime: string;
+    tags: string[];
+    series?: string;
+    featured?: boolean;
+    cover?: string;
+    status?: PostStatus;
+    scheduledAt?: string;
+    seo?: PostSeo;
+    sections: PostSection[];
+}
+
+export type PostInput = Omit<Post, 'id'>;

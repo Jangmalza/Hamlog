@@ -1,24 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useEditor } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import Color from '@tiptap/extension-color';
-import FontFamily from '@tiptap/extension-font-family';
-import Highlight from '@tiptap/extension-highlight';
-import Underline from '@tiptap/extension-underline';
-import LinkExtension from '@tiptap/extension-link';
-import Image from '@tiptap/extension-image';
-import Placeholder from '@tiptap/extension-placeholder';
-import Table from '@tiptap/extension-table';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
-import TableRow from '@tiptap/extension-table-row';
-import TextStyle from '@tiptap/extension-text-style';
-import TextAlign from '@tiptap/extension-text-align';
-import { createLowlight, common } from 'lowlight';
-import { SlashCommand, getSuggestionItems, renderItems } from '../editor/extensions/slashCommand';
+import { useTiptapEditor } from '../hooks/useTiptapEditor';
 import AdminNav from '../components/admin/AdminNav';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import CategorySection from '../components/admin/sections/CategorySection';
@@ -45,10 +28,7 @@ import {
 import { stripHtml, sectionsToHtml } from '../utils/postContent';
 import { slugify } from '../utils/slugify';
 import { normalizePostStatus } from '../utils/postStatus';
-import { FontSize } from '../editor/extensions/fontSize';
-
 const MAX_UPLOAD_MB = 8;
-const lowlight = createLowlight(common);
 const ADMIN_SECTIONS: Array<{ key: AdminSection; label: string }> = [
   { key: 'dashboard', label: '대시보드' },
   { key: 'posts', label: '글 관리' },
@@ -56,38 +36,7 @@ const ADMIN_SECTIONS: Array<{ key: AdminSection; label: string }> = [
   { key: 'profile', label: '자기소개' }
 ];
 
-const CustomImage = Image.extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      size: {
-        default: 'full',
-        parseHTML: element => element.getAttribute('data-size') || 'full',
-        renderHTML: attributes => ({
-          'data-size': attributes.size
-        })
-      },
-      dataWidth: {
-        default: null,
-        parseHTML: element => element.getAttribute('data-width'),
-        renderHTML: attributes =>
-          attributes.dataWidth ? { 'data-width': attributes.dataWidth } : {}
-      },
-      width: {
-        default: null,
-        parseHTML: element => element.getAttribute('width'),
-        renderHTML: attributes =>
-          attributes.width ? { width: attributes.width } : {}
-      },
-      style: {
-        default: null,
-        parseHTML: element => element.getAttribute('style'),
-        renderHTML: attributes =>
-          attributes.style ? { style: attributes.style } : {}
-      }
-    };
-  }
-});
+
 
 const formatSeoKeywords = (keywords?: string[]) =>
   keywords && keywords.length > 0 ? keywords.join(', ') : '';
@@ -255,56 +204,12 @@ const AdminPage: React.FC = () => {
     setStackInput
   } = useProfile();
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3]
-        },
-        codeBlock: false
-      }),
-      CodeBlockLowlight.configure({ lowlight }),
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      FontFamily,
-      FontSize,
-      Underline,
-      LinkExtension.configure({
-        openOnClick: false
-      }),
-      CustomImage,
-      Placeholder.configure({
-        placeholder: '내용을 입력하세요...'
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph']
-      }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      SlashCommand.configure({
-        suggestion: {
-          items: getSuggestionItems,
-          render: renderItems,
-        },
-      })
-    ],
-    content: draft.contentHtml || '',
-    onUpdate: ({ editor }) => {
-      setDraft(prev => ({ ...prev, contentHtml: editor.getHTML() }));
-    },
-    onSelectionUpdate: ({ editor }) => {
-      handleSelectionUpdate(editor);
-    },
-    editorProps: {
-      attributes: {
-        class: 'tiptap-editor border-none shadow-none outline-none ring-0 focus:ring-0 focus:outline-none'
-      },
-      handlePaste,
-      handleDrop
-    }
+  const editor = useTiptapEditor({
+    contentHtml: draft.contentHtml || '',
+    setDraft,
+    handleSelectionUpdate,
+    handlePaste,
+    handleDrop
   });
 
   useEffect(() => {
@@ -448,17 +353,7 @@ const AdminPage: React.FC = () => {
     discardRestore();
   };
 
-  const handleReset = () => {
-    const nextDraft = activeId
-      ? toDraft(posts.find(post => post.id === activeId))
-      : toDraft();
-    setDraft(nextDraft);
-    setSlugTouched(Boolean(activeId));
-    setNotice('');
-    setTagInput('');
-    syncEditorContent(nextDraft.contentHtml);
-    clearAutosave(activeId);
-  };
+
 
   const handleImageUpload = async (file: File) => {
     await uploadImageToEditor(file);
@@ -776,7 +671,6 @@ const AdminPage: React.FC = () => {
               onSave={(message, statusOverride) =>
                 void handleSave(message, statusOverride)
               }
-              onReset={() => handleReset()}
               onDelete={() => void handleDelete()}
               updateDraft={updateDraft}
               previewMode={previewMode}

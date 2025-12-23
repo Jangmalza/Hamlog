@@ -121,21 +121,17 @@ const allowedImageTypes = new Map([
 ]);
 
 const defaultProfile = {
-  title: 'Hamlog',
-  name: 'Hamwoo',
-  role: '프론트엔드 엔지니어',
-  tagline: '탄탄한 UI와 제품 경험을 만들어가는 기록.',
-  description:
-    '프론트엔드 아키텍처, 사용자 경험, 실용적인 도구 선택에 대한 짧고 명확한 노트를 남깁니다.',
-  location: '서울',
-  profileImage: '/avatar.jpg',
-  email: 'hello@hamlog.dev',
-  social: {
-    github: 'https://github.com/Jangmalza',
-    instagram: 'https://www.instagram.com/hamwo_o/'
-  },
-  stack: ['React', 'TypeScript', 'Vite', 'Node.js', 'Tailwind'],
-  now: '로컬 퍼스트 글쓰기 워크플로우와 작은 퍼블리싱 파이프라인을 다듬는 중입니다.'
+  title: 'Blog Title',
+  name: 'Author Name',
+  role: 'Role',
+  tagline: 'Tagline',
+  description: 'Description',
+  location: 'Location',
+  profileImage: '',
+  email: '',
+  social: {},
+  stack: [],
+  now: ''
 };
 
 async function ensurePostsFile() {

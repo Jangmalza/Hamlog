@@ -16,6 +16,7 @@ const NEW_BADGE_DAYS = 7;
 
 function App() {
   const [profile, setProfile] = useState(siteMeta);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +44,10 @@ function App() {
         }
       } catch (error) {
         console.error('Failed to load profile', error);
+      } finally {
+        if (isActive) {
+          setInitialLoading(false);
+        }
       }
     };
     void loadProfile();
@@ -227,6 +232,16 @@ function App() {
     );
   };
 
+
+
+  if (initialLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
+        <LoadingSpinner message="블로그 정보 불러오는 중..." />
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen text-[var(--text)]">
@@ -236,17 +251,7 @@ function App() {
               <span className="font-display text-base font-semibold text-[var(--text)]">
                 {profile.title}
               </span>
-              <div className="flex flex-wrap items-center gap-4">
-                <a href="#writing" className="hover:text-[var(--accent-strong)]">
-                  글
-                </a>
-                <a href="#topics" className="hover:text-[var(--accent-strong)]">
-                  주제
-                </a>
-                <a href="#about" className="hover:text-[var(--accent-strong)]">
-                  소개
-                </a>
-              </div>
+
             </nav>
 
             <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
