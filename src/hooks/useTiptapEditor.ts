@@ -18,6 +18,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import { createLowlight, common } from 'lowlight';
 import { SlashCommand, getSuggestionItems, renderItems } from '../editor/extensions/slashCommand';
 import { FontSize } from '../editor/extensions/fontSize';
+import { MathExtension } from '../components/editor/extensions/MathExtension';
 import type { PostDraft } from '../types/admin';
 import type { EditorView } from '@tiptap/pm/view';
 import type { Slice } from '@tiptap/pm/model';
@@ -107,6 +108,8 @@ export const useTiptapEditor = ({
                     render: renderItems,
                 },
             })
+            ,
+            MathExtension
         ],
         content: contentHtml || '',
         onUpdate: ({ editor }) => {
