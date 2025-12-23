@@ -400,7 +400,17 @@ function App() {
           )}
 
           <section id="writing" className="mx-auto max-w-5xl px-4 py-12">
-            <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="mt-2 font-display text-2xl font-semibold">
+                  전체 글
+                </h2>
+              </div>
+              <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                {filteredPosts.length}편
+              </span>
+            </div>
+            <div className="mt-8 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
               <aside className="space-y-4">
                 <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] lg:sticky lg:top-6">
                   <div className="flex items-center justify-between">
