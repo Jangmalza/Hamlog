@@ -1,0 +1,75 @@
+name: Docker Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: type=raw,value=latest,enable=true
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT || '22' }}
+          script: |
+            # Login to GHCR
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull latest image
+            docker pull ghcr.io/${{ github.repository }}:latest
+            
+            # Stop old container if exists
+            docker stop hamlog || true
+            docker rm hamlog || true
+            
+            # Run new container
+            # Using --network host or mapping ports
+            docker run -d \
+              --name hamlog \
+              --restart unless-stopped \
+              -p 4000:4000 \
+              -v ~/hamlog-data/data:/app/server/data \
+              -v ~/hamlog-data/uploads:/app/server/uploads \
+              -e PORT=4000 \
+              ghcr.io/${{ github.repository }}:latest
+            
+            # Cleanup unused images
+            docker image prune -f
