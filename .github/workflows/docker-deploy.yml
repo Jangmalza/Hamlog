@@ -47,11 +47,17 @@ jobs:
     steps:
       - name: Deploy to Server
         run: |
+          # Convert repository name to lowercase
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG="ghcr.io/$REPO:latest"
+          
+          echo "Deploying $IMAGE_TAG..."
+
           # Login to GHCR
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
           # Pull latest image
-          docker pull ghcr.io/${{ github.repository }}:latest
+          docker pull $IMAGE_TAG
           
           # Stop old container if exists
           docker stop hamlog || true
@@ -67,7 +73,7 @@ jobs:
             -e PORT=4000 \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
-            ghcr.io/${{ github.repository }}:latest
+            $IMAGE_TAG
           
           # Cleanup unused images
           docker image prune -f
