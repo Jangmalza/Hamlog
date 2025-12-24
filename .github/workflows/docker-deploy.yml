@@ -72,6 +72,8 @@ jobs:
               -v ~/hamlog-data/data:/app/server/data \
               -v ~/hamlog-data/uploads:/app/server/uploads \
               -e PORT=4000 \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
               ghcr.io/${{ github.repository }}:latest
             
             # Cleanup unused images
