@@ -41,40 +41,30 @@ jobs:
 
   deploy:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@master
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: ${{ secrets.PORT || '22' }}
-          script: |
-            # Login to GHCR
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
             
-            # Pull latest image
-            docker pull ghcr.io/${{ github.repository }}:latest
-            
-            # Stop old container if exists
-            docker stop hamlog || true
-            docker rm hamlog || true
-            
-            # Run new container
-            # Using --network host or mapping ports
-            docker run -d \
-              --name hamlog \
-              --restart unless-stopped \
-              -p 4000:4000 \
-              -v ~/hamlog-data/data:/app/server/data \
-              -v ~/hamlog-data/uploads:/app/server/uploads \
-              -e PORT=4000 \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
-              ghcr.io/${{ github.repository }}:latest
-            
-            # Cleanup unused images
-            docker image prune -f
+      - name: Pull and Restart Docker Container
+        run: |
+          docker pull ghcr.io/${{ github.repository }}:latest
+          docker stop hamlog || true
+          docker rm hamlog || true
+          docker run -d \
+            --name hamlog \
+            --restart unless-stopped \
+            -p 4000:4000 \
+            -v ~/hamlog-data/data:/app/server/data \
+            -v ~/hamlog-data/uploads:/app/server/uploads \
+            -e PORT=4000 \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
+            ghcr.io/${{ github.repository }}:latest
+          docker image prune -f
