@@ -566,7 +566,7 @@ const AdminPage: React.FC = () => {
           }}
           filterStatus={filterStatus}
           onFilterStatusChange={(value) => {
-            setFilterStatus(value);
+            setFilterStatus(value as PostStatus | 'all');
             setPage(1);
           }}
           filterCategory={filterCategory}

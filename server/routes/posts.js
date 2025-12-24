@@ -6,12 +6,14 @@ import {
   deletePost
 } from '../controllers/postController.js';
 
+import { authenticateToken } from '../middleware/auth.js';
+
 const router = express.Router();
 
 router.get('/', getPosts);
-router.post('/', createPost);
-router.put('/:id', updatePost);
-router.delete('/:id', deletePost);
+router.post('/', authenticateToken, createPost);
+router.put('/:id', authenticateToken, updatePost);
+router.delete('/:id', authenticateToken, deletePost);
 
 export const postRouter = router;
 

@@ -1,16 +1,7 @@
 import { randomUUID } from 'crypto';
 import { readPosts, writePosts } from '../models/postModel.js';
 import { addCategoryIfMissing } from '../models/categoryModel.js';
-import {
-    normalizeCategory,
-    normalizePostStatus,
-    normalizeScheduledAt,
-    normalizeSeo,
-    normalizeTags,
-    normalizeSections,
-    normalizeContentHtml,
-    normalizeContentHtml as normalizeHtml // alias if needed
-} from '../utils/normalizers.js';
+import { normalizePostData } from '../utils/postHelpers.js';
 
 export const getPosts = async (req, res) => {
     try {
@@ -24,86 +15,26 @@ export const getPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        const {
-            slug,
-            title,
-            summary,
-            contentHtml,
-            category,
-            status,
-            scheduledAt,
-            seo,
-            publishedAt,
-            readingTime,
-            tags,
-            series,
-            featured,
-            cover,
-            sections
-        } = req.body ?? {};
+        // 1. Normalize & Validate Input
+        const { error, data } = normalizePostData(req.body);
 
-        const normalizedSlug = slug ? String(slug).trim() : '';
-        const normalizedTitle = title ? String(title).trim() : '';
-
-        if (!normalizedSlug || !normalizedTitle) {
-            return res.status(400).json({ message: '슬러그와 제목이 필요합니다.' });
+        if (error) {
+            return res.status(400).json({ message: error });
         }
 
-        const normalizedSections = normalizeSections(sections);
-        const normalizedContentHtml = normalizeContentHtml(contentHtml);
-        const normalizedStatus = normalizePostStatus(status);
-        if (
-            normalizedStatus !== 'draft' &&
-            normalizedSections.length === 0 &&
-            !normalizedContentHtml
-        ) {
-            return res.status(400).json({ message: '본문 내용이 필요합니다.' });
-        }
-
+        // 2. Check Slug Uniqueness
         const allPosts = await readPosts();
-        if (allPosts.some(post => post.slug === normalizedSlug)) {
+        if (allPosts.some(post => post.slug === data.slug)) {
             return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
         }
 
-        const normalizedTags = normalizeTags(tags);
-        const normalizedSeries = series ? String(series).trim() : '';
-        const normalizedCover = cover ? String(cover).trim() : '';
-        const normalizedReadingTime = readingTime ? String(readingTime).trim() : '';
-        const normalizedCategory = normalizeCategory(category);
-        const normalizedScheduledAt = normalizeScheduledAt(scheduledAt);
-        if (normalizedStatus === 'scheduled' && !normalizedScheduledAt) {
-            return res.status(400).json({ message: '예약 발행 날짜가 필요합니다.' });
-        }
-        const normalizedSeo = normalizeSeo(seo);
+        // 3. Side Effects (Category)
+        await addCategoryIfMissing(data.category);
 
-        // Side effect: update categories
-        await addCategoryIfMissing(normalizedCategory);
-
-        const normalizedPublishedAt = publishedAt
-            ? String(publishedAt)
-            : new Date().toISOString().slice(0, 10);
-        const effectivePublishedAt =
-            normalizedStatus === 'scheduled' && normalizedScheduledAt
-                ? normalizedScheduledAt.slice(0, 10)
-                : normalizedPublishedAt;
-
+        // 4. Create New Post
         const newPost = {
             id: `post-${randomUUID()}`,
-            slug: normalizedSlug,
-            title: normalizedTitle,
-            summary: summary ? String(summary).trim() : '요약이 없습니다.',
-            category: normalizedCategory,
-            contentHtml: normalizedContentHtml || undefined,
-            publishedAt: effectivePublishedAt,
-            readingTime: normalizedReadingTime || '3분 읽기',
-            tags: normalizedTags,
-            series: normalizedSeries || undefined,
-            featured: Boolean(featured),
-            cover: normalizedCover || undefined,
-            status: normalizedStatus,
-            scheduledAt: normalizedScheduledAt || undefined,
-            seo: normalizedSeo,
-            sections: normalizedSections
+            ...data
         };
 
         const next = [newPost, ...allPosts];
@@ -127,116 +58,28 @@ export const updatePost = async (req, res) => {
         }
 
         const existing = allPosts[index];
-        const {
-            slug,
-            title,
-            summary,
-            contentHtml,
-            category,
-            status,
-            scheduledAt,
-            seo,
-            publishedAt,
-            readingTime,
-            tags,
-            series,
-            featured,
-            cover,
-            sections
-        } = req.body ?? {};
 
-        const normalizedSlug = slug ? String(slug).trim() : existing.slug;
-        const normalizedTitle = title ? String(title).trim() : existing.title;
+        // 1. Normalize & Validate Input (merging with existing)
+        const { error, data } = normalizePostData(req.body, existing);
 
-        if (!normalizedSlug || !normalizedTitle) {
-            return res.status(400).json({ message: '슬러그와 제목이 필요합니다.' });
+        if (error) {
+            return res.status(400).json({ message: error });
         }
 
-        if (allPosts.some(post => post.slug === normalizedSlug && post.id !== id)) {
-            return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
+        // 2. Check Slug Uniqueness (if changed)
+        if (data.slug !== existing.slug) {
+            if (allPosts.some(post => post.slug === data.slug && post.id !== id)) {
+                return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
+            }
         }
 
-        const normalizedSections =
-            sections !== undefined ? normalizeSections(sections) : existing.sections ?? [];
-        const normalizedContentHtml =
-            contentHtml !== undefined
-                ? normalizeContentHtml(contentHtml)
-                : normalizeContentHtml(existing.contentHtml);
-        const normalizedStatus =
-            status !== undefined
-                ? normalizePostStatus(status)
-                : normalizePostStatus(existing.status);
-        if (
-            normalizedStatus !== 'draft' &&
-            normalizedSections.length === 0 &&
-            !normalizedContentHtml
-        ) {
-            return res.status(400).json({ message: '본문 내용이 필요합니다.' });
-        }
+        // 3. Side Effects (Category)
+        await addCategoryIfMissing(data.category);
 
-        const normalizedSeries = series !== undefined ? String(series).trim() : '';
-        const normalizedCover = cover !== undefined ? String(cover).trim() : '';
-        const normalizedReadingTime = readingTime ? String(readingTime).trim() : '';
-        const normalizedCategory =
-            category !== undefined ? normalizeCategory(category) : normalizeCategory(existing.category);
-        const normalizedScheduledAt =
-            scheduledAt !== undefined
-                ? normalizeScheduledAt(scheduledAt)
-                : normalizeScheduledAt(existing.scheduledAt);
-        if (normalizedStatus === 'scheduled' && !normalizedScheduledAt) {
-            return res.status(400).json({ message: '예약 발행 날짜가 필요합니다.' });
-        }
-        const normalizedSeo = seo !== undefined ? normalizeSeo(seo) : normalizeSeo(existing.seo);
-
-        await addCategoryIfMissing(normalizedCategory);
-
-        const normalizedPublishedAt =
-            publishedAt !== undefined ? String(publishedAt) : existing.publishedAt;
-        const effectivePublishedAt =
-            normalizedStatus === 'scheduled' && normalizedScheduledAt
-                ? normalizedScheduledAt.slice(0, 10)
-                : normalizedPublishedAt;
-
-        const updated = {
-            ...existing,
-            ...Object.fromEntries(Object.entries({
-                slug: normalizedSlug,
-                title: normalizedTitle,
-                summary: summary !== undefined ? String(summary).trim() : existing.summary,
-                category: normalizedCategory,
-                contentHtml: normalizedContentHtml || undefined,
-                publishedAt: effectivePublishedAt,
-                readingTime: normalizedReadingTime || existing.readingTime,
-                tags: tags !== undefined ? normalizeTags(tags) : existing.tags,
-                series: series !== undefined ? normalizedSeries || undefined : existing.series,
-                featured: featured !== undefined ? Boolean(featured) : existing.featured,
-                cover: cover !== undefined ? normalizedCover || undefined : existing.cover,
-                status: normalizedStatus,
-                scheduledAt: normalizedScheduledAt || undefined,
-                seo: normalizedSeo,
-                sections: normalizedSections
-            }).filter(([_, v]) => v !== undefined)) // Clean up undefineds if any
-        };
-        // Simplified object spread instead of filter for clarity/correctness vs original:
-        // Original code constructed the object explicitly. I will match that closer to avoid bugs.
-
+        // 4. Update Post
         const updatedPost = {
             ...existing,
-            slug: normalizedSlug,
-            title: normalizedTitle,
-            summary: summary !== undefined ? String(summary).trim() : existing.summary,
-            category: normalizedCategory,
-            contentHtml: normalizedContentHtml || undefined,
-            publishedAt: effectivePublishedAt,
-            readingTime: normalizedReadingTime || existing.readingTime,
-            tags: tags !== undefined ? normalizeTags(tags) : existing.tags,
-            series: series !== undefined ? normalizedSeries || undefined : existing.series,
-            featured: featured !== undefined ? Boolean(featured) : existing.featured,
-            cover: cover !== undefined ? normalizedCover || undefined : existing.cover,
-            status: normalizedStatus,
-            scheduledAt: normalizedScheduledAt || undefined,
-            seo: normalizedSeo,
-            sections: normalizedSections
+            ...data
         };
 
         allPosts[index] = updatedPost;

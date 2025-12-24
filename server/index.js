@@ -1,5 +1,6 @@
 ﻿import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { mkdir } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,6 +16,7 @@ import { uploadRouter } from './routes/uploads.js';
 import { healthRouter } from './routes/health.js';
 import { seoRouter } from './routes/seo.js';
 import { commentRouter } from './routes/comments.js';
+import { authRouter } from './routes/auth.js';
 
 // Initialization
 import { ensurePostsFile } from './models/postModel.js';
@@ -31,6 +33,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
@@ -45,6 +48,7 @@ app.use('/api/categories', categoryRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/uploads', uploadRouter);
 app.use('/api/comments', commentRouter);
+app.use('/api/auth', authRouter);
 app.use('/', seoRouter);
 
 // Fallback for SPA

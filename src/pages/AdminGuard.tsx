@@ -1,33 +1,43 @@
 import React, { useEffect, useState } from 'react';
+import * as authApi from '../api/authApi';
 
 interface AdminGuardProps {
   children: React.ReactNode;
 }
 
-const SESSION_KEY = 'admin_authed_v1';
-
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
   const [isAuthed, setIsAuthed] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const expected = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) || 'admin1234';
 
   useEffect(() => {
-    const ok = sessionStorage.getItem(SESSION_KEY) === 'true';
-    setIsAuthed(ok);
+    checkAuth();
   }, []);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const checkAuth = async () => {
+    try {
+      await authApi.getMe();
+      setIsAuthed(true);
+    } catch {
+      setIsAuthed(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (password === expected) {
-      sessionStorage.setItem(SESSION_KEY, 'true');
+    try {
+      await authApi.login(password);
       setIsAuthed(true);
       setError('');
-    } else {
+    } catch (err) {
       setError('비밀번호가 올바르지 않습니다.');
     }
   };
 
+  if (isLoading) return null; // Or a loading spinner
   if (isAuthed) return <>{children}</>;
 
   return (
@@ -38,8 +48,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
         </p>
         <h1 className="mt-2 font-display text-xl font-semibold">비밀번호 입력</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          기본 비밀번호는 <span className="font-mono">admin1234</span>입니다. 배포 환경에서는
-          <span className="font-mono"> VITE_ADMIN_PASSWORD</span>로 변경하세요.
+          서버에 설정된 관리자 비밀번호를 입력해주세요.
         </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">

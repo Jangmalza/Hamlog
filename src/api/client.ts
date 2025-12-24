@@ -18,7 +18,7 @@ export const requestJson = async <T>(
   path: string,
   options?: RequestInit
 ): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, credentials: 'include' });
   if (!response.ok) {
     await handleError(response);
   }
@@ -26,7 +26,7 @@ export const requestJson = async <T>(
 };
 
 export const requestVoid = async (path: string, options?: RequestInit): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, credentials: 'include' });
   if (response.status === 204) return;
   if (!response.ok) {
     await handleError(response);
