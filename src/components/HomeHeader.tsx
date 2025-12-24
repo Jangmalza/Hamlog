@@ -1,3 +1,5 @@
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 import type { SiteMeta } from '../types/blog';
 
 
@@ -10,6 +12,8 @@ interface HomeHeaderProps {
 }
 
 export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, seriesCount }: HomeHeaderProps) => {
+    const { theme, toggleTheme } = useTheme();
+
     return (
         <header className="border-b border-[color:var(--border)]">
             <div className="mx-auto max-w-5xl px-4 py-10">
@@ -17,6 +21,13 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                     <span className="font-display text-base font-semibold text-[var(--text)]">
                         {profile.title}
                     </span>
+                    <button
+                        onClick={toggleTheme}
+                        className="rounded-full p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+                        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    >
+                        {theme === 'dark' ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
+                    </button>
                 </nav>
 
                 <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
