@@ -45,18 +45,19 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-            
-      - name: Pull and Restart Docker Container
+      - name: Deploy to Server
         run: |
+          # Login to GHCR
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # Pull latest image
           docker pull ghcr.io/${{ github.repository }}:latest
+          
+          # Stop old container if exists
           docker stop hamlog || true
           docker rm hamlog || true
+          
+          # Run new container
           docker run -d \
             --name hamlog \
             --restart unless-stopped \
@@ -67,4 +68,6 @@ jobs:
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
             ghcr.io/${{ github.repository }}:latest
+          
+          # Cleanup unused images
           docker image prune -f
