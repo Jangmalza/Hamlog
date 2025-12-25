@@ -3,7 +3,7 @@ import type { SiteMeta, TopicHighlight } from '../types/blog';
 export * from '../types/blog';
 
 export const siteMeta: SiteMeta = {
-  title: 'Blog Title',
+  title: 'Ham_Tech_Log',
   name: 'Author Name',
   role: 'Role',
   tagline: 'Tagline',
