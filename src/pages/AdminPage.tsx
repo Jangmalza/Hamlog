@@ -250,7 +250,7 @@ const AdminPage: React.FC = () => {
                 setParentCategoryId(value);
                 setCategoriesError('');
               }}
-              onAddCategory={() => void handleAddCategory()}
+              onAddCategory={(name, parentId) => void handleAddCategory(name, parentId)}
               onUpdateCategory={(category, updates) =>
                 void handleUpdateCategory(category, updates)
               }
