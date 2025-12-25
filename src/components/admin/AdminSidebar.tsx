@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import LoadingSpinner from '../LoadingSpinner';
 import type { Post, PostStatus } from '../../data/blogData';
-import type { StoredDraft } from '../../hooks/useDraftAutosave';
+
 import { formatDate } from '../../utils/formatDate';
 import { formatScheduleLabel } from '../../utils/adminDate';
 import { getPostStatusLabel, normalizePostStatus } from '../../utils/postStatus';
@@ -28,10 +28,8 @@ interface AdminSidebarProps {
   onReload: () => void;
   totalCount: number;
   statusCount: Record<PostStatus, number>;
+
   categories: string[];
-  restoreCandidate: StoredDraft | null;
-  onRestore: () => void;
-  onDiscardRestore: () => void;
   editor: Editor | null;
 }
 
@@ -58,9 +56,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   totalCount,
   statusCount,
   categories,
-  restoreCandidate,
-  onRestore,
-  onDiscardRestore,
   editor
 }) => {
   const [tab, setTab] = useState<'posts' | 'toc'>('posts');
@@ -174,33 +169,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               </div>
             </div>
 
-            {restoreCandidate && (
-              <div className="animate-fade-in rounded-xl border border-[color:var(--accent)] bg-[var(--surface)] p-4 shadow-sm">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-bold text-[var(--accent)]">임시 저장본 발견</span>
-                  <span className="text-[10px] text-[var(--text-muted)]">
-                    {formatDate(new Date(restoreCandidate.updatedAt).toISOString())}
-                  </span>
-                </div>
-                <p className="mb-3 text-xs text-[var(--text-muted)]">
-                  작성 중이던 글이 있습니다. 복구하시겠습니까?
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={onRestore}
-                    className="flex-1 rounded-lg bg-[var(--accent)] py-1.5 text-xs font-bold text-white transition-colors hover:bg-[var(--accent-strong)]"
-                  >
-                    복구
-                  </button>
-                  <button
-                    onClick={onDiscardRestore}
-                    className="flex-1 rounded-lg bg-[var(--surface-muted)] py-1.5 text-xs font-medium text-[var(--text-muted)] transition-colors hover:bg-[color:var(--border)]"
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
-            )}
+
           </div>
 
           <div className="flex items-center justify-between">

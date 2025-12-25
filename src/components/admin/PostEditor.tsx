@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react';
 import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
-import { useDraftAutosave } from '../../hooks/useDraftAutosave';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
 import { useCategoryManagement } from '../../hooks/useCategoryManagement';
@@ -106,17 +105,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         setTagInput('');
         setPreviewMode(false);
     }, [post]);
-
-
-    const {
-        restoreCandidate,
-        autosavePaused,
-        setAutosavePaused,
-        lastAutosavedAt,
-        clearAutosave,
-        restoreDraft,
-        discardRestore
-    } = useDraftAutosave({ draft, activeId });
 
     const {
         fileInputRef,
@@ -240,18 +228,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         }
     };
 
-    const handleRestoreDraft = () => {
-        const restored = restoreDraft();
-        if (!restored) return;
-        setDraft(restored.draft);
-        setSlugTouched(true);
-        setNotice('임시 저장된 초안을 복구했습니다.');
-        setTagInput('');
-        if (editor) {
-            editor.commands.setContent(restored.draft.contentHtml || '', false);
-        }
-    };
-
     const handleImageUpload = async (file: File) => {
         await uploadImageToEditor(file);
     };
@@ -268,7 +244,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         editor.chain().focus().setLink({ href: url }).run();
     };
 
-    const handleSave = async (successMessage?: string, statusOverride?: PostStatus) => {
+    const handleSave = useCallback(async (successMessage?: string, statusOverride?: PostStatus) => {
         setNotice('');
         const title = draft.title.trim();
         const slug = slugify(draft.slug.trim() || title);
@@ -354,13 +330,11 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
             const fallbackMessage = activeId ? '글이 저장되었습니다.' : '새 글이 생성되었습니다.';
             setNotice(successMessage ?? fallbackMessage);
-            clearAutosave(activeId);
 
             // Notify Parent
             onSaveSuccess(saved);
 
             setSlugTouched(true);
-            setAutosavePaused(false);
             setTagInput('');
             void loadCategories();
         } catch (error) {
@@ -372,7 +346,19 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         } finally {
             setSaving(false);
         }
-    };
+    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, slugTouched, loadCategories]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                void handleSave('수동 저장되었습니다.');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleSave]);
 
     const handleDelete = async () => {
         if (!activeId) return;
@@ -382,7 +368,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         setSaving(true);
         try {
             await deletePost(activeId);
-            clearAutosave(activeId);
             setNotice('글이 삭제되었습니다.');
             onDeleteSuccess();
         } catch (error) {
@@ -404,8 +389,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             notice={notice}
             saving={saving}
             activeId={activeId}
-            lastAutosavedAt={lastAutosavedAt}
-            autosavePaused={autosavePaused}
             tagInput={tagInput}
             onTagInputChange={(value) => setTagInput(value)}
             onTagKeyDown={handleTagKeyDown}
@@ -436,10 +419,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onClearImageWidth={clearImageWidth}
             fileInputRef={fileInputRef}
             onImageUpload={(file) => void handleImageUpload(file)}
-            // Props for draft recovery
-            restoreCandidate={restoreCandidate}
-            onRestore={handleRestoreDraft}
-            onDiscardRestore={discardRestore}
         />
     );
 };

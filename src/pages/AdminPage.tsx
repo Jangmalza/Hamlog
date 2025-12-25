@@ -202,9 +202,6 @@ const AdminPage: React.FC = () => {
           totalCount={filteredPosts.length}
           statusCount={dashboardStats.statusCount}
           categories={categoryTree.allNames}
-          restoreCandidate={null} // Autosave handled in editor
-          onRestore={() => { }}
-          onDiscardRestore={() => { }}
           editor={null} // Editor instance not needed here
         />
 
