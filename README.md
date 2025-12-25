@@ -49,15 +49,28 @@ Node.js Backend와 React Frontend로 구성된 기술 블로그 프로젝트입�
 운영 서버는 **Cloudflare Tunnel**을 통해 외부와 안전하게 연결됩니다.
 
 ```bash
-# 컨테이너 실행 예시 (Self-Hosted Runner가 자동 수행)
-docker run -d \
-  --name hamlog \
-  --restart unless-stopped \
-  -p 4000:4000 \
-  -v ~/hamlog-data/data:/app/server/data \
-  -v ~/hamlog-data/uploads:/app/server/uploads \
-  -e PORT=4000 \
-  -e JWT_SECRET=*** \
   -e ADMIN_PASSWORD=*** \
   ghcr.io/jangmalza/hamlog:latest
 ```
+
+---
+
+## 🎨 Custom Built & Usability
+
+**이 블로그는 상용 플랫폼(WordPress, Tistory 등)을 사용하지 않고 밑바닥부터 직접 설계하고 개발했습니다.**
+사용자 경험(UX)과 성능을 최우선으로 고려하여, 글 쓰는 즐거움을 느낄 수 있도록 세심하게 다듬었습니다.
+
+### ✨ 주요 사용 기능 (User Guide)
+
+#### 1. 강력한 에디터 (Rich Text & Markdown)
+- **WYSIWYG**: 노션(Notion)처럼 직관적인 블록 기반 에디터를 제공합니다.
+- **마크다운 지원**: `#` 제목, `-` 리스트, ` ``` ` 코드 블록 등 익숙한 마크다운 문법을 그대로 사용할 수 있습니다.
+- **이미지 업로드**: 이미지를 드래그 앤 드롭하거나 붙여넣기(`Ctrl+V`)하여 즉시 업로드할 수 있습니다.
+
+#### 2. 안전한 저장 시스템
+- **수동 저장 (`Ctrl + S`)**: 글 작성 중 언제든지 단축키를 눌러 저장할 수 있습니다. 저장된 내용은 서버에 즉시 반영되며, 나중에 다시 이어서 작성할 수 있습니다.
+- **임시 저장(Draft)**: 발행하지 않은 글은 '임시 저장' 상태로 안전하게 보관됩니다.
+
+#### 3. 쾌적한 탐색 경험
+- **다크 모드**: 우측 상단 달 모양 아이콘을 클릭하여 눈이 편안한 다크 모드로 전환할 수 있습니다.
+- **반응형 목차(TOC)**: 긴 글을 읽을 때 현재 위치를 쉽게 파악할 수 있는 목차를 제공합니다.
