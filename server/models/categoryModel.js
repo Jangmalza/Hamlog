@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { randomUUID } from 'node:crypto';
-import { categoriesFilePath, dataDir, postsFilePath } from '../config/paths.js'; // Ensure paths exported
+import { categoriesFilePath, dataDir } from '../config/paths.js';
 import {
     normalizeCategoryList,
     normalizeCategoryName,
@@ -9,10 +9,7 @@ import {
     DEFAULT_CATEGORY,
     getNextCategoryOrder
 } from '../utils/normalizers.js';
-import { readFile as fsReadFile, writeFile as fsWriteFile } from 'fs/promises'; // Duplicate import?
-
-// Helper wrapper to avoid circular dependency issues if needed, or just standard imports
-// index.js used direct fs imports.
+import { readPosts, writePosts } from './postModel.js';
 
 export async function readCategories() {
     const raw = await readFile(categoriesFilePath, 'utf8');
