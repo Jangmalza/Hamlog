@@ -1,4 +1,4 @@
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Github, Linkedin, Mail } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import type { SiteMeta } from '../types/blog';
 
@@ -103,6 +103,42 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                 <p className="text-sm text-[var(--text-muted)]">{profile.role}</p>
                             </div>
                         </div>
+
+                        {/* Social Links */}
+                        <div className="flex gap-3">
+                            {profile.social.github && (
+                                <a
+                                    href={profile.social.github}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="GitHub"
+                                >
+                                    <Github size={18} />
+                                </a>
+                            )}
+                            {profile.social.linkedin && (
+                                <a
+                                    href={profile.social.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="LinkedIn"
+                                >
+                                    <Linkedin size={18} />
+                                </a>
+                            )}
+                            {profile.email && (
+                                <a
+                                    href={`mailto:${profile.email}`}
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="Email"
+                                >
+                                    <Mail size={18} />
+                                </a>
+                            )}
+                        </div>
+
                         <div>
                             <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                                 지금
