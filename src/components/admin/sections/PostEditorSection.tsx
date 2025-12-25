@@ -45,9 +45,10 @@ interface PostEditorSectionProps {
   onClearImageWidth: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onImageUpload: (file: File) => void;
+  restoreCandidate: { draft: PostDraft; updatedAt: number } | null;
+  onRestore: () => void;
+  onDiscardRestore: () => void;
 }
-
-
 
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   draft,
@@ -82,14 +83,49 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onApplyImageWidth,
   onClearImageWidth,
   fileInputRef,
-  onImageUpload
+  onImageUpload,
+  restoreCandidate,
+  onRestore,
+  onDiscardRestore
 }) => {
   const isImageActive = editor?.isActive('image') ?? false;
-
 
   return (
     <div className="mx-auto max-w-5xl">
       <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+        {/* Autosave Restore Banner */}
+        {restoreCandidate && (
+          <div className="mb-6 flex items-center justify-between rounded-xl bg-orange-50 p-4 dark:bg-orange-900/20">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/50">
+                <span className="text-sm">⚠️</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">
+                  작성 중이던 임시 저장본이 있습니다
+                </p>
+                <p className="text-xs text-orange-700 dark:text-orange-200">
+                  {formatAutosaveTime(restoreCandidate.updatedAt)}에 저장됨
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onRestore}
+                className="rounded-lg bg-orange-200 px-3 py-1.5 text-xs font-semibold text-orange-900 transition-colors hover:bg-orange-300 dark:bg-orange-800 dark:text-orange-100 dark:hover:bg-orange-700"
+              >
+                복구하기
+              </button>
+              <button
+                onClick={onDiscardRestore}
+                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100 dark:text-orange-300 dark:hover:bg-orange-900/50"
+              >
+                무시
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Top Actions & Status */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 space-y-4">
