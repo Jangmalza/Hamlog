@@ -67,7 +67,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                             }`}
                     >
                         <span className="flex items-center gap-2">
-                            <span>{node.name}</span>
+                            <span className="whitespace-nowrap">{node.name}</span>
                             {node.hasNew && (
                                 <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-semibold text-white">
                                     N
