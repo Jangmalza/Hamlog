@@ -234,11 +234,7 @@ const PostPage: React.FC = () => {
                 </div>
               </header>
 
-              {post.cover && (
-                <div className="mb-12 overflow-hidden rounded-3xl border border-[color:var(--border)] shadow-[var(--shadow)]">
-                  <img src={post.cover} alt={post.title} className="w-full object-cover" />
-                </div>
-              )}
+
 
               <div className="prose prose-lg max-w-none">
                 <PostContent sections={post.sections} contentHtml={post.contentHtml} />
