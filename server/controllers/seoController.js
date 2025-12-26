@@ -1,17 +1,17 @@
 import { readPosts } from '../models/postModel.js';
 import { readProfile } from '../models/profileModel.js';
 
-const BASE_URL = 'https://hamlog.dev'; // Ideally from config/env
+const BASE_URL = 'https://tech.hamwoo.co.kr';
 
 export const getRss = async (req, res) => {
-    try {
-        const posts = await readPosts();
-        const profile = await readProfile();
-        const publishedPosts = posts
-            .filter(p => p.status === 'published')
-            .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  try {
+    const posts = await readPosts();
+    const profile = await readProfile();
+    const publishedPosts = posts
+      .filter(p => p.status === 'published')
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-        const items = publishedPosts.map(post => `
+    const items = publishedPosts.map(post => `
     <item>
       <title><![CDATA[${post.title}]]></title>
       <link>${BASE_URL}/posts/${post.slug}</link>
@@ -21,7 +21,7 @@ export const getRss = async (req, res) => {
       ${post.category ? `<category>${post.category}</category>` : ''}
     </item>`).join('');
 
-        const rss = `<?xml version="1.0" encoding="UTF-8" ?>
+    const rss = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
   <channel>
     <title>${profile.title}</title>
@@ -32,20 +32,20 @@ export const getRss = async (req, res) => {
   </channel>
 </rss>`;
 
-        res.set('Content-Type', 'text/xml');
-        res.send(rss);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error generating RSS');
-    }
+    res.set('Content-Type', 'text/xml');
+    res.send(rss);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating RSS');
+  }
 };
 
 export const getSitemap = async (req, res) => {
-    try {
-        const posts = await readPosts();
-        const publishedPosts = posts.filter(p => p.status === 'published');
+  try {
+    const posts = await readPosts();
+    const publishedPosts = posts.filter(p => p.status === 'published');
 
-        const urls = publishedPosts.map(post => `
+    const urls = publishedPosts.map(post => `
   <url>
     <loc>${BASE_URL}/posts/${post.slug}</loc>
     <lastmod>${post.publishedAt}</lastmod>
@@ -53,7 +53,7 @@ export const getSitemap = async (req, res) => {
     <priority>0.8</priority>
   </url>`).join('');
 
-        const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${BASE_URL}</loc>
@@ -63,10 +63,10 @@ export const getSitemap = async (req, res) => {
   ${urls}
 </urlset>`;
 
-        res.set('Content-Type', 'text/xml');
-        res.send(sitemap);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error generating Sitemap');
-    }
+    res.set('Content-Type', 'text/xml');
+    res.send(sitemap);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating Sitemap');
+  }
 };

@@ -11,7 +11,7 @@ export const siteMeta: SiteMeta = {
   location: 'Location',
   profileImage: '/avatar.jpg',
   email: '',
-  siteUrl: 'http://localhost:5173',
+  siteUrl: 'https://tech.hamwoo.co.kr',
   social: {
     github: '',
     linkedin: '',
