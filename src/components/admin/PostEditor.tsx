@@ -7,74 +7,20 @@ import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
 import { usePostStore } from '../../store/postStore';
 import type { Post, PostInput, PostStatus } from '../../data/blogData';
-import type { PostDraft } from '../../types/admin';
-import { formatDateTimeLocal, toIsoDateTime } from '../../utils/adminDate';
+
+import { toIsoDateTime } from '../../utils/adminDate';
 import {
     DEFAULT_CATEGORY,
     normalizeDraftCategory
 } from '../../utils/category';
-import { stripHtml, sectionsToHtml } from '../../utils/postContent';
+import { stripHtml } from '../../utils/postContent';
 import { slugify } from '../../utils/slugify';
 import { normalizePostStatus } from '../../utils/postStatus';
+import type { CategoryTreeResult } from '../../utils/categoryTree';
+import { usePostForm, toDraft } from '../../hooks/usePostForm';
+import { useAutosave } from '../../hooks/useAutosave';
 
 const MAX_UPLOAD_MB = 8;
-
-const formatSeoKeywords = (keywords?: string[]) =>
-    keywords && keywords.length > 0 ? keywords.join(', ') : '';
-
-const toDraft = (post?: Post): PostDraft => {
-    if (!post) {
-        return {
-            title: '',
-            slug: '',
-            summary: '',
-            category: DEFAULT_CATEGORY,
-            contentHtml: '',
-            publishedAt: new Date().toISOString().slice(0, 10),
-            readingTime: '3분 읽기',
-            tags: [],
-            series: '',
-            featured: false,
-            cover: '',
-            status: 'draft',
-            scheduledAt: '',
-            seoTitle: '',
-            seoDescription: '',
-            seoOgImage: '',
-            seoCanonicalUrl: '',
-            seoKeywords: ''
-        };
-    }
-
-    const contentHtml = post.contentHtml?.trim()
-        ? post.contentHtml
-        : post.sections.length
-            ? sectionsToHtml(post.sections)
-            : '';
-
-    return {
-        title: post.title,
-        slug: post.slug,
-        summary: post.summary,
-        category: normalizeDraftCategory(post.category ?? '', DEFAULT_CATEGORY),
-        contentHtml,
-        publishedAt: post.publishedAt.slice(0, 10),
-        readingTime: post.readingTime,
-        tags: post.tags ?? [],
-        series: post.series ?? '',
-        featured: Boolean(post.featured),
-        cover: post.cover ?? '',
-        status: normalizePostStatus(post.status),
-        scheduledAt: formatDateTimeLocal(post.scheduledAt),
-        seoTitle: post.seo?.title ?? '',
-        seoDescription: post.seo?.description ?? '',
-        seoOgImage: post.seo?.ogImage ?? '',
-        seoCanonicalUrl: post.seo?.canonicalUrl ?? '',
-        seoKeywords: formatSeoKeywords(post.seo?.keywords)
-    };
-};
-
-import type { CategoryTreeResult } from '../../utils/categoryTree';
 
 interface PostEditorProps {
     post: Post | null;
@@ -91,70 +37,41 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const updatePost = usePostStore(state => state.updatePost);
     const deletePost = usePostStore(state => state.deletePost);
 
-    const [draft, setDraft] = useState<PostDraft>(() => toDraft(post || undefined));
-    const [slugTouched, setSlugTouched] = useState(!!post);
+    // 1. Form Logic (extracted)
+    const {
+        draft,
+        setDraft,
+        slugTouched,
+        setSlugTouched,
+        tagInput,
+        setTagInput,
+        updateDraft,
+        handleTitleChange,
+        handleStatusChange,
+        removeTag,
+        handleTagKeyDown,
+        handleTagBlur
+    } = usePostForm(post);
+
     const [notice, setNotice] = useState('');
     const [saving, setSaving] = useState(false);
-    const [tagInput, setTagInput] = useState('');
     const [previewMode, setPreviewMode] = useState(false);
     const editorRef = useRef<Editor | null>(null);
 
-    // Auto-save logic
-    const autosaveKey = `hamlog_draft_${activeId || 'new'}`;
+    // 2. Auto-save Logic (extracted)
+    const { clearAutosave, handleRestoreAutosave } = useAutosave({
+        activeId,
+        draft,
+        setDraft,
+        setNotice,
+        onLoadDraft: () => toDraft(post || undefined)
+    });
 
-    // Load initial Post
+    // Reset specific UI states on post change
     useEffect(() => {
-        setDraft(toDraft(post || undefined));
-        setSlugTouched(!!post);
         setNotice('');
-        setTagInput('');
         setPreviewMode(false);
-
-        // Check for autosave
-        const saved = localStorage.getItem(autosaveKey);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Simple check: if autosave is effectively different/newer
-                // For now, just always notify if exists and is not identical to current loaded post
-                // But avoid notifying if it matches exactly what we just loaded
-                const currentInit = toDraft(post || undefined);
-                if (parsed.contentHtml !== currentInit.contentHtml || parsed.title !== currentInit.title) {
-                    setNotice('임시 저장된 내용이 있습니다. 복구하시겠습니까? (클릭)');
-                }
-            } catch (e) {
-                // ignore invalid json
-            }
-        }
-    }, [post, autosaveKey]);
-
-    // Save to LocalStorage (Debounced or minimal interval)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (draft.contentHtml || draft.title) {
-                localStorage.setItem(autosaveKey, JSON.stringify(draft));
-            }
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, [draft, autosaveKey]);
-
-    // Clear autosave on successful save
-    const clearAutosave = useCallback(() => {
-        localStorage.removeItem(autosaveKey);
-    }, [autosaveKey]);
-
-    const handleRestoreAutosave = () => {
-        const saved = localStorage.getItem(autosaveKey);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setDraft(parsed);
-                setNotice('임시 저장된 내용을 복구했습니다.');
-            } catch (e) {
-                setNotice('복구에 실패했습니다.');
-            }
-        }
-    };
+    }, [post]);
 
     const {
         fileInputRef,
@@ -190,18 +107,14 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         editorRef.current = editor;
     }, [editor]);
 
-    // Sync editor content when draft changes (e.g. from restore or initial load)
+    // Sync editor content when draft changes
     useEffect(() => {
         if (!editor) return;
         const safeHtml = draft.contentHtml?.trim() ? draft.contentHtml : '';
         if (editor.getHTML() !== safeHtml) {
-            // Only set content if significant difference to avoid cursor jump issues 
-            // on simple typing, but here draft.contentHtml is usually the source of truth
-            // passed into useTiptapEditor. 
-            // However, if we switch posts, we MUST force update.
             editor.commands.setContent(safeHtml, false);
         }
-    }, [editor, activeId]); // Dependency on activeId ensures content swap on post switch
+    }, [editor, activeId]); // activeId ensures swap
 
     const contentStats = useMemo(() => {
         const plainText = stripHtml(draft.contentHtml || '');
@@ -211,57 +124,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             readingMinutes
         };
     }, [draft.contentHtml]);
-
-
-    const handleTitleChange = (value: string) => {
-        setDraft(prev => {
-            const next = { ...prev, title: value };
-            if (!slugTouched) {
-                next.slug = slugify(value);
-            }
-            return next;
-        });
-    };
-
-    const handleStatusChange = (value: PostStatus) => {
-        setDraft(prev => ({
-            ...prev,
-            status: value,
-            scheduledAt: value === 'scheduled' ? prev.scheduledAt : ''
-        }));
-    };
-
-    const updateDraft = useCallback((patch: Partial<PostDraft>) => {
-        setDraft(prev => ({ ...prev, ...patch }));
-    }, []);
-
-    const addTag = (value: string) => {
-        const normalized = value.replace(/^#/, '').trim();
-        if (!normalized) return;
-        setDraft(prev => {
-            if (prev.tags.includes(normalized)) return prev;
-            return { ...prev, tags: [...prev.tags, normalized] };
-        });
-    };
-
-    const removeTag = (value: string) => {
-        setDraft(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== value) }));
-    };
-
-    const handleTagKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter' || event.key === ',') {
-            event.preventDefault();
-            addTag(tagInput);
-            setTagInput('');
-        }
-    };
-
-    const handleTagBlur = () => {
-        if (tagInput.trim()) {
-            addTag(tagInput);
-            setTagInput('');
-        }
-    };
 
     const handleImageUpload = async (file: File) => {
         await uploadImageToEditor(file);
@@ -382,7 +244,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         } finally {
             setSaving(false);
         }
-    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, slugTouched, onLoadCategories]);
+    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, slugTouched, onLoadCategories, clearAutosave, setSlugTouched, setTagInput]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
