@@ -266,6 +266,8 @@ const AdminPage: React.FC = () => {
               post={activePost}
               onSaveSuccess={handleSaveSuccess}
               onDeleteSuccess={handleDeleteSuccess}
+              categoryTree={categoryTree}
+              onLoadCategories={loadCategories}
             />
           )}
         </section>

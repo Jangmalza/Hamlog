@@ -5,7 +5,6 @@ import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
-import { useCategoryManagement } from '../../hooks/useCategoryManagement';
 import { usePostStore } from '../../store/postStore';
 import type { Post, PostInput, PostStatus } from '../../data/blogData';
 import type { PostDraft } from '../../types/admin';
@@ -75,19 +74,22 @@ const toDraft = (post?: Post): PostDraft => {
     };
 };
 
+import type { CategoryTreeResult } from '../../utils/categoryTree';
+
 interface PostEditorProps {
     post: Post | null;
     onSaveSuccess: (post: Post) => void;
     onDeleteSuccess: () => void;
+    categoryTree: CategoryTreeResult;
+    onLoadCategories: () => void | Promise<void>;
 }
 
-const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSuccess }) => {
+const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSuccess, categoryTree, onLoadCategories }) => {
     const activeId = post?.id || null;
     const posts = usePostStore(state => state.posts);
     const addPost = usePostStore(state => state.addPost);
     const updatePost = usePostStore(state => state.updatePost);
     const deletePost = usePostStore(state => state.deletePost);
-    const fetchPosts = usePostStore(state => state.fetchPosts);
 
     const [draft, setDraft] = useState<PostDraft>(() => toDraft(post || undefined));
     const [slugTouched, setSlugTouched] = useState(!!post);
@@ -126,21 +128,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         editorRef,
         maxUploadMb: MAX_UPLOAD_MB,
         uploadLocalImage
-    });
-
-    const setDraftCategory = useCallback((category: string) => {
-        setDraft(prev => ({ ...prev, category }));
-    }, []);
-
-    const {
-        categoryTree,
-        loadCategories
-    } = useCategoryManagement({
-        posts,
-        draftCategory: draft.category,
-        setDraftCategory,
-        refreshPosts: fetchPosts,
-        setNotice
     });
 
     const editor = useTiptapEditor({
@@ -336,7 +323,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
             setSlugTouched(true);
             setTagInput('');
-            void loadCategories();
+            void onLoadCategories();
         } catch (error) {
             if (error instanceof Error && error.message) {
                 setNotice(error.message);
@@ -346,7 +333,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         } finally {
             setSaving(false);
         }
-    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, slugTouched, loadCategories]);
+    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, slugTouched, onLoadCategories]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
