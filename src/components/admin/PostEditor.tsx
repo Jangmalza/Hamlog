@@ -129,6 +129,19 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         await uploadImageToEditor(file);
     };
 
+    const handleCoverUpload = async (file: File) => {
+        try {
+            setSaving(true); // Reuse saving state for loading indication
+            const { url } = await uploadLocalImage(file);
+            updateDraft({ cover: url });
+            setNotice('대표 이미지가 업로드되었습니다.');
+        } catch (error) {
+            setNotice('이미지 업로드에 실패했습니다.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleLink = () => {
         if (!editor) return;
         const previousUrl = editor.getAttributes('link').href as string | undefined;
@@ -318,6 +331,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             fileInputRef={fileInputRef}
             onImageUpload={(file) => void handleImageUpload(file)}
             onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
+            onCoverUpload={handleCoverUpload}
         />
     );
 };

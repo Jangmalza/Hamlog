@@ -44,6 +44,7 @@ interface PostEditorSectionProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   onImageUpload: (file: File) => void;
   onNoticeClick?: () => void;
+  onCoverUpload?: (file: File) => Promise<void>;
 }
 
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
@@ -78,7 +79,8 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onClearImageWidth,
   fileInputRef,
   onImageUpload,
-  onNoticeClick
+  onNoticeClick,
+  onCoverUpload
 }) => {
   const isImageActive = editor?.isActive('image') ?? false;
 
@@ -153,6 +155,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           draft={draft}
           updateDraft={updateDraft}
           categoryTree={categoryTree}
+          onCoverUpload={onCoverUpload}
         />
 
         {/* Editor Toolbar - Sticky */}

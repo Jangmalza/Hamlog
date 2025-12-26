@@ -7,16 +7,19 @@ interface PostMetadataProps {
     draft: PostDraft;
     updateDraft: (patch: Partial<PostDraft>) => void;
     categoryTree: CategoryTreeResult;
+    onCoverUpload?: (file: File) => Promise<void>;
 }
 
 export const PostMetadata: React.FC<PostMetadataProps> = ({
     draft,
     updateDraft,
-    categoryTree
+    categoryTree,
+    onCoverUpload
 }) => {
     const [categoryOpen, setCategoryOpen] = useState(false);
     const [categoryQuery, setCategoryQuery] = useState('');
     const [categoryExpanded, setCategoryExpanded] = useState<Record<string, boolean>>({});
+    const coverInputRef = React.useRef<HTMLInputElement>(null);
 
     const getNodePath = (node: CategoryNode) => {
         const path: string[] = [];
@@ -180,12 +183,35 @@ export const PostMetadata: React.FC<PostMetadataProps> = ({
             {/* Cover Image - Col 12 */}
             <div className="md:col-span-12">
                 <label className="block text-[10px] text-[var(--text-muted)] mb-1">대표 이미지 (URL)</label>
-                <input
-                    value={draft.cover}
-                    onChange={(e) => updateDraft({ cover: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text)] focus:border-[color:var(--accent)] focus:outline-none"
-                />
+                <div className="flex gap-2">
+                    <input
+                        value={draft.cover}
+                        onChange={(e) => updateDraft({ cover: e.target.value })}
+                        placeholder="https://..."
+                        className="flex-1 rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text)] focus:border-[color:var(--accent)] focus:outline-none"
+                    />
+                    <input
+                        ref={coverInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file && onCoverUpload) {
+                                void onCoverUpload(file);
+                            }
+                            e.target.value = '';
+                        }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => coverInputRef.current?.click()}
+                        className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium hover:bg-[var(--surface-muted)]"
+                        title="이미지 업로드"
+                    >
+                        📁
+                    </button>
+                </div>
             </div>
 
             {/* Summary - Full Width */}
