@@ -3,7 +3,7 @@
 Node.js Backend와 React Frontend로 구성된 기술 블로그 프로젝트입니다.
 복잡한 RDBMS 없이 **파일 시스템(JSON)을 DB로 사용**하여 가볍고 이식성이 뛰어난 것이 특징입니다.
 
-## 🛠 Tech Stack
+## Tech Stack
 - **Frontend**: MySQL 없이 JSON 파일로 데이터 관리
 - **Framework**: React, Vite, TypeScript
 - **Styling**: TailwindCSS
@@ -12,7 +12,7 @@ Node.js Backend와 React Frontend로 구성된 기술 블로그 프로젝트입�
 - **Backend**: Node.js (Express), JWT Auth
 - **Infrastructure**: Docker, GitHub Actions (Self-Hosted Runner), Cloudflare Tunnel
 
-## ✨ Key Features
+## Key Features
 
 ### 1. Robust Security
 - **JWT Authentication**: `access_token`을 HttpOnly Cookie로 관리하여 XSS/CSRF 방지
@@ -35,7 +35,7 @@ Node.js Backend와 React Frontend로 구성된 기술 블로그 프로젝트입�
 - **Sitemap & RSS**: `/sitemap.xml`, `/rss.xml` 자동 생성
 - **Meta Tags**: 게시글별 동적 메타 태그(Open Graph) 적용
 
-## 🚀 DevOps (CI/CD)
+## DevOps (CI/CD)
 
 **Security-First Deployment Pipeline**이 구축되어 있습니다.
 
@@ -55,12 +55,12 @@ Node.js Backend와 React Frontend로 구성된 기술 블로그 프로젝트입�
 
 ---
 
-## 🎨 Custom Built & Usability
+## Custom Built & Usability
 
 **이 블로그는 상용 플랫폼(WordPress, Tistory 등)을 사용하지 않고 밑바닥부터 직접 설계하고 개발했습니다.**
 사용자 경험(UX)과 성능을 최우선으로 고려하여, 글 쓰는 즐거움을 느낄 수 있도록 세심하게 다듬었습니다.
 
-### ✨ 주요 사용 기능 (User Guide)
+### 주요 사용 기능 (User Guide)
 
 #### 1. 강력한 에디터 (Rich Text & Markdown)
 - **WYSIWYG**: 노션(Notion)처럼 직관적인 블록 기반 에디터를 제공합니다.
