@@ -7,9 +7,9 @@ export const siteMeta: SiteMeta = {
   name: 'Author Name',
   role: 'Role',
   tagline: 'Tagline',
-  description: 'Description',
+  description: '개인적으로 경험하고 탐구하고 학습했던 내용들을 기록하는 블로그입니다.',
   location: 'Location',
-  profileImage: '',
+  profileImage: '/avatar.jpg',
   email: '',
   siteUrl: 'http://localhost:5173',
   social: {
