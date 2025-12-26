@@ -99,14 +99,62 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const [previewMode, setPreviewMode] = useState(false);
     const editorRef = useRef<Editor | null>(null);
 
-    // Initial load sync
+    // Auto-save logic
+    const autosaveKey = `hamlog_draft_${activeId || 'new'}`;
+
+    // Load initial Post
     useEffect(() => {
         setDraft(toDraft(post || undefined));
         setSlugTouched(!!post);
         setNotice('');
         setTagInput('');
         setPreviewMode(false);
-    }, [post]);
+
+        // Check for autosave
+        const saved = localStorage.getItem(autosaveKey);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                // Simple check: if autosave is effectively different/newer
+                // For now, just always notify if exists and is not identical to current loaded post
+                // But avoid notifying if it matches exactly what we just loaded
+                const currentInit = toDraft(post || undefined);
+                if (parsed.contentHtml !== currentInit.contentHtml || parsed.title !== currentInit.title) {
+                    setNotice('임시 저장된 내용이 있습니다. 복구하시겠습니까? (클릭)');
+                }
+            } catch (e) {
+                // ignore invalid json
+            }
+        }
+    }, [post, autosaveKey]);
+
+    // Save to LocalStorage (Debounced or minimal interval)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (draft.contentHtml || draft.title) {
+                localStorage.setItem(autosaveKey, JSON.stringify(draft));
+            }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [draft, autosaveKey]);
+
+    // Clear autosave on successful save
+    const clearAutosave = useCallback(() => {
+        localStorage.removeItem(autosaveKey);
+    }, [autosaveKey]);
+
+    const handleRestoreAutosave = () => {
+        const saved = localStorage.getItem(autosaveKey);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setDraft(parsed);
+                setNotice('임시 저장된 내용을 복구했습니다.');
+            } catch (e) {
+                setNotice('복구에 실패했습니다.');
+            }
+        }
+    };
 
     const {
         fileInputRef,
@@ -323,6 +371,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
             setSlugTouched(true);
             setTagInput('');
+            clearAutosave();
             void onLoadCategories();
         } catch (error) {
             if (error instanceof Error && error.message) {
@@ -406,6 +455,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onClearImageWidth={clearImageWidth}
             fileInputRef={fileInputRef}
             onImageUpload={(file) => void handleImageUpload(file)}
+            onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
         />
     );
 };

@@ -19,6 +19,7 @@ import { createLowlight, common } from 'lowlight';
 import { SlashCommand, getSuggestionItems, renderItems } from '../editor/extensions/slashCommand';
 import { FontSize } from '../editor/extensions/fontSize';
 import { MathExtension } from '../components/editor/extensions/MathExtension';
+import Typography from '@tiptap/extension-typography';
 import type { PostDraft } from '../types/admin';
 import type { EditorView } from '@tiptap/pm/view';
 import type { Slice } from '@tiptap/pm/model';
@@ -109,7 +110,8 @@ export const useTiptapEditor = ({
                 },
             })
             ,
-            MathExtension
+            MathExtension,
+            Typography
         ],
         content: contentHtml || '',
         onUpdate: ({ editor }) => {

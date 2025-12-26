@@ -43,6 +43,7 @@ interface PostEditorSectionProps {
   onClearImageWidth: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onImageUpload: (file: File) => void;
+  onNoticeClick?: () => void;
 }
 
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
@@ -76,7 +77,8 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onApplyImageWidth,
   onClearImageWidth,
   fileInputRef,
-  onImageUpload
+  onImageUpload,
+  onNoticeClick
 }) => {
   const isImageActive = editor?.isActive('image') ?? false;
 
@@ -99,7 +101,15 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-col items-end gap-1 text-[10px] text-[var(--text-muted)]">
-              {notice && <span className="text-[var(--accent-strong)]">{notice}</span>}
+              {notice && (
+                <button
+                  type="button"
+                  onClick={() => onNoticeClick?.()}
+                  className={`text-[var(--accent-strong)] ${onNoticeClick ? 'cursor-pointer hover:underline underline' : ''}`}
+                >
+                  {notice}
+                </button>
+              )}
             </div>
             {/* Status Badge Select - Compact */}
             <div className="relative">
