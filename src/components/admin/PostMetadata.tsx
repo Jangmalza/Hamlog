@@ -177,6 +177,17 @@ export const PostMetadata: React.FC<PostMetadataProps> = ({
                 )}
             </div>
 
+            {/* Cover Image - Col 12 */}
+            <div className="md:col-span-12">
+                <label className="block text-[10px] text-[var(--text-muted)] mb-1">대표 이미지 (URL)</label>
+                <input
+                    value={draft.cover}
+                    onChange={(e) => updateDraft({ cover: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text)] focus:border-[color:var(--accent)] focus:outline-none"
+                />
+            </div>
+
             {/* Summary - Full Width */}
             <div className="md:col-span-12">
                 <label className="block text-[10px] text-[var(--text-muted)] mb-1">요약 / Featured</label>
