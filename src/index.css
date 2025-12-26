@@ -141,11 +141,11 @@ body::before {
 .rich-content p,
 .tiptap-editor p {
   font-size: 1.05rem;
-  line-height: 1.85;
+  line-height: 2.0;
   color: var(--text-muted);
   letter-spacing: -0.01em;
   margin-top: 0;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
   word-break: keep-all;
 }
 
@@ -359,9 +359,9 @@ body::before {
 
 .post-paragraph {
   font-size: 1rem;
-  line-height: 1.85;
+  line-height: 2.0;
   color: var(--text-muted);
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 
 .post-list {
