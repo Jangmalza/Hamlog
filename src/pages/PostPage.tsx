@@ -211,7 +211,7 @@ const PostPage: React.FC = () => {
                   )}
                 </div>
 
-                <h1 className="mt-6 font-display text-3xl font-bold leading-tight tracking-tight text-[var(--text)] sm:text-4xl lg:text-5xl">
+                <h1 className="mt-6 font-display text-3xl font-bold leading-normal tracking-tight text-[var(--text)] sm:text-4xl lg:text-5xl">
                   {post.title}
                 </h1>
 
