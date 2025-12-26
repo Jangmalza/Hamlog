@@ -114,7 +114,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         if (editor.getHTML() !== safeHtml) {
             editor.commands.setContent(safeHtml, false);
         }
-    }, [editor, activeId]); // activeId ensures swap
+    }, [editor, activeId, draft.contentHtml]); // activeId ensures swap, draft.contentHtml ensures sync
 
     const contentStats = useMemo(() => {
         const plainText = stripHtml(draft.contentHtml || '');
