@@ -145,7 +145,7 @@ body::before {
   color: var(--text-muted);
   letter-spacing: -0.01em;
   margin-top: 0;
-  margin-bottom: 0.25rem;
+  margin-bottom: 1rem;
   word-break: keep-all;
 }
 
@@ -361,7 +361,7 @@ body::before {
   font-size: 1rem;
   line-height: 1.75;
   color: var(--text-muted);
-  margin-bottom: 0.25rem;
+  margin-bottom: 1rem;
 }
 
 .post-list {
