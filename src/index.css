@@ -147,6 +147,12 @@ body::before {
   margin-top: 0;
   margin-bottom: 1rem;
   word-break: keep-all;
+  min-height: 1.8rem;
+}
+
+.rich-content p:empty,
+.tiptap-editor p:empty {
+  min-height: 1.8rem;
 }
 
 .rich-content ul,
