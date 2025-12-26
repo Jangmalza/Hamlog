@@ -94,6 +94,7 @@ interface EditorToolbarProps {
     onToolbarImageUpload: () => void;
     onInsertImageUrl: () => void;
     uploadingImage: boolean;
+    onSave: () => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -103,7 +104,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     onLink,
     onToolbarImageUpload,
     onInsertImageUrl,
-    uploadingImage
+    uploadingImage,
+    onSave
 }) => {
     const [toolbarMenu, setToolbarMenu] = useState<
         'color' | 'highlight' | 'table' | null
@@ -568,6 +570,14 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 </ToolbarGroup>
 
                 <div className="ml-auto flex items-center gap-1">
+                    <ToolbarButton
+                        label="저장 (Ctrl+S)"
+                        onClick={onSave}
+                        disabled={!editor}
+                    >
+                        💾
+                    </ToolbarButton>
+                    <div className="h-5 w-px bg-[var(--border)] mx-1" />
                     <ToolbarButton
                         label="편집 모드"
                         onClick={() => setPreviewMode(false)}

@@ -154,6 +154,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           onToolbarImageUpload={onToolbarImageUpload}
           onInsertImageUrl={onInsertImageUrl}
           uploadingImage={uploadingImage}
+          onSave={() => onSave('수동 저장되었습니다.')}
         />
 
         {isImageActive && (
