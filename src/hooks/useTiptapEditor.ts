@@ -20,6 +20,9 @@ import { SlashCommand, getSuggestionItems, renderItems } from '../editor/extensi
 import { FontSize } from '../editor/extensions/fontSize';
 import { MathExtension } from '../components/editor/extensions/MathExtension';
 import { ImageGallery } from '../components/editor/extensions/ImageGallery';
+import { ImageComponent } from '../components/editor/extensions/ImageComponent';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+
 import Typography from '@tiptap/extension-typography';
 import type { PostDraft } from '../types/admin';
 import type { EditorView } from '@tiptap/pm/view';
@@ -55,8 +58,34 @@ const CustomImage = Image.extend({
                 parseHTML: element => element.getAttribute('style'),
                 renderHTML: attributes =>
                     attributes.style ? { style: attributes.style } : {}
+            },
+            caption: {
+                default: null,
+                parseHTML: element => element.querySelector('figcaption')?.innerText || element.getAttribute('data-caption'),
+                renderHTML: attributes => {
+                    if (!attributes.caption) return {};
+                    return { 'data-caption': attributes.caption };
+                }
             }
         };
+    },
+    renderHTML({ HTMLAttributes }) {
+        const { caption } = HTMLAttributes;
+
+        // This is for Tiptap's output (saving to HTML)
+        // We render a figure with caption if it exists
+        if (caption) {
+            return [
+                'figure',
+                { class: 'post-image local-image' },
+                ['img', HTMLAttributes],
+                ['figcaption', {}, caption]
+            ];
+        }
+        return ['img', HTMLAttributes];
+    },
+    addNodeView() {
+        return ReactNodeViewRenderer(ImageComponent);
     }
 });
 

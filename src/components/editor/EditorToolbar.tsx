@@ -548,23 +548,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     >
                         🔗
                     </ToolbarButton>
-                    <ToolbarButton
-                        label="갤러리"
-                        onClick={() => {
-                            if (!editor) return;
-                            editor.chain().focus().insertContent({
-                                type: 'imageGallery',
-                                attrs: { columns: 2 },
-                                content: [
-                                    { type: 'image', attrs: { src: 'https://placehold.co/600x400' } },
-                                    { type: 'image', attrs: { src: 'https://placehold.co/600x400' } }
-                                ]
-                            }).run();
-                        }}
-                        disabled={!editor}
-                    >
-                        ▦
-                    </ToolbarButton>
+
                 </ToolbarGroup>
 
                 <div className="h-5 w-px bg-[var(--border)]" />

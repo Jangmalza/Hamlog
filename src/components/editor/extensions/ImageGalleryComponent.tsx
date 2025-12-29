@@ -1,5 +1,3 @@
-
-
 import { NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 
 export const ImageGalleryComponent = ({ node, updateAttributes }: any) => {
@@ -29,6 +27,13 @@ export const ImageGalleryComponent = ({ node, updateAttributes }: any) => {
             </div>
             <NodeViewContent
                 className={`image-gallery grid gap-4 ${columns === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}
+                data-columns={columns}
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                    gap: '1rem',
+                    width: '100%',
+                }}
             />
         </NodeViewWrapper>
     );

@@ -81,18 +81,94 @@ export const useEditorImageControls = ({
       if (moved) return false;
       const file = getImageFileFromTransfer(event.dataTransfer);
       if (!file) return false;
+
       event.preventDefault();
-      const coordinates = view.posAtCoords({
-        left: event.clientX,
-        top: event.clientY
-      });
-      if (coordinates?.pos) {
-        editorRef.current?.chain().focus().setTextSelection(coordinates.pos).run();
-      }
-      void uploadImageToEditor(file);
+
+      const clientX = event.clientX;
+      const clientY = event.clientY;
+
+      const handleUploadAndInsert = async () => {
+        try {
+          const { url } = await uploadLocalImage(file);
+          let grouped = false;
+
+          // STRATEGY: Magnet detection
+          // Find all images in the editor DOM
+          const editorDom = view.dom as HTMLElement;
+          const images = Array.from(editorDom.querySelectorAll('img'));
+
+          let closestImage: HTMLImageElement | null = null;
+          let minDistance = Infinity;
+          const THRESHOLD = 100; // Increased threshold for easier grouping
+
+          images.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            // Calculate distance from point to rectangle
+            const dx = Math.max(rect.left - clientX, 0, clientX - rect.right);
+            const dy = Math.max(rect.top - clientY, 0, clientY - rect.bottom);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestImage = img;
+            }
+          });
+
+          if (closestImage && minDistance < THRESHOLD) {
+            const domPos = view.posAtDOM(closestImage, 0);
+            if (typeof domPos === 'number') {
+              const node = view.state.doc.nodeAt(domPos);
+              // Verify it's effectively an image or we can resolve it
+              if (node && node.type.name === 'image') {
+                const existingSrc = node.attrs.src;
+
+                // Check if parent is already a gallery
+                const $pos = view.state.doc.resolve(domPos);
+                const parent = $pos.parent;
+
+                if (parent.type.name === 'imageGallery') {
+                  // Append to existing gallery
+                  editorRef.current?.chain()
+                    .insertContentAt(domPos + node.nodeSize, { type: 'image', attrs: { src: url } })
+                    .run();
+                  grouped = true;
+                } else {
+                  // Create new gallery
+                  editorRef.current?.chain()
+                    .deleteRange({ from: domPos, to: domPos + node.nodeSize })
+                    .insertContentAt(domPos, {
+                      type: 'imageGallery',
+                      attrs: { columns: 2 },
+                      content: [
+                        { type: 'image', attrs: { src: existingSrc } },
+                        { type: 'image', attrs: { src: url } }
+                      ]
+                    })
+                    .run();
+                  grouped = true;
+                }
+              }
+            }
+          }
+
+          if (!grouped) {
+            // Fallback: Standard insert at coords
+            const freshCoords = view.posAtCoords({ left: clientX, top: clientY });
+            if (freshCoords) {
+              editorRef.current?.chain().focus().setTextSelection(freshCoords.pos).setImage({ src: url }).run();
+            } else {
+              editorRef.current?.chain().focus().setImage({ src: url }).run();
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      void handleUploadAndInsert();
       return true;
     },
-    [editorRef, getImageFileFromTransfer, uploadImageToEditor]
+    [editorRef, getImageFileFromTransfer, uploadLocalImage]
   );
 
   const applyImageWidth = useCallback(() => {

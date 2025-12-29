@@ -10,7 +10,8 @@ interface PostContentProps {
 const sanitizeHtml = (html: string) =>
   DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['data-size', 'data-width', 'style', 'width', 'class', 'colspan', 'rowspan', 'colwidth']
+    ADD_ATTR: ['data-size', 'data-width', 'style', 'width', 'class', 'colspan', 'rowspan', 'colwidth', 'data-caption'],
+    ADD_TAGS: ['figure', 'figcaption']
   });
 
 const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml }) => {

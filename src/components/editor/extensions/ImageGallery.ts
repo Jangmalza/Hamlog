@@ -1,4 +1,3 @@
-
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { ImageGalleryComponent } from './ImageGalleryComponent';
