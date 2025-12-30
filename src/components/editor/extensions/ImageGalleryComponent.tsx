@@ -1,6 +1,7 @@
 import { NodeViewWrapper, NodeViewContent } from '@tiptap/react';
+import type { NodeViewProps } from '@tiptap/react';
 
-export const ImageGalleryComponent = ({ node, updateAttributes }: any) => {
+export const ImageGalleryComponent = ({ node, updateAttributes }: NodeViewProps) => {
     const columns = node.attrs.columns || 2;
 
     const setColumns = (cols: number) => {

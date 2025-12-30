@@ -1,9 +1,9 @@
 import ErrorBoundary from '../components/ErrorBoundary';
 import LoadingSpinner from '../components/LoadingSpinner';
-import PostCard from '../components/PostCard';
-import { CategorySidebar } from '../components/CategorySidebar';
 import { HomeHeader } from '../components/HomeHeader';
 import { HomeFooter } from '../components/HomeFooter';
+import { FeaturedSection } from '../components/home/FeaturedSection';
+import { PostListSection } from '../components/home/PostListSection';
 
 import { useSeo } from '../hooks/useSeo';
 import { useHomeData } from '../hooks/useHomeData';
@@ -87,95 +87,21 @@ const HomePage = () => {
                         </section>
                     )}
 
-                    {featuredPosts.length > 0 && (
-                        <section id="spotlight" className="mx-auto max-w-5xl px-4 py-12">
-                            <div className="flex flex-wrap items-end justify-between gap-4">
-                                <div>
-                                    <h2 className="mt-2 font-display text-2xl font-semibold">
-                                        추천 글
-                                    </h2>
-                                </div>
-                                <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                                    {featuredPosts.length}편
-                                </span>
-                            </div>
-                            <div className="mt-8 grid gap-6 md:grid-cols-2">
-                                {featuredPosts.map((post, index) => (
-                                    <PostCard key={post.id} post={post} variant="featured" index={index} />
-                                ))}
-                            </div>
-                        </section>
-                    )}
+                    <FeaturedSection posts={featuredPosts} />
 
-                    <section id="writing" className="mx-auto max-w-5xl px-4 py-12">
-                        <div className="flex flex-wrap items-end justify-between gap-4">
-                            <div>
-                                <h2 className="mt-2 font-display text-2xl font-semibold">
-                                    전체 글
-                                </h2>
-                            </div>
-                            <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                                {filteredPosts.length}편
-                            </span>
-                        </div>
-                        <div className="mt-8 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-                            <CategorySidebar
-                                categoryTree={categoryTree}
-                                selectedCategory={selectedCategory}
-                                onSelectCategory={selectCategory}
-                            />
-
-                            <div className="space-y-5">
-                                {filteredPosts.length > 0 && (
-                                    <div className="grid gap-5">
-                                        {filteredPosts.map((post, index) => (
-                                            <PostCard key={post.id} post={post} variant="compact" index={index} />
-                                        ))}
-                                    </div>
-                                )}
-
-                                {filteredPosts.length === 0 && hasLoaded && !loading && !error && (
-                                    <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-8 text-center">
-                                        <h3 className="font-display text-lg font-semibold">
-                                            조건에 맞는 글이 없어요
-                                        </h3>
-                                        <p className="mt-2 text-sm text-[var(--text-muted)]">
-                                            태그를 바꾸거나 검색어를 지우고 다시 확인해 보세요.
-                                        </p>
-                                        <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                            {selectedTag && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSelectedTag(null)}
-                                                    className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
-                                                >
-                                                    태그 해제
-                                                </button>
-                                            )}
-                                            {selectedCategory && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => selectCategory(null)}
-                                                    className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
-                                                >
-                                                    카테고리 해제
-                                                </button>
-                                            )}
-                                            {searchQuery && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSearchQuery('')}
-                                                    className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
-                                                >
-                                                    검색 초기화
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </section>
+                    <PostListSection
+                        filteredPosts={filteredPosts}
+                        categoryTree={categoryTree}
+                        selectedCategory={selectedCategory}
+                        selectedTag={selectedTag}
+                        searchQuery={searchQuery}
+                        hasLoaded={hasLoaded}
+                        loading={loading}
+                        error={error}
+                        onSelectCategory={selectCategory}
+                        onClearTag={() => setSelectedTag(null)}
+                        onClearSearch={() => setSearchQuery('')}
+                    />
                 </main>
 
                 <HomeFooter profile={profile} />

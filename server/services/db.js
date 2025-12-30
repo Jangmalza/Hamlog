@@ -1,0 +1,20 @@
+import { mkdir } from 'fs/promises';
+import { uploadDir } from '../config/paths.js';
+import { ensurePostsFile } from '../models/postModel.js';
+import { ensureCategoriesFile } from '../models/categoryModel.js';
+import { ensureProfileFile } from '../models/profileModel.js';
+import { ensureCommentsFile } from '../models/commentModel.js';
+
+export async function initializeDatabase() {
+    try {
+        await ensurePostsFile();
+        await ensureCategoriesFile();
+        await ensureProfileFile();
+        await ensureCommentsFile();
+        await mkdir(uploadDir, { recursive: true });
+        console.log('Database and directories initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize database:', error);
+        throw error;
+    }
+}
