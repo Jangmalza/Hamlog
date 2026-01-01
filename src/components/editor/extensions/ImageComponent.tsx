@@ -1,5 +1,5 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
-import React from 'react';
+
 
 export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewProps) => {
     const { src, alt, width, style, caption } = node.attrs;
@@ -43,8 +43,8 @@ export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewPro
                                         handleResize(w);
                                     }}
                                     className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${(width === w || (!width && w === '100%'))
-                                            ? 'bg-[var(--accent)] text-white'
-                                            : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
+                                        ? 'bg-[var(--accent)] text-white'
+                                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
                                         }`}
                                 >
                                     {w}
