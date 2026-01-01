@@ -31,58 +31,57 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                 </nav>
 
                 <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-                    <div className="space-y-6">
-                        <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                            기술 저널
-                        </p>
-                        <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl">
-                            {profile.tagline}
-                        </h1>
-                        <p className="text-base text-[var(--text-muted)]">
-                            {profile.description}
-                        </p>
+                    <div className="space-y-8">
+                        <div>
+                            <p className="mb-4 text-xs font-bold uppercase tracking-[0.3em] text-[var(--accent)]">
+                                기술 저널
+                            </p>
+                            <h1 className="break-keep font-display text-2xl font-bold leading-tight tracking-tight text-[var(--text)] sm:text-3xl lg:text-4xl">
+                                {profile.tagline}
+                            </h1>
+                            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-muted)] break-keep">
+                                {profile.description}
+                            </p>
+                        </div>
+
                         <div className="flex flex-wrap gap-3">
                             <a
                                 href="#writing"
-                                className="rounded-full bg-[var(--accent)] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-[var(--shadow)] transition hover:-translate-y-0.5"
+                                className="group inline-flex items-center gap-2 rounded-full bg-[var(--text)] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--bg)] transition-all hover:bg-[var(--accent)] hover:scale-105 active:scale-95"
                             >
-                                최신 글 보기
+                                최신 글 읽기
+                                <span className="transition-transform group-hover:translate-x-1">→</span>
                             </a>
                             {profile.email && (
                                 <a
                                     href={`mailto:${profile.email}`}
-                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)] transition hover:-translate-y-0.5"
+                                    className="group inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-transparent px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] transition-all hover:border-[var(--text)] hover:text-[var(--text)] active:scale-95"
                                 >
                                     메일 보내기
                                 </a>
                             )}
                         </div>
-                        <dl className="grid grid-cols-2 gap-4 text-xs text-[var(--text-muted)] sm:grid-cols-4">
-                            <div>
-                                <dt className="uppercase tracking-[0.2em]">글</dt>
-                                <dd className="mt-1 text-lg font-semibold text-[var(--text)]">
-                                    {postCount}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="uppercase tracking-[0.2em]">태그</dt>
-                                <dd className="mt-1 text-lg font-semibold text-[var(--text)]">
-                                    {tagCount}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="uppercase tracking-[0.2em]">카테고리</dt>
-                                <dd className="mt-1 text-lg font-semibold text-[var(--text)]">
-                                    {categoryCount}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="uppercase tracking-[0.2em]">시리즈</dt>
-                                <dd className="mt-1 text-lg font-semibold text-[var(--text)]">
-                                    {seriesCount}
-                                </dd>
-                            </div>
-                        </dl>
+
+                        <div className="pt-4">
+                            <dl className="grid grid-cols-4 gap-6 border-t border-[color:var(--border)] pt-6">
+                                <div>
+                                    <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Post</dt>
+                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{postCount}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Tag</dt>
+                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{tagCount}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Category</dt>
+                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{categoryCount}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Series</dt>
+                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{seriesCount}</dd>
+                                </div>
+                            </dl>
+                        </div>
                     </div>
 
                     <div className="space-y-6 rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
