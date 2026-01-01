@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { readPosts, writePosts } from '../models/postModel.js';
-import { addCategoryIfMissing } from '../models/categoryModel.js';
+import { createCategory } from '../services/categoryService.js';
 import { normalizePostData } from '../utils/postHelpers.js';
 
 export const getPosts = async (req, res) => {
@@ -29,7 +29,8 @@ export const createPost = async (req, res) => {
         }
 
         // 3. Side Effects (Category)
-        await addCategoryIfMissing(data.category);
+        // Ensure category exists using the Service
+        await createCategory(data.category);
 
         // 4. Create New Post
         const newPost = {
@@ -74,7 +75,7 @@ export const updatePost = async (req, res) => {
         }
 
         // 3. Side Effects (Category)
-        await addCategoryIfMissing(data.category);
+        await createCategory(data.category);
 
         // 4. Update Post
         const updatedPost = {
