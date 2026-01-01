@@ -1,17 +1,12 @@
-import { randomUUID } from 'crypto';
 import {
-    readCategories,
-    writeCategories,
-    removeCategoryByName,
-    updateCategoryById
+    readCategories
 } from '../models/categoryModel.js';
 import {
-    normalizeCategoryName,
-    normalizeCategoryKey,
-    normalizeCategoryId,
-    getNextCategoryOrder,
-    DEFAULT_CATEGORY
-} from '../utils/normalizers.js';
+    createCategory,
+    removeCategory,
+    updateCategory,
+    reorderCategories as reorderCategoriesService
+} from '../services/categoryService.js';
 
 export const getCategories = async (req, res) => {
     try {
@@ -23,44 +18,28 @@ export const getCategories = async (req, res) => {
     }
 };
 
-export const createCategory = async (req, res) => {
+export const createCategoryController = async (req, res) => {
     try {
         const { name, parentId } = req.body ?? {};
-        const normalized = normalizeCategoryName(name);
-        if (!normalized) {
-            return res.status(400).json({ message: '카테고리 이름이 필요합니다.' });
-        }
-        if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-            return res.status(409).json({ message: '이미 존재하는 카테고리입니다.' });
-        }
-        const categories = await readCategories();
-        const exists = categories.some(
-            category => normalizeCategoryKey(category.name) === normalizeCategoryKey(normalized)
-        );
-        if (exists) {
-            return res.status(409).json({ message: '이미 존재하는 카테고리입니다.' });
-        }
-        const normalizedParentId = normalizeCategoryId(parentId);
-        if (normalizedParentId) {
-            const parent = categories.find(category => category.id === normalizedParentId);
-            if (!parent) {
-                return res.status(400).json({ message: '상위 카테고리를 찾을 수 없습니다.' });
-            }
-            if (normalizeCategoryKey(parent.name) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-                return res.status(400).json({ message: '기본 카테고리는 상위로 지정할 수 없습니다.' });
+
+        const result = await createCategory(name, parentId);
+
+        if (!result.created) {
+            switch (result.reason) {
+                case 'name_required':
+                    return res.status(400).json({ message: '카테고리 이름이 필요합니다.' });
+                case 'duplicate':
+                    return res.status(409).json({ message: '이미 존재하는 카테고리입니다.' });
+                case 'parent_not_found':
+                    return res.status(400).json({ message: '상위 카테고리를 찾을 수 없습니다.' });
+                case 'parent_default':
+                    return res.status(400).json({ message: '기본 카테고리는 상위로 지정할 수 없습니다.' });
+                default:
+                    return res.status(400).json({ message: '카테고리 생성에 실패했습니다.' });
             }
         }
-        const order = getNextCategoryOrder(categories, normalizedParentId || null);
-        const next = await writeCategories([
-            ...categories,
-            {
-                id: randomUUID(),
-                name: normalized,
-                parentId: normalizedParentId || null,
-                order
-            }
-        ]);
-        res.status(201).json({ categories: next });
+
+        res.status(201).json({ categories: result.categories });
     } catch (error) {
         console.error('Failed to create category', error);
         res.status(500).json({ message: '카테고리 생성에 실패했습니다.' });
@@ -70,22 +49,18 @@ export const createCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
     try {
         const { name } = req.params;
-        const normalized = normalizeCategoryName(name);
-        if (!normalized) {
-            return res.status(400).json({ message: '카테고리 이름이 필요합니다.' });
+        // Logic moved to service, which supports ID or Name
+        const result = await removeCategory(name);
+
+        if (!result.removed) {
+            // If not removed, it might be not found or default
+            // The service currently returns { removed: false } for both "not found" and "default".
+            // We can infer or check explicitly if needed, but for now generic error 400 or 404.
+            // Looking at service: it returns removed: false if target not found OR if target is default.
+            // We can assume user tried to delete default or invalid category.
+            return res.status(400).json({ message: '카테고리를 삭제할 수 없습니다. (기본 카테고리거나 존재하지 않음)' });
         }
-        const categories = await readCategories();
-        const key = normalizeCategoryKey(normalized);
-        const target =
-            categories.find(category => category.id === normalized) ??
-            categories.find(category => normalizeCategoryKey(category.name) === key);
-        if (!target) {
-            return res.status(404).json({ message: '카테고리를 찾을 수 없습니다.' });
-        }
-        if (normalizeCategoryKey(target.name) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-            return res.status(400).json({ message: '기본 카테고리는 삭제할 수 없습니다.' });
-        }
-        const result = await removeCategoryByName(target.id);
+
         res.json({
             categories: result.categories,
             reassignedCount: result.reassignedCount,
@@ -100,80 +75,35 @@ export const deleteCategory = async (req, res) => {
 export const reorderCategories = async (req, res) => {
     try {
         const { parentId, orderedIds } = req.body ?? {};
-        if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
-            return res.status(400).json({ message: '정렬할 카테고리 목록이 필요합니다.' });
+        const result = await reorderCategoriesService(parentId, orderedIds);
+
+        if (!result.updated) {
+            return res.status(400).json({ message: '카테고리 순서 변경 실패: ' + result.reason });
         }
-        const normalizedParentId = normalizeCategoryId(parentId);
-        const targetParentId = normalizedParentId || null;
-        const cleanedIds = orderedIds.map(item => normalizeCategoryId(item));
-        if (cleanedIds.some(id => !id)) {
-            return res
-                .status(400)
-                .json({ message: '유효하지 않은 카테고리 ID가 포함되어 있습니다.' });
-        }
-        const categories = await readCategories();
-        if (targetParentId && !categories.some(category => category.id === targetParentId)) {
-            return res.status(404).json({ message: '상위 카테고리를 찾을 수 없습니다.' });
-        }
-        const siblings = categories.filter(
-            category => (category.parentId ?? null) === targetParentId
-        );
-        if (siblings.length === 0) {
-            return res.status(400).json({ message: '정렬할 카테고리가 없습니다.' });
-        }
-        if (cleanedIds.length !== siblings.length) {
-            return res.status(400).json({ message: '정렬할 카테고리 목록이 일치하지 않습니다.' });
-        }
-        const siblingIds = new Set(siblings.map(item => item.id));
-        const nextOrderMap = new Map();
-        for (let index = 0; index < cleanedIds.length; index += 1) {
-            const id = cleanedIds[index];
-            if (!siblingIds.has(id)) {
-                return res
-                    .status(400)
-                    .json({ message: '정렬할 카테고리 목록이 올바르지 않습니다.' });
-            }
-            if (nextOrderMap.has(id)) {
-                return res
-                    .status(400)
-                    .json({ message: '정렬할 카테고리가 중복되었습니다.' });
-            }
-            nextOrderMap.set(id, index);
-        }
-        if (nextOrderMap.size !== siblings.length) {
-            return res.status(400).json({ message: '정렬할 카테고리 목록이 올바르지 않습니다.' });
-        }
-        const next = categories.map(category => {
-            if (!nextOrderMap.has(category.id)) return category;
-            return { ...category, order: nextOrderMap.get(category.id) };
-        });
-        const saved = await writeCategories(next);
-        return res.json({ categories: saved });
+
+        return res.json({ categories: result.categories });
     } catch (error) {
         console.error('Failed to reorder categories', error);
         return res.status(500).json({ message: '카테고리 순서 변경에 실패했습니다.' });
     }
 };
 
-export const updateCategory = async (req, res) => {
+export const updateCategoryController = async (req, res) => {
     try {
         const { id } = req.params;
-        const normalizedId = normalizeCategoryId(id);
-        if (!normalizedId) {
-            return res.status(400).json({ message: '카테고리 ID가 필요합니다.' });
-        }
         const { name, parentId } = req.body ?? {};
+
+        // Filter updates
         const updates = {};
-        if (name !== undefined) {
-            updates.name = name;
-        }
-        if (parentId !== undefined) {
-            updates.parentId = parentId;
-        }
+        if (name !== undefined) updates.name = name;
+        if (parentId !== undefined) updates.parentId = parentId;
+
         if (Object.keys(updates).length === 0) {
             return res.status(400).json({ message: '업데이트할 값이 없습니다.' });
         }
-        const result = await updateCategoryById(normalizedId, updates);
+
+        const result = await updateCategory(id, updates);
+
         if (!result.updated) {
             switch (result.reason) {
                 case 'not_found':
@@ -192,9 +122,10 @@ export const updateCategory = async (req, res) => {
                 case 'cycle':
                     return res.status(400).json({ message: '상위 카테고리를 다시 선택하세요.' });
                 default:
-                    return res.status(400).json({ message: '카테고리 업데이트에 실패했습니다.' });
+                    return res.status(400).json({ message: '카테고리 수정에 실패했습니다.' });
             }
         }
+
         return res.json({
             categories: result.categories,
             reassignedCount: result.reassignedCount,
@@ -206,3 +137,6 @@ export const updateCategory = async (req, res) => {
         res.status(500).json({ message: '카테고리 수정에 실패했습니다.' });
     }
 };
+
+// Map exported names to match routes if necessary
+export { createCategoryController as createCategory, updateCategoryController as updateCategory };
