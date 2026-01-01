@@ -20,7 +20,7 @@ export const FeaturedSection = ({ posts }: FeaturedSectionProps) => {
                     {posts.length}편
                 </span>
             </div>
-            <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post, index) => (
                     <PostCard key={post.id} post={post} variant="featured" index={index} />
                 ))}
