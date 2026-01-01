@@ -13,23 +13,110 @@ import {
  * Add a category if it doesn't exist.
  * Used mainly for initialization or simple addition.
  */
-export async function addCategoryIfMissing(categoryName) {
-    const name = normalizeCategoryName(categoryName);
-    if (!name) return readCategories();
-
-    const key = normalizeCategoryKey(name);
-    const categories = await readCategories();
-
-    if (categories.some(item => normalizeCategoryKey(item.name) === key)) {
-        return categories;
+/**
+ * Create a new category.
+ * Returns { categories, created: boolean, reason: string, category: object }.
+ */
+export async function createCategory(name, parentId) {
+    const normalized = normalizeCategoryName(name);
+    if (!normalized) {
+        return { created: false, reason: 'name_required' };
     }
 
-    const order = getNextCategoryOrder(categories, null);
-    const newItem = { id: randomUUID(), name, parentId: null, order };
-    const nextCategories = [...categories, newItem];
+    if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
+        return { created: false, reason: 'duplicate' }; // Default exists
+    }
 
-    return writeCategories(nextCategories);
+    const categories = await readCategories();
+    const exists = categories.some(
+        category => normalizeCategoryKey(category.name) === normalizeCategoryKey(normalized)
+    );
+    if (exists) {
+        return { created: false, reason: 'duplicate' };
+    }
+
+    const normalizedParentId = normalizeCategoryId(parentId);
+    if (normalizedParentId) {
+        const parent = categories.find(category => category.id === normalizedParentId);
+        if (!parent) {
+            return { created: false, reason: 'parent_not_found' };
+        }
+        if (normalizeCategoryKey(parent.name) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
+            return { created: false, reason: 'parent_default' };
+        }
+    }
+
+    const order = getNextCategoryOrder(categories, normalizedParentId || null);
+    const newCategory = {
+        id: randomUUID(),
+        name: normalized,
+        parentId: normalizedParentId || null,
+        order
+    };
+
+    const nextCategories = [...categories, newCategory];
+    await writeCategories(nextCategories);
+
+    return { categories: nextCategories, created: true, category: newCategory };
 }
+
+/**
+ * Reorder categories.
+ * Validates logical consistency of the order map.
+ */
+export async function reorderCategories(parentId, orderedIds) {
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+        return { updated: false, reason: 'invalid_list' };
+    }
+
+    const normalizedParentId = normalizeCategoryId(parentId);
+    const targetParentId = normalizedParentId || null;
+    const cleanedIds = orderedIds.map(item => normalizeCategoryId(item));
+
+    if (cleanedIds.some(id => !id)) {
+        return { updated: false, reason: 'invalid_id' };
+    }
+
+    const categories = await readCategories();
+    if (targetParentId && !categories.some(category => category.id === targetParentId)) {
+        return { updated: false, reason: 'parent_not_found' };
+    }
+
+    const siblings = categories.filter(
+        category => (category.parentId ?? null) === targetParentId
+    );
+
+    if (siblings.length === 0) return { updated: false, reason: 'no_siblings' };
+    if (cleanedIds.length !== siblings.length) return { updated: false, reason: 'list_mismatch' };
+
+    const siblingIds = new Set(siblings.map(item => item.id));
+    const nextOrderMap = new Map();
+
+    for (let index = 0; index < cleanedIds.length; index += 1) {
+        const id = cleanedIds[index];
+        if (!siblingIds.has(id)) return { updated: false, reason: 'invalid_list_content' };
+        if (nextOrderMap.has(id)) return { updated: false, reason: 'duplicate_in_list' };
+        nextOrderMap.set(id, index);
+    }
+
+    const nextCategories = categories.map(category => {
+        if (!nextOrderMap.has(category.id)) return category;
+        return { ...category, order: nextOrderMap.get(category.id) };
+    });
+
+    const saved = await writeCategories(nextCategories);
+    return { updated: true, categories: saved };
+}
+
+/**
+ * Add a category if it doesn't exist (Legacy/Init mostly).
+ * Wraps createCategory for compatibility if needed, or just remains independent.
+ * Note: db.js initialization logic might need this? 
+ * Actually, db.js calls ensureCategoriesFile in Model, which doesn't use this.
+ * We'll keep it as a simple wrapper or just export createCategory.
+ * But to be safe, let's just REPLACE it with createCategory as planned, 
+ * since nothing else seems to import addCategoryIfMissing based on grep.
+ */
 
 /**
  * Remove a category by its ID (preferred) or Name (legacy support).
