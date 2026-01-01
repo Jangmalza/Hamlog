@@ -1,6 +1,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { randomUUID } from 'crypto';
+import sharp from 'sharp';
 import { uploadDir } from '../config/paths.js';
 import { parseDataUrl, allowedImageTypes } from '../utils/normalizers.js';
 
@@ -29,8 +30,15 @@ export const uploadImage = async (req, res) => {
         }
 
         await mkdir(uploadDir, { recursive: true });
-        const filename = `upload-${Date.now()}-${randomUUID()}.${extension}`;
-        await writeFile(path.join(uploadDir, filename), parsed.buffer);
+
+        // Image Optimization
+        const filename = `upload-${Date.now()}-${randomUUID()}.webp`;
+        const optimizedBuffer = await sharp(parsed.buffer)
+            .resize({ width: 1200, withoutEnlargement: true }) // Limit width to 1200px
+            .webp({ quality: 80 }) // Convert to WebP with 80% quality
+            .toBuffer();
+
+        await writeFile(path.join(uploadDir, filename), optimizedBuffer);
 
         res.status(201).json({
             url: `/uploads/${filename}`,
