@@ -7,7 +7,7 @@ export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewPro
     const handleResize = (newWidth: string) => {
         updateAttributes({
             width: newWidth,
-            style: { ...style, width: newWidth }
+            style: `width: ${newWidth}`
         });
     };
 
