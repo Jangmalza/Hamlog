@@ -12,6 +12,7 @@ export const getComments = async (req, res) => {
         }
         const comments = await getCommentsByPostId(postId);
         // Exclude password from response
+        // eslint-disable-next-line no-unused-vars
         const safeComments = comments.map(({ password, ...rest }) => rest);
         res.json({ comments: safeComments });
     } catch (error) {
@@ -27,6 +28,7 @@ export const createComment = async (req, res) => {
             return res.status(400).json({ message: 'All fields are required.' });
         }
         const newComment = await createCommentModel({ postId, author, password, content });
+        // eslint-disable-next-line no-unused-vars
         const { password: _, ...safeComment } = newComment;
         res.status(201).json({ comment: safeComment });
     } catch (error) {

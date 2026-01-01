@@ -3,6 +3,7 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import pluginImport from 'eslint-plugin-import'
 import { globalIgnores } from 'eslint/config'
 
 export default tseslint.config([
@@ -20,4 +21,31 @@ export default tseslint.config([
       globals: globals.browser,
     },
   },
+  {
+    files: ['server/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: globals.node,
+    },
+    plugins: {
+      import: pluginImport,
+    },
+    rules: {
+      'no-unused-vars': 'warn',
+      'no-undef': 'error',
+      'import/named': 'error',
+      'import/namespace': 'error',
+      'import/default': 'error',
+      'import/export': 'error',
+    },
+    settings: {
+      'import/resolver': {
+        node: {
+          extensions: ['.js']
+        }
+      }
+    }
+  }
 ])
