@@ -24,13 +24,13 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
     const toggleCategory = (id: string) => {
         setExpandedCategories(prev => {
             const current = prev[id];
-            return { ...prev, [id]: current === undefined ? false : !current };
+            return { ...prev, [id]: current === undefined ? true : !current };
         });
     };
 
     const renderCategoryNode = (node: CategoryNode, depth: number) => {
         const hasChildren = node.children.length > 0;
-        const isExpanded = expandedCategories[node.id] ?? true;
+        const isExpanded = expandedCategories[node.id] ?? false;
         const isActive =
             selectedCategory &&
             normalizeCategoryKey(selectedCategory) === normalizeCategoryKey(node.name);
