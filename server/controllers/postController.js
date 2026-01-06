@@ -1,12 +1,14 @@
-import { randomUUID } from 'crypto';
-import { readPosts, writePosts } from '../models/postModel.js';
-import { createCategory } from '../services/categoryService.js';
-import { normalizePostData } from '../utils/postHelpers.js';
+import {
+    getAllPostsService,
+    createPostService,
+    updatePostService,
+    deletePostService
+} from '../services/postService.js';
 
 export const getPosts = async (req, res) => {
     try {
-        const posts = await readPosts();
-        res.json({ posts, total: posts.length });
+        const result = await getAllPostsService();
+        res.json({ posts: result.data, total: result.data.length });
     } catch (error) {
         console.error('Failed to fetch posts', error);
         res.status(500).json({ message: '포스트를 불러오지 못했습니다.' });
@@ -15,33 +17,16 @@ export const getPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        // 1. Normalize & Validate Input
-        const { error, data } = normalizePostData(req.body);
+        const result = await createPostService(req.body);
 
-        if (error) {
-            return res.status(400).json({ message: error });
+        if (!result.success) {
+            const status = result.code === 'validation_error' ? 400
+                : result.code === 'duplicate_slug' ? 409
+                    : 500;
+            return res.status(status).json({ message: result.error });
         }
 
-        // 2. Check Slug Uniqueness
-        const allPosts = await readPosts();
-        if (allPosts.some(post => post.slug === data.slug)) {
-            return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
-        }
-
-        // 3. Side Effects (Category)
-        // Ensure category exists using the Service
-        await createCategory(data.category);
-
-        // 4. Create New Post
-        const newPost = {
-            id: `post-${randomUUID()}`,
-            ...data
-        };
-
-        const next = [newPost, ...allPosts];
-        await writePosts(next);
-
-        res.status(201).json(newPost);
+        res.status(201).json(result.data);
     } catch (error) {
         console.error('Failed to create post', error);
         res.status(500).json({ message: '포스트 생성에 실패했습니다.' });
@@ -51,42 +36,17 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
     try {
         const { id } = req.params;
-        const allPosts = await readPosts();
-        const index = allPosts.findIndex(post => post.id === id);
+        const result = await updatePostService(id, req.body);
 
-        if (index === -1) {
-            return res.status(404).json({ message: '포스트를 찾을 수 없습니다.' });
+        if (!result.success) {
+            const status = result.code === 'not_found' ? 404
+                : result.code === 'validation_error' ? 400
+                    : result.code === 'duplicate_slug' ? 409
+                        : 500;
+            return res.status(status).json({ message: result.error });
         }
 
-        const existing = allPosts[index];
-
-        // 1. Normalize & Validate Input (merging with existing)
-        const { error, data } = normalizePostData(req.body, existing);
-
-        if (error) {
-            return res.status(400).json({ message: error });
-        }
-
-        // 2. Check Slug Uniqueness (if changed)
-        if (data.slug !== existing.slug) {
-            if (allPosts.some(post => post.slug === data.slug && post.id !== id)) {
-                return res.status(409).json({ message: '슬러그가 이미 존재합니다.' });
-            }
-        }
-
-        // 3. Side Effects (Category)
-        await createCategory(data.category);
-
-        // 4. Update Post
-        const updatedPost = {
-            ...existing,
-            ...data
-        };
-
-        allPosts[index] = updatedPost;
-        await writePosts(allPosts);
-
-        res.json(updatedPost);
+        res.json(result.data);
     } catch (error) {
         console.error('Failed to update post', error);
         res.status(500).json({ message: '포스트 수정에 실패했습니다.' });
@@ -96,14 +56,12 @@ export const updatePost = async (req, res) => {
 export const deletePost = async (req, res) => {
     try {
         const { id } = req.params;
-        const allPosts = await readPosts();
-        const next = allPosts.filter(post => post.id !== id);
+        const result = await deletePostService(id);
 
-        if (next.length === allPosts.length) {
-            return res.status(404).json({ message: '포스트를 찾을 수 없습니다.' });
+        if (!result.success) {
+            return res.status(404).json({ message: result.error });
         }
 
-        await writePosts(next);
         res.status(204).send();
     } catch (error) {
         console.error('Failed to delete post', error);
