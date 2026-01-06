@@ -15,7 +15,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
 
   if (variant === 'featured') {
     return (
-      <article
+      <Link
+        to={`/posts/${post.slug}`}
         className="group flex h-full flex-col gap-3 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-strong)] animate-slide-up"
         style={{ animationDelay: delay }}
       >
@@ -53,20 +54,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
               </span>
             ))}
           </div>
-          <Link
-            to={`/posts/${post.slug}`}
+          <span
             className="group/link mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent-strong)]"
           >
             Read
             <span aria-hidden="true" className="transition-transform group-hover/link:translate-x-1">&rarr;</span>
-          </Link>
+          </span>
         </div>
-      </article>
+      </Link>
     );
   }
 
   return (
-    <article
+    <Link
+      to={`/posts/${post.slug}`}
       className="group flex flex-col gap-4 rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow)] animate-slide-up"
       style={{ animationDelay: delay }}
     >
@@ -104,16 +105,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
                 #{tag}
               </span>
             ))}
-            <Link
-              to={`/posts/${post.slug}`}
+            <span
               className="ml-auto text-xs font-medium uppercase tracking-[0.2em] text-[var(--accent-strong)]"
             >
               읽기
-            </Link>
+            </span>
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 };
 
