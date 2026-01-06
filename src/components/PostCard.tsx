@@ -33,35 +33,33 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
             </span>
           </div>
         )}
-        <div className="flex flex-1 flex-col space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
-            {meta}
-          </p>
-          <h3 className="font-display text-lg font-bold text-[var(--text)] leading-snug">
-            {post.title}
-          </h3>
-          <p className="text-xs text-[var(--text-muted)] line-clamp-2">{post.summary}</p>
-          <div className="mt-auto pt-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-strong)]">
-                {post.category ?? '미분류'}
-              </span>
-              {post.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-            <span
-              className="group/link mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent-strong)]"
-            >
-              Read
-              <span aria-hidden="true" className="transition-transform group-hover/link:translate-x-1">&rarr;</span>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          {meta}
+        </p>
+        <h3 className="font-display text-lg font-bold text-[var(--text)] leading-snug">
+          {post.title}
+        </h3>
+        <p className="text-xs text-[var(--text-muted)] line-clamp-2">{post.summary}</p>
+        <div className="mt-auto">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-strong)]">
+              {post.category ?? '미분류'}
             </span>
+            {post.tags.map(tag => (
+              <span
+                key={tag}
+                className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]"
+              >
+                #{tag}
+              </span>
+            ))}
           </div>
+          <span
+            className="group/link mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent-strong)]"
+          >
+            Read
+            <span aria-hidden="true" className="transition-transform group-hover/link:translate-x-1">&rarr;</span>
+          </span>
         </div>
       </Link>
     );
