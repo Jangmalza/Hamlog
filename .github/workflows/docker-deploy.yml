@@ -66,6 +66,8 @@ jobs:
           docker pull $IMAGE_TAG
           
           # Stop old container if exists
+          # Force remove any container binding port 4000 to prevent conflicts
+          docker ps -q --filter "publish=4000" | xargs -r docker rm -f || true
           docker stop hamlog || true
           docker rm hamlog || true
           
