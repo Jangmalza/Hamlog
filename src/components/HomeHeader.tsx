@@ -1,4 +1,4 @@
-import { Sun, Moon, Github, Linkedin, Mail } from 'lucide-react';
+import { Sun, Moon, Github, Linkedin, Mail, Twitter, Instagram, AtSign, Send } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import type { SiteMeta } from '../types/blog';
 
@@ -125,6 +125,50 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                     aria-label="LinkedIn"
                                 >
                                     <Linkedin size={18} />
+                                </a>
+                            )}
+                            {profile.social.twitter && (
+                                <a
+                                    href={profile.social.twitter}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="Twitter"
+                                >
+                                    <Twitter size={18} />
+                                </a>
+                            )}
+                            {profile.social.instagram && (
+                                <a
+                                    href={profile.social.instagram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="Instagram"
+                                >
+                                    <Instagram size={18} />
+                                </a>
+                            )}
+                            {profile.social.threads && (
+                                <a
+                                    href={profile.social.threads}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="Threads"
+                                >
+                                    <AtSign size={18} />
+                                </a>
+                            )}
+                            {profile.social.telegram && (
+                                <a
+                                    href={profile.social.telegram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                    aria-label="Telegram"
+                                >
+                                    <Send size={18} />
                                 </a>
                             )}
                             {profile.email && (

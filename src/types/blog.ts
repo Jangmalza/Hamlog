@@ -13,6 +13,8 @@ export interface SiteMeta {
         linkedin?: string;
         twitter?: string;
         instagram?: string;
+        threads?: string;
+        telegram?: string;
     };
     stack: string[];
     now: string;

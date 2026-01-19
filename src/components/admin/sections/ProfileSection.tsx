@@ -223,6 +223,24 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
               className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
             />
           </label>
+          <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            Threads
+            <input
+              value={profileDraft.social.threads ?? ''}
+              onChange={(event) => onProfileSocialChange('threads', event.target.value)}
+              placeholder="https://threads.net/..."
+              className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
+            />
+          </label>
+          <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            Telegram
+            <input
+              value={profileDraft.social.telegram ?? ''}
+              onChange={(event) => onProfileSocialChange('telegram', event.target.value)}
+              placeholder="https://t.me/..."
+              className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
+            />
+          </label>
         </div>
       )}
 
