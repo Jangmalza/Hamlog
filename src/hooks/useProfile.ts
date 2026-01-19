@@ -16,7 +16,9 @@ const normalizeProfileDraft = (profile: SiteMeta): SiteMeta => ({
     github: profile.social?.github ?? '',
     linkedin: profile.social?.linkedin ?? '',
     twitter: profile.social?.twitter ?? '',
-    instagram: profile.social?.instagram ?? ''
+    instagram: profile.social?.instagram ?? '',
+    threads: profile.social?.threads ?? '',
+    telegram: profile.social?.telegram ?? ''
   }
 });
 
@@ -99,7 +101,9 @@ export const useProfile = () => {
           github: profileDraft.social.github?.trim() ?? '',
           linkedin: profileDraft.social.linkedin?.trim() ?? '',
           twitter: profileDraft.social.twitter?.trim() ?? '',
-          instagram: profileDraft.social.instagram?.trim() ?? ''
+          instagram: profileDraft.social.instagram?.trim() ?? '',
+          threads: profileDraft.social.threads?.trim() ?? '',
+          telegram: profileDraft.social.telegram?.trim() ?? ''
         }
       };
       const saved = await updateProfile(payload);
