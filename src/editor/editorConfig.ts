@@ -1,0 +1,71 @@
+import StarterKit from '@tiptap/starter-kit';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import Color from '@tiptap/extension-color';
+import FontFamily from '@tiptap/extension-font-family';
+import Highlight from '@tiptap/extension-highlight';
+import Underline from '@tiptap/extension-underline';
+import LinkExtension from '@tiptap/extension-link';
+import Youtube from '@tiptap/extension-youtube';
+import Placeholder from '@tiptap/extension-placeholder';
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
+import TextStyle from '@tiptap/extension-text-style';
+import TextAlign from '@tiptap/extension-text-align';
+import Typography from '@tiptap/extension-typography';
+import { createLowlight, common } from 'lowlight';
+
+// Relative imports adjusted for src/editor/editorConfig.ts
+// Assuming this file is in src/editor/
+import { SlashCommand, getSuggestionItems, renderItems } from './extensions/slashCommand';
+import { FontSize } from './extensions/fontSize';
+import { MathExtension } from '../components/editor/extensions/MathExtension';
+import { ImageGallery } from '../components/editor/extensions/ImageGallery';
+import { LinkCard } from './extensions/LinkCard';
+import { CustomImage } from './extensions/CustomImage';
+
+const lowlight = createLowlight(common);
+
+export const getEditorExtensions = () => [
+    StarterKit.configure({
+        heading: {
+            levels: [1, 2, 3]
+        },
+        codeBlock: false
+    }),
+    CodeBlockLowlight.configure({ lowlight }),
+    TextStyle,
+    Color,
+    Highlight.configure({ multicolor: true }),
+    FontFamily,
+    FontSize,
+    Underline,
+    LinkExtension.configure({
+        openOnClick: false
+    }),
+    CustomImage,
+    Placeholder.configure({
+        placeholder: '내용을 입력하세요...'
+    }),
+    TextAlign.configure({
+        types: ['heading', 'paragraph']
+    }),
+    Table.configure({ resizable: true }),
+    TableRow,
+    TableHeader,
+    TableCell,
+    SlashCommand.configure({
+        suggestion: {
+            items: getSuggestionItems,
+            render: renderItems,
+        },
+    }),
+    MathExtension,
+    Typography,
+    ImageGallery,
+    Youtube.configure({
+        controls: false,
+    }),
+    LinkCard
+];
