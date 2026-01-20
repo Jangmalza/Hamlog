@@ -1,10 +1,45 @@
 import React from 'react';
 import { BubbleMenu } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
+import {
+    ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+    Trash2, Merge, Split, PanelTop, X
+} from 'lucide-react';
 
 interface TableBubbleMenuProps {
     editor: Editor | null;
 }
+
+const MenuButton = ({
+    onClick,
+    icon,
+    label,
+    active = false,
+    disabled = false,
+    danger = false
+}: {
+    onClick: () => void;
+    icon: React.ReactNode;
+    label: string;
+    active?: boolean;
+    disabled?: boolean;
+    danger?: boolean;
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        title={label}
+        className={`inline-flex items-center justify-center rounded-lg border p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${active
+                ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                : danger
+                    ? 'border-transparent text-red-500 hover:bg-red-50 hover:text-red-600'
+                    : 'border-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
+            }`}
+    >
+        {icon}
+    </button>
+);
 
 export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
     if (!editor) return null;
@@ -12,92 +47,85 @@ export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
     return (
         <BubbleMenu
             editor={editor}
-            tippyOptions={{ duration: 100, maxWidth: 600 }}
+            tippyOptions={{ duration: 100, maxWidth: 600, placement: 'top' }}
             shouldShow={({ editor }) => editor.isActive('table')}
-            className="flex flex-wrap gap-1 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-2 shadow-lg"
+            className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-200"
         >
-            {/* Rows */}
-            <div className="flex items-center gap-1 border-r border-[color:var(--border)] pr-2">
-                <button
+            {/* Row Operations */}
+            <div className="flex items-center gap-0.5">
+                <MenuButton
                     onClick={() => editor.chain().focus().addRowBefore().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="위에 행 추가"
-                >
-                    +Row↑
-                </button>
-                <button
+                    icon={<ArrowUp size={16} />}
+                    label="위에 행 추가"
+                />
+                <MenuButton
                     onClick={() => editor.chain().focus().addRowAfter().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="아래에 행 추가"
-                >
-                    +Row↓
-                </button>
-                <button
+                    icon={<ArrowDown size={16} />}
+                    label="아래에 행 추가"
+                />
+                <MenuButton
                     onClick={() => editor.chain().focus().deleteRow().run()}
-                    className="rounded p-1 text-xs text-red-500 hover:bg-red-50"
-                    title="행 삭제"
-                >
-                    Del Row
-                </button>
+                    icon={<Trash2 size={16} />}
+                    label="행 삭제"
+                    danger
+                />
             </div>
 
-            {/* Columns */}
-            <div className="flex items-center gap-1 border-r border-[color:var(--border)] pr-2">
-                <button
+            <div className="mx-1 h-4 w-px bg-[var(--border)]" />
+
+            {/* Column Operations */}
+            <div className="flex items-center gap-0.5">
+                <MenuButton
                     onClick={() => editor.chain().focus().addColumnBefore().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="왼쪽에 열 추가"
-                >
-                    +Col←
-                </button>
-                <button
+                    icon={<ArrowLeft size={16} />}
+                    label="왼쪽에 열 추가"
+                />
+                <MenuButton
                     onClick={() => editor.chain().focus().addColumnAfter().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="오른쪽에 열 추가"
-                >
-                    +Col→
-                </button>
-                <button
+                    icon={<ArrowRight size={16} />}
+                    label="오른쪽에 열 추가"
+                />
+                <MenuButton
                     onClick={() => editor.chain().focus().deleteColumn().run()}
-                    className="rounded p-1 text-xs text-red-500 hover:bg-red-50"
-                    title="열 삭제"
-                >
-                    Del Col
-                </button>
+                    icon={<Trash2 size={16} />}
+                    label="열 삭제"
+                    danger
+                />
             </div>
 
-            {/* Cells */}
-            <div className="flex items-center gap-1">
-                <button
+            <div className="mx-1 h-4 w-px bg-[var(--border)]" />
+
+            {/* Cell Operations */}
+            <div className="flex items-center gap-0.5">
+                <MenuButton
                     onClick={() => editor.chain().focus().mergeCells().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="셀 병합"
+                    icon={<Merge size={16} />}
+                    label="셀 병합"
                     disabled={!editor.can().mergeCells()}
-                >
-                    Merge
-                </button>
-                <button
+                />
+                <MenuButton
                     onClick={() => editor.chain().focus().splitCell().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="셀 분할"
+                    icon={<Split size={16} />}
+                    label="셀 분할"
                     disabled={!editor.can().splitCell()}
-                >
-                    Split
-                </button>
-                <button
+                />
+                <MenuButton
                     onClick={() => editor.chain().focus().toggleHeaderCell().run()}
-                    className="rounded p-1 text-xs hover:bg-[var(--surface-muted)]"
-                    title="헤더 토글"
-                >
-                    Header
-                </button>
-                <button
+                    icon={<PanelTop size={16} />}
+                    label="헤더 토글"
+                />
+            </div>
+
+            <div className="mx-1 h-4 w-px bg-[var(--border)]" />
+
+            {/* Table Operations */}
+            <div className="flex items-center gap-0.5">
+                <MenuButton
                     onClick={() => editor.chain().focus().deleteTable().run()}
-                    className="rounded p-1 text-xs font-bold text-red-600 hover:bg-red-50"
-                    title="표 삭제"
-                >
-                    Del Table
-                </button>
+                    icon={<X size={16} />}
+                    label="표 삭제"
+                    danger
+                />
             </div>
         </BubbleMenu>
     );
