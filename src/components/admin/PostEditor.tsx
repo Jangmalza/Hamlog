@@ -77,19 +77,12 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         fileInputRef,
         uploadingImage,
         uploadError,
-        imageWidthInput,
-        imageWidthError,
-        setImageWidthInput,
-        setImageWidthError,
         uploadImageToEditor,
         handleSelectionUpdate,
         handlePaste,
         handleDrop,
-        applyImageWidth,
-        clearImageWidth,
         handleToolbarImageUpload,
-        handleInsertImageUrl,
-        isImageSelected
+        handleInsertImageUrl
     } = useEditorImageControls({
         editorRef,
         maxUploadMb: MAX_UPLOAD_MB,
@@ -352,20 +345,11 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onInsertImageUrl={handleInsertImageUrl}
             uploadingImage={uploadingImage}
             uploadError={uploadError}
-            imageWidthInput={imageWidthInput}
-            imageWidthError={imageWidthError}
-            onImageWidthInputChange={(value) => {
-                setImageWidthInput(value);
-                setImageWidthError('');
-            }}
-            onApplyImageWidth={applyImageWidth}
-            onClearImageWidth={clearImageWidth}
             fileInputRef={fileInputRef}
             onImageUpload={(file) => void handleImageUpload(file)}
             onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
             onCoverUpload={handleCoverUpload}
             onSetCoverFromContent={handleSetCoverFromContent}
-            isImageSelected={isImageSelected}
         />
     );
 };

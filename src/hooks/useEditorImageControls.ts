@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import type { Editor } from '@tiptap/react';
-import { extractImageWidth, parseImageWidthInput } from '../utils/editorImage';
+
 
 interface UseEditorImageControlsProps {
   editorRef: MutableRefObject<Editor | null>;
@@ -16,8 +16,6 @@ export const useEditorImageControls = ({
 }: UseEditorImageControlsProps) => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [imageWidthInput, setImageWidthInput] = useState('');
-  const [imageWidthError, setImageWidthError] = useState('');
   const [isImageSelected, setIsImageSelected] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -63,13 +61,8 @@ export const useEditorImageControls = ({
     setIsImageSelected(active);
 
     if (!active) {
-      setImageWidthInput('');
-      setImageWidthError('');
       return;
     }
-    const attrs = editor.getAttributes('image') as Record<string, string>;
-    setImageWidthInput(extractImageWidth(attrs));
-    setImageWidthError('');
   }, []);
 
   const handlePaste = useCallback(
@@ -178,62 +171,7 @@ export const useEditorImageControls = ({
     [editorRef, getImageFileFromTransfer, uploadLocalImage]
   );
 
-  const applyImageWidth = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    if (!editor.isActive('image')) return;
-    const parsed = parseImageWidthInput(imageWidthInput);
-    if (parsed.kind === 'error') {
-      setImageWidthError(parsed.message);
-      return;
-    }
 
-    if (parsed.kind === 'clear') {
-      editor
-        .chain()
-        .focus()
-        .updateAttributes('image', {
-          dataWidth: null,
-          width: null,
-          style: null,
-          size: 'full'
-        })
-        .run();
-      setImageWidthInput('');
-      setImageWidthError('');
-      return;
-    }
-
-    editor
-      .chain()
-      .focus()
-      .updateAttributes('image', {
-        dataWidth: parsed.dataWidth,
-        width: parsed.widthAttr,
-        style: `width: ${parsed.cssValue};`,
-        size: 'custom'
-      })
-      .run();
-    setImageWidthInput(parsed.displayValue ?? parsed.cssValue);
-    setImageWidthError('');
-  }, [editorRef, imageWidthInput]);
-
-  const clearImageWidth = useCallback(() => {
-    setImageWidthInput('');
-    setImageWidthError('');
-    const editor = editorRef.current;
-    if (!editor || !editor.isActive('image')) return;
-    editor
-      .chain()
-      .focus()
-      .updateAttributes('image', {
-        dataWidth: null,
-        width: null,
-        style: null,
-        size: 'full'
-      })
-      .run();
-  }, [editorRef]);
 
   const handleToolbarImageUpload = useCallback(() => {
     fileInputRef.current?.click();
@@ -252,16 +190,10 @@ export const useEditorImageControls = ({
     fileInputRef,
     uploadingImage,
     uploadError,
-    imageWidthInput,
-    imageWidthError,
-    setImageWidthInput,
-    setImageWidthError,
     uploadImageToEditor,
     handleSelectionUpdate,
     handlePaste,
     handleDrop,
-    applyImageWidth,
-    clearImageWidth,
     handleToolbarImageUpload,
     handleInsertImageUrl,
     isImageSelected

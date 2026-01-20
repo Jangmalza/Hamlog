@@ -36,12 +36,7 @@ interface PostEditorSectionProps {
   onToolbarImageUpload: () => void;
   onInsertImageUrl: () => void;
   uploadingImage: boolean;
-  uploadError: string;
-  imageWidthInput: string;
-  imageWidthError: string;
-  onImageWidthInputChange: (value: string) => void;
-  onApplyImageWidth: () => void;
-  onClearImageWidth: () => void;
+  uploadError: string | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onImageUpload: (file: File) => void;
   onNoticeClick?: () => void;
@@ -75,19 +70,12 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onInsertImageUrl,
   uploadingImage,
   uploadError,
-  imageWidthInput,
-  imageWidthError,
-  onImageWidthInputChange,
-  onApplyImageWidth,
-  onClearImageWidth,
   fileInputRef,
   onImageUpload,
   onNoticeClick,
   onCoverUpload,
-  onSetCoverFromContent,
-  isImageSelected
+  onSetCoverFromContent
 }) => {
-  const isImageActive = isImageSelected || (editor?.isActive('image') ?? false);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -175,48 +163,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           onSave={() => onSave('수동 저장되었습니다.')}
         />
 
-        {isImageActive && (
-          <div className="sticky top-[70px] z-10 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-xs text-[var(--text)] shadow-[var(--shadow)]">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-[var(--text-muted)]">
-                이미지 크기
-              </span>
-              <input
-                value={imageWidthInput}
-                onChange={(event) => onImageWidthInputChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    onApplyImageWidth();
-                  }
-                }}
-                placeholder="예: 640 또는 640px"
-                className="w-40 rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-xs text-[var(--text)]"
-              />
-              <button
-                type="button"
-                onClick={onApplyImageWidth}
-                className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[11px] font-semibold text-[var(--text)]"
-              >
-                적용
-              </button>
-              <button
-                type="button"
-                onClick={onClearImageWidth}
-                className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[11px] font-semibold text-[var(--text-muted)]"
-              >
-                초기화
-              </button>
-              <span className="text-[11px] text-[var(--text-muted)]">
-                px만 지원합니다. 숫자만 입력하면 px로 적용됩니다.
-              </span>
-            </div>
 
-            {imageWidthError && (
-              <p className="mt-2 text-xs text-red-500">{imageWidthError}</p>
-            )}
-          </div>
-        )}
 
         {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
 
