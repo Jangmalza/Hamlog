@@ -2,14 +2,6 @@ import { useCallback, useState } from 'react';
 import { fetchProfile, updateProfile } from '../api/profileApi';
 import type { SiteMeta } from '../data/blogData';
 
-const formatStackInput = (stack: string[]) => stack.join(', ');
-
-const parseStackInput = (value: string) =>
-  value
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-
 const normalizeProfileDraft = (profile: SiteMeta): SiteMeta => ({
   ...profile,
   social: {
@@ -19,12 +11,12 @@ const normalizeProfileDraft = (profile: SiteMeta): SiteMeta => ({
     instagram: profile.social?.instagram ?? '',
     threads: profile.social?.threads ?? '',
     telegram: profile.social?.telegram ?? ''
-  }
+  },
+  stack: profile.stack ?? []
 });
 
 export const useProfile = () => {
   const [profileDraft, setProfileDraft] = useState<SiteMeta | null>(null);
-  const [stackInput, setStackInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +30,6 @@ export const useProfile = () => {
       const profile = await fetchProfile();
       const normalized = normalizeProfileDraft(profile);
       setProfileDraft(normalized);
-      setStackInput(formatStackInput(normalized.stack));
     } catch (err) {
       const message =
         err instanceof Error && err.message
@@ -96,7 +87,7 @@ export const useProfile = () => {
         profileImage: profileDraft.profileImage.trim(),
         email: profileDraft.email.trim(),
         now: profileDraft.now.trim(),
-        stack: parseStackInput(stackInput),
+        stack: profileDraft.stack, // Use array directly
         social: {
           github: profileDraft.social.github?.trim() ?? '',
           linkedin: profileDraft.social.linkedin?.trim() ?? '',
@@ -109,7 +100,6 @@ export const useProfile = () => {
       const saved = await updateProfile(payload);
       const normalized = normalizeProfileDraft(saved);
       setProfileDraft(normalized);
-      setStackInput(formatStackInput(normalized.stack));
       setNotice('자기소개 정보가 저장되었습니다.');
     } catch (err) {
       const message =
@@ -118,13 +108,11 @@ export const useProfile = () => {
     } finally {
       setSaving(false);
     }
-  }, [profileDraft, saving, stackInput]);
+  }, [profileDraft, saving]);
 
   return {
     profileDraft,
     setProfileDraft,
-    stackInput,
-    setStackInput,
     loading,
     saving,
     error,

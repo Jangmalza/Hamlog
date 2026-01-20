@@ -1,38 +1,34 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import LoadingSpinner from '../../LoadingSpinner';
 import type { SiteMeta } from '../../../data/blogData';
 import { uploadLocalImage } from '../../../api/uploadApi';
-import { useState, useRef } from 'react';
+import { X } from 'lucide-react';
 
 interface ProfileSectionProps {
   profileDraft: SiteMeta | null;
-  stackInput: string;
   profileLoading: boolean;
   profileSaving: boolean;
   profileError: string;
   profileNotice: string;
   onProfileChange: <K extends keyof SiteMeta>(key: K, value: SiteMeta[K]) => void;
   onProfileSocialChange: (key: keyof SiteMeta['social'], value: string) => void;
-  onStackInputChange: (value: string) => void;
   onSave: () => void;
   onReload: () => void;
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({
   profileDraft,
-  stackInput,
   profileLoading,
   profileSaving,
   profileError,
   profileNotice,
   onProfileChange,
   onProfileSocialChange,
-  onStackInputChange,
   onSave,
   onReload
-
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [stackInputValue, setStackInputValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,11 +44,33 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
       alert('이미지 업로드에 실패했습니다.');
     } finally {
       setUploading(false);
-      // Reset input value to allow selecting the same file again
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  const handleStackKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!profileDraft) return;
+
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = stackInputValue.trim();
+      if (newTag && !profileDraft.stack.includes(newTag)) {
+        onProfileChange('stack', [...(profileDraft.stack || []), newTag]);
+        setStackInputValue('');
+      }
+    } else if (e.key === 'Backspace' && !stackInputValue && profileDraft.stack.length > 0) {
+      const newStack = [...profileDraft.stack];
+      newStack.pop();
+      onProfileChange('stack', newStack);
+    }
+  };
+
+  const removeStackTag = (tagToRemove: string) => {
+    if (!profileDraft) return;
+    const newStack = profileDraft.stack.filter(tag => tag !== tagToRemove);
+    onProfileChange('stack', newStack);
   };
 
   return (
@@ -177,15 +195,27 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
           </label>
           <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] md:col-span-2">
             기술 스택
-            <input
-              value={stackInput}
-              onChange={(event) => onStackInputChange(event.target.value)}
-              placeholder="React, TypeScript, Vite"
-              className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
-            />
-            <span className="mt-2 block text-[11px] text-[var(--text-muted)]">
-              쉼표로 구분해서 입력하세요.
-            </span>
+            <div className="mt-2 flex w-full flex-wrap items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] focus-within:ring-2 focus-within:ring-[var(--accent)]">
+              {profileDraft.stack?.map(tag => (
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-[var(--surface)] px-2 py-0.5 text-xs font-medium text-[var(--text)] shadow-sm">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeStackTag(tag)}
+                    className="rounded-full p-0.5 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-red-500"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              <input
+                value={stackInputValue}
+                onChange={(e) => setStackInputValue(e.target.value)}
+                onKeyDown={handleStackKeyDown}
+                placeholder={profileDraft.stack?.length ? "" : "React, TypeScript..."}
+                className="flex-1 bg-transparent outline-none min-w-[120px]"
+              />
+            </div>
           </label>
           <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
             GitHub
@@ -264,8 +294,6 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
       </div>
     </div>
   );
-
 };
-
 
 export default ProfileSection;

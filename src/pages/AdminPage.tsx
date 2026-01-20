@@ -78,7 +78,6 @@ const AdminPage: React.FC = () => {
   // Profile Management
   const {
     profileDraft,
-    stackInput,
     loading: profileLoading,
     saving: profileSaving,
     error: profileError,
@@ -86,8 +85,7 @@ const AdminPage: React.FC = () => {
     loadProfile,
     saveProfile,
     updateProfileField,
-    updateProfileSocial,
-    setStackInput
+    updateProfileSocial
   } = useProfile();
 
   // Initial Data Load
@@ -217,14 +215,12 @@ const AdminPage: React.FC = () => {
           {activeSection === 'profile' && (
             <ProfileSection
               profileDraft={profileDraft}
-              stackInput={stackInput}
               profileLoading={profileLoading}
               profileSaving={profileSaving}
               profileError={profileError}
               profileNotice={profileNotice}
               onProfileChange={updateProfileField}
               onProfileSocialChange={updateProfileSocial}
-              onStackInputChange={(value) => setStackInput(value)}
               onSave={() => void saveProfile()}
               onReload={() => void loadProfile()}
             />
