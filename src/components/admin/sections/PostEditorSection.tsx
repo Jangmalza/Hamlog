@@ -86,7 +86,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onSetCoverFromContent,
   isImageSelected
 }) => {
-  const isImageActive = isImageSelected ?? (editor?.isActive('image') ?? false);
+  const isImageActive = isImageSelected || (editor?.isActive('image') ?? false);
 
   return (
     <div className="mx-auto max-w-5xl">

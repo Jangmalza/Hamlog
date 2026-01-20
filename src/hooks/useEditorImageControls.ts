@@ -56,7 +56,10 @@ export const useEditorImageControls = ({
   );
 
   const handleSelectionUpdate = useCallback((editor: Editor) => {
-    const active = editor.isActive('image');
+    const { selection } = editor.state;
+    // Check both standard isActive and explicit NodeSelection for 'image' type
+    const active = editor.isActive('image') || ((selection as any).node?.type.name === 'image');
+
     setIsImageSelected(active);
 
     if (!active) {
