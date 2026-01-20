@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Editor } from '@tiptap/react';
+import {
+    Bold, Italic, Underline, Strikethrough, Code, Highlighter,
+    AlignLeft, AlignCenter, AlignRight, AlignJustify,
+    List, ListOrdered, Quote, Code2, Minus,
+    Link as LinkIcon, Image as ImageIcon, Table as TableIcon,
+    Undo, Redo, Save, Eye, Edit2, ChevronDown, Check,
+    Palette, Ban
+} from 'lucide-react';
 import {
     CODE_LANGUAGES,
     FONT_FAMILIES,
@@ -8,12 +16,16 @@ import {
     HIGHLIGHT_COLORS
 } from '../../utils/editorConstants';
 
+// --- Sub Components ---
+
 interface ToolbarButtonProps {
     label: string;
     onClick: () => void;
     active?: boolean;
     disabled?: boolean;
+    icon?: React.ReactNode;
     children?: React.ReactNode;
+    className?: string;
 }
 
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({
@@ -21,28 +33,93 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
     onClick,
     active,
     disabled,
-    children
+    icon,
+    children,
+    className
 }) => (
     <button
         type="button"
         onClick={onClick}
         disabled={disabled}
         title={label}
-        aria-label={label}
-        className={`inline-flex items-center justify-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold transition ${active
-            ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-            : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)]'
-            } disabled:cursor-not-allowed disabled:opacity-60`}
+        className={`inline-flex items-center justify-center rounded-lg border p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${active
+            ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+            : 'border-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
+            } ${className || ''}`}
     >
-        {children ?? label}
+        {icon}
+        {children}
     </button>
 );
 
-const ToolbarGroup: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="flex flex-wrap items-center gap-1">{children}</div>
-);
+interface ToolbarDropdownProps {
+    label: string;
+    value: string;
+    options: { value: string; label: string }[];
+    onSelect: (value: string) => void;
+    width?: string;
+    disabled?: boolean;
+}
 
+const ToolbarDropdown: React.FC<ToolbarDropdownProps> = ({
+    label,
+    value,
+    options,
+    onSelect,
+    width = 'w-32',
+    disabled
+}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const currentLabel = options.find(opt => opt.value === value)?.label || label;
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <button
+                type="button"
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                disabled={disabled}
+                className={`flex items-center justify-between gap-2 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-2 py-1.5 text-xs font-medium text-[var(--text)] transition-colors hover:bg-[var(--surface-muted)] disabled:opacity-50 ${width}`}
+            >
+                <span className="truncate">{currentLabel}</span>
+                <ChevronDown size={14} className="opacity-50" />
+            </button>
+
+            {isOpen && (
+                <div className="absolute left-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-1 shadow-lg ring-1 ring-black/5 w-full min-w-[140px]">
+                    {options.map((option) => (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                                onSelect(option.value);
+                                setIsOpen(false);
+                            }}
+                            className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-[var(--surface-muted)] ${value === option.value ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)] font-semibold' : 'text-[var(--text)]'
+                                }`}
+                        >
+                            {option.label}
+                            {value === option.value && <Check size={12} />}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- Main Toolbar ---
 
 interface EditorToolbarProps {
     editor: Editor | null;
@@ -65,10 +142,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     uploadingImage,
     onSave
 }) => {
-    const [toolbarMenu, setToolbarMenu] = useState<
-        'color' | 'highlight' | 'table' | null
-    >(null);
+    const [toolbarMenu, setToolbarMenu] = useState<'color' | 'highlight' | 'table' | null>(null);
 
+    // -- Derived States --
     const headingValue = editor?.isActive('heading', { level: 1 })
         ? 'h1'
         : editor?.isActive('heading', { level: 2 })
@@ -77,484 +153,249 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 ? 'h3'
                 : 'paragraph';
 
-    const codeBlockLanguage =
-        (editor?.getAttributes('codeBlock') as { language?: string })?.language ??
-        'plaintext';
-
+    const codeBlockLanguage = (editor?.getAttributes('codeBlock') as { language?: string })?.language ?? 'plaintext';
     const isCodeBlockActive = editor?.isActive('codeBlock') ?? false;
-    const isTableActive = editor?.isActive('table') ?? false;
 
-    const fontFamilyValue =
-        (editor?.getAttributes('textStyle') as { fontFamily?: string })?.fontFamily ??
-        'default';
-    const fontSizeValue =
-        (editor?.getAttributes('textStyle') as { fontSize?: string })?.fontSize ?? 'default';
+    const fontFamilyValue = (editor?.getAttributes('textStyle') as { fontFamily?: string })?.fontFamily ?? 'default';
+    const fontSizeValue = (editor?.getAttributes('textStyle') as { fontSize?: string })?.fontSize ?? 'default';
 
-    const activeColor =
-        (editor?.getAttributes('textStyle') as { color?: string })?.color ?? '';
-    const activeHighlight =
-        (editor?.getAttributes('highlight') as { color?: string })?.color ?? '';
+    const activeColor = (editor?.getAttributes('textStyle') as { color?: string })?.color ?? '';
+    const activeHighlight = (editor?.getAttributes('highlight') as { color?: string })?.color ?? '';
 
-    const resolvedFontFamily = FONT_FAMILIES.some(item => item.value === fontFamilyValue)
-        ? fontFamilyValue
-        : 'default';
-    const resolvedFontSize = FONT_SIZES.some(item => item.value === fontSizeValue)
-        ? fontSizeValue
-        : 'default';
-
+    // -- Handlers --
     const toggleToolbarMenu = (menu: 'color' | 'highlight' | 'table') => {
         setToolbarMenu(prev => (prev === menu ? null : menu));
     };
 
-    const closeToolbarMenu = () => {
-        setToolbarMenu(null);
-    };
+    const closeToolbarMenu = () => setToolbarMenu(null);
+
+    const Divider = () => <div className="mx-1 h-5 w-px bg-[var(--border)]" />;
 
     return (
-        <div className="sticky top-0 z-10 mt-6 -mx-6 border-y border-[color:var(--border)] bg-[var(--surface)] px-6 py-2">
-            <div className="flex flex-wrap items-center gap-2">
-                <ToolbarGroup>
-                    <select
+        <div className="sticky top-0 z-10 mt-6 -mx-6 border-y border-[color:var(--border)] bg-[var(--surface)] px-4 py-2">
+            <div className="flex flex-wrap items-center gap-1">
+
+                {/* --- History --- */}
+                <div className="flex items-center gap-0.5">
+                    <ToolbarButton
+                        label="실행 취소"
+                        onClick={() => editor?.chain().focus().undo().run()}
+                        disabled={!editor}
+                        icon={<Undo size={16} />}
+                    />
+                    <ToolbarButton
+                        label="다시 실행"
+                        onClick={() => editor?.chain().focus().redo().run()}
+                        disabled={!editor}
+                        icon={<Redo size={16} />}
+                    />
+                </div>
+
+                <Divider />
+
+                {/* --- Typography --- */}
+                <div className="flex items-center gap-2">
+                    <ToolbarDropdown
+                        label="본문"
                         value={headingValue}
-                        onChange={(event) => {
-                            const value = event.target.value;
+                        width="w-24"
+                        options={[
+                            { value: 'paragraph', label: '본문' },
+                            { value: 'h1', label: '제목 1' },
+                            { value: 'h2', label: '제목 2' },
+                            { value: 'h3', label: '제목 3' },
+                        ]}
+                        onSelect={(val) => {
                             if (!editor) return;
-                            if (value === 'paragraph') {
-                                editor.chain().focus().setParagraph().run();
-                                return;
-                            }
-                            const level = Number(value.replace('h', '')) as 1 | 2 | 3;
-                            editor.chain().focus().toggleHeading({ level }).run();
+                            if (val === 'paragraph') editor.chain().focus().setParagraph().run();
+                            else editor.chain().focus().toggleHeading({ level: Number(val.replace('h', '')) as 1 | 2 | 3 }).run();
                         }}
-                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-xs text-[var(--text)]"
-                    >
-                        <option value="paragraph">본문</option>
-                        <option value="h1">제목 1</option>
-                        <option value="h2">제목 2</option>
-                        <option value="h3">제목 3</option>
-                    </select>
-                    <select
-                        value={resolvedFontFamily}
-                        onChange={(event) => {
-                            if (!editor) return;
-                            const value = event.target.value;
-                            if (value === 'default') {
-                                editor.chain().focus().unsetFontFamily().run();
-                                return;
-                            }
-                            editor.chain().focus().setFontFamily(value).run();
-                        }}
-                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-xs text-[var(--text)]"
-                    >
-                        {FONT_FAMILIES.map(font => (
-                            <option key={font.value} value={font.value}>
-                                {font.label}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={resolvedFontSize}
-                        onChange={(event) => {
-                            if (!editor) return;
-                            const value = event.target.value;
-                            if (value === 'default') {
-                                editor.chain().focus().unsetFontSize().run();
-                                return;
-                            }
-                            editor.chain().focus().setFontSize(value).run();
-                        }}
-                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-xs text-[var(--text)]"
-                    >
-                        {FONT_SIZES.map(size => (
-                            <option key={size.value} value={size.value}>
-                                {size.label}
-                            </option>
-                        ))}
-                    </select>
-                </ToolbarGroup>
+                        disabled={!editor}
+                    />
 
-                <div className="h-5 w-px bg-[var(--border)]" />
+                    <ToolbarDropdown
+                        label="글꼴"
+                        value={fontFamilyValue}
+                        width="w-28"
+                        options={FONT_FAMILIES}
+                        onSelect={(val) => {
+                            if (!editor) return;
+                            if (val === 'default') editor.chain().focus().unsetFontFamily().run();
+                            else editor.chain().focus().setFontFamily(val).run();
+                        }}
+                        disabled={!editor}
+                    />
 
-                <ToolbarGroup>
-                    <ToolbarButton
-                        label="굵게"
-                        onClick={() => editor?.chain().focus().toggleBold().run()}
-                        active={editor?.isActive('bold')}
+                    <ToolbarDropdown
+                        label="크기"
+                        value={fontSizeValue}
+                        width="w-20"
+                        options={FONT_SIZES}
+                        onSelect={(val) => {
+                            if (!editor) return;
+                            if (val === 'default') editor.chain().focus().unsetFontSize().run();
+                            else editor.chain().focus().setFontSize(val).run();
+                        }}
                         disabled={!editor}
-                    >
-                        <span className="font-bold">B</span>
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="기울임"
-                        onClick={() => editor?.chain().focus().toggleItalic().run()}
-                        active={editor?.isActive('italic')}
-                        disabled={!editor}
-                    >
-                        <span className="italic">I</span>
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="밑줄"
-                        onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                        active={editor?.isActive('underline')}
-                        disabled={!editor}
-                    >
-                        <span className="underline">U</span>
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="취소선"
-                        onClick={() => editor?.chain().focus().toggleStrike().run()}
-                        active={editor?.isActive('strike')}
-                        disabled={!editor}
-                    >
-                        <span className="line-through">S</span>
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="인라인 코드"
-                        onClick={() => editor?.chain().focus().toggleCode().run()}
-                        active={editor?.isActive('code')}
-                        disabled={!editor}
-                    >
-                        {'</>'}
-                    </ToolbarButton>
+                    />
+                </div>
+
+                <Divider />
+
+                {/* --- Formatting --- */}
+                <div className="flex items-center gap-0.5">
+                    <ToolbarButton label="굵게" onClick={() => editor?.chain().focus().toggleBold().run()} active={editor?.isActive('bold')} disabled={!editor} icon={<Bold size={16} />} />
+                    <ToolbarButton label="기울임" onClick={() => editor?.chain().focus().toggleItalic().run()} active={editor?.isActive('italic')} disabled={!editor} icon={<Italic size={16} />} />
+                    <ToolbarButton label="밑줄" onClick={() => editor?.chain().focus().toggleUnderline().run()} active={editor?.isActive('underline')} disabled={!editor} icon={<Underline size={16} />} />
+                    <ToolbarButton label="취소선" onClick={() => editor?.chain().focus().toggleStrike().run()} active={editor?.isActive('strike')} disabled={!editor} icon={<Strikethrough size={16} />} />
+                    <ToolbarButton label="인라인 코드" onClick={() => editor?.chain().focus().toggleCode().run()} active={editor?.isActive('code')} disabled={!editor} icon={<Code size={16} />} />
+
+                    {/* Text Color */}
                     <div className="relative">
-                        <ToolbarButton
-                            label="글자색"
-                            onClick={() => toggleToolbarMenu('color')}
-                            active={Boolean(activeColor)}
-                            disabled={!editor}
-                        >
-                            <span className="text-xs font-semibold">A</span>
-                            <span
-                                className="h-1 w-3 rounded-full"
-                                style={{ backgroundColor: activeColor || '#1d1916' }}
-                            />
+                        <ToolbarButton label="글자색" onClick={() => toggleToolbarMenu('color')} active={Boolean(activeColor)} disabled={!editor} icon={<Palette size={16} />} className={activeColor ? 'text-[var(--accent-strong)]' : ''}>
+                            <div className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: activeColor || 'transparent' }} />
                         </ToolbarButton>
                         {toolbarMenu === 'color' && (
-                            <div className="absolute left-0 z-20 mt-2 w-40 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow)]">
-                                <div className="grid grid-cols-7 gap-2">
+                            <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+                                <div className="grid grid-cols-5 gap-1">
                                     {TEXT_COLORS.map(color => (
                                         <button
                                             key={color}
-                                            type="button"
-                                            onClick={() => {
-                                                editor?.chain().focus().setColor(color).run();
-                                                closeToolbarMenu();
-                                            }}
-                                            className="h-5 w-5 rounded-full border border-[color:var(--border)]"
+                                            onClick={() => { editor?.chain().focus().setColor(color).run(); closeToolbarMenu(); }}
+                                            className="h-6 w-6 rounded-full border border-[color:var(--border)] hover:scale-110 transition-transform"
                                             style={{ backgroundColor: color }}
-                                            aria-label={`색상 ${color}`}
+                                            title={color}
                                         />
                                     ))}
+                                    <button
+                                        onClick={() => { editor?.chain().focus().unsetColor().run(); closeToolbarMenu(); }}
+                                        className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--border)] bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        title="색상 제거"
+                                    >
+                                        <Ban size={12} />
+                                    </button>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        editor?.chain().focus().unsetColor().run();
-                                        closeToolbarMenu();
-                                    }}
-                                    className="mt-3 w-full rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] font-semibold text-[var(--text-muted)]"
-                                >
-                                    기본색
-                                </button>
                             </div>
                         )}
                     </div>
+
+                    {/* Highlight */}
                     <div className="relative">
-                        <ToolbarButton
-                            label="하이라이트"
-                            onClick={() => toggleToolbarMenu('highlight')}
-                            active={Boolean(activeHighlight)}
-                            disabled={!editor}
-                        >
-                            <span className="text-xs font-semibold">형광</span>
-                        </ToolbarButton>
+                        <ToolbarButton label="하이라이트" onClick={() => toggleToolbarMenu('highlight')} active={Boolean(activeHighlight)} disabled={!editor} icon={<Highlighter size={16} />} className={activeHighlight ? 'bg-yellow-100 text-yellow-800' : ''} />
                         {toolbarMenu === 'highlight' && (
-                            <div className="absolute left-0 z-20 mt-2 w-40 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow)]">
-                                <div className="grid grid-cols-6 gap-2">
+                            <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+                                <div className="grid grid-cols-5 gap-1">
                                     {HIGHLIGHT_COLORS.map(color => (
                                         <button
                                             key={color}
-                                            type="button"
-                                            onClick={() => {
-                                                editor?.chain().focus().toggleHighlight({ color }).run();
-                                                closeToolbarMenu();
-                                            }}
-                                            className="h-5 w-5 rounded-full border border-[color:var(--border)]"
+                                            onClick={() => { editor?.chain().focus().toggleHighlight({ color }).run(); closeToolbarMenu(); }}
+                                            className="h-6 w-6 rounded-full border border-[color:var(--border)] hover:scale-110 transition-transform"
                                             style={{ backgroundColor: color }}
-                                            aria-label={`하이라이트 ${color}`}
+                                            title={color}
                                         />
                                     ))}
+                                    <button
+                                        onClick={() => { editor?.chain().focus().unsetHighlight().run(); closeToolbarMenu(); }}
+                                        className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--border)] bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        title="형광펜 제거"
+                                    >
+                                        <Ban size={12} />
+                                    </button>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        editor?.chain().focus().unsetHighlight().run();
-                                        closeToolbarMenu();
-                                    }}
-                                    className="mt-3 w-full rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] font-semibold text-[var(--text-muted)]"
-                                >
-                                    제거
-                                </button>
                             </div>
                         )}
                     </div>
-                    <ToolbarButton
-                        label="서식 초기화"
-                        onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()}
-                        disabled={!editor}
-                    >
-                        Tx
-                    </ToolbarButton>
-                </ToolbarGroup>
+                </div>
 
-                <div className="h-5 w-px bg-[var(--border)]" />
+                <Divider />
 
-                <ToolbarGroup>
-                    <ToolbarButton
-                        label="글머리 목록"
-                        onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                        active={editor?.isActive('bulletList')}
-                        disabled={!editor}
-                    >
-                        •
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="번호 목록"
-                        onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                        active={editor?.isActive('orderedList')}
-                        disabled={!editor}
-                    >
-                        1.
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="왼쪽 정렬"
-                        onClick={() => editor?.chain().focus().setTextAlign('left').run()}
-                        active={editor?.isActive({ textAlign: 'left' })}
-                        disabled={!editor}
-                    >
-                        좌
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="가운데 정렬"
-                        onClick={() => editor?.chain().focus().setTextAlign('center').run()}
-                        active={editor?.isActive({ textAlign: 'center' })}
-                        disabled={!editor}
-                    >
-                        중
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="오른쪽 정렬"
-                        onClick={() => editor?.chain().focus().setTextAlign('right').run()}
-                        active={editor?.isActive({ textAlign: 'right' })}
-                        disabled={!editor}
-                    >
-                        우
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="양쪽 정렬"
-                        onClick={() => editor?.chain().focus().setTextAlign('justify').run()}
-                        active={editor?.isActive({ textAlign: 'justify' })}
-                        disabled={!editor}
-                    >
-                        양
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="인용"
-                        onClick={() => editor?.chain().focus().toggleBlockquote().run()}
-                        active={editor?.isActive('blockquote')}
-                        disabled={!editor}
-                    >
-                        “”
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="코드 블록"
-                        onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
-                        active={editor?.isActive('codeBlock')}
-                        disabled={!editor}
-                    >
-                        {'</>'}
-                    </ToolbarButton>
-                    {isCodeBlockActive && (
-                        <label className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-                            언어
-                            <select
-                                value={codeBlockLanguage}
-                                onChange={(event) => {
-                                    if (!editor) return;
-                                    editor
-                                        .chain()
-                                        .focus()
-                                        .setCodeBlock({ language: event.target.value })
-                                        .run();
-                                }}
-                                className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text)]"
-                            >
-                                {CODE_LANGUAGES.map(language => (
-                                    <option key={language.value} value={language.value}>
-                                        {language.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                    )}
-                    <ToolbarButton
-                        label="구분선"
-                        onClick={() => editor?.chain().focus().setHorizontalRule().run()}
-                        disabled={!editor}
-                    >
-                        —
-                    </ToolbarButton>
-                </ToolbarGroup>
+                {/* --- Alignment --- */}
+                <div className="flex items-center gap-0.5">
+                    <ToolbarButton label="왼쪽" onClick={() => editor?.chain().focus().setTextAlign('left').run()} active={editor?.isActive({ textAlign: 'left' })} disabled={!editor} icon={<AlignLeft size={16} />} />
+                    <ToolbarButton label="가운데" onClick={() => editor?.chain().focus().setTextAlign('center').run()} active={editor?.isActive({ textAlign: 'center' })} disabled={!editor} icon={<AlignCenter size={16} />} />
+                    <ToolbarButton label="오른쪽" onClick={() => editor?.chain().focus().setTextAlign('right').run()} active={editor?.isActive({ textAlign: 'right' })} disabled={!editor} icon={<AlignRight size={16} />} />
+                    <ToolbarButton label="양쪽" onClick={() => editor?.chain().focus().setTextAlign('justify').run()} active={editor?.isActive({ textAlign: 'justify' })} disabled={!editor} icon={<AlignJustify size={16} />} />
+                </div>
 
-                <div className="h-5 w-px bg-[var(--border)]" />
+                <Divider />
 
-                <ToolbarGroup>
+                {/* --- Lists --- */}
+                <div className="flex items-center gap-0.5">
+                    <ToolbarButton label="글머리" onClick={() => editor?.chain().focus().toggleBulletList().run()} active={editor?.isActive('bulletList')} disabled={!editor} icon={<List size={16} />} />
+                    <ToolbarButton label="번호" onClick={() => editor?.chain().focus().toggleOrderedList().run()} active={editor?.isActive('orderedList')} disabled={!editor} icon={<ListOrdered size={16} />} />
+                    <ToolbarButton label="인용구" onClick={() => editor?.chain().focus().toggleBlockquote().run()} active={editor?.isActive('blockquote')} disabled={!editor} icon={<Quote size={16} />} />
+                </div>
+
+                <Divider />
+
+                {/* --- Insert --- */}
+                <div className="flex items-center gap-0.5">
+                    <ToolbarButton label="코드 블록" onClick={() => editor?.chain().focus().toggleCodeBlock().run()} active={editor?.isActive('codeBlock')} disabled={!editor} icon={<Code2 size={16} />} />
+                    <ToolbarButton label="구분선" onClick={() => editor?.chain().focus().setHorizontalRule().run()} disabled={!editor} icon={<Minus size={16} />} />
+
                     <div className="relative">
-                        <ToolbarButton
-                            label="표"
-                            onClick={() => toggleToolbarMenu('table')}
-                            active={isTableActive}
-                            disabled={!editor}
-                        >
-                            ▦
-                        </ToolbarButton>
-                        {toolbarMenu === 'table' && (
-                            <div className="absolute left-0 z-20 mt-2 w-52 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 text-xs shadow-[var(--shadow)]">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        editor
-                                            ?.chain()
-                                            .focus()
-                                            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                                            .run();
-                                        closeToolbarMenu();
-                                    }}
-                                    className="w-full rounded-full border border-[color:var(--border)] px-3 py-2 text-left text-[11px] font-semibold text-[var(--text)]"
-                                >
-                                    표 삽입 (3x3)
-                                </button>
-                                {isTableActive && (
-                                    <div className="mt-3 grid gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => editor?.chain().focus().addRowAfter().run()}
-                                            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] text-[var(--text-muted)]"
-                                        >
-                                            아래 행 추가
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => editor?.chain().focus().addColumnAfter().run()}
-                                            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] text-[var(--text-muted)]"
-                                        >
-                                            오른쪽 열 추가
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => editor?.chain().focus().deleteRow().run()}
-                                            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] text-[var(--text-muted)]"
-                                        >
-                                            행 삭제
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => editor?.chain().focus().deleteColumn().run()}
-                                            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] text-[var(--text-muted)]"
-                                        >
-                                            열 삭제
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                editor?.chain().focus().deleteTable().run();
-                                                closeToolbarMenu();
-                                            }}
-                                            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[10px] text-[var(--text-muted)]"
-                                        >
-                                            표 삭제
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        <ToolbarButton label="표" onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} disabled={!editor} icon={<TableIcon size={16} />} />
                     </div>
-                </ToolbarGroup>
 
-                <div className="h-5 w-px bg-[var(--border)]" />
+                    <ToolbarButton label="링크" onClick={onLink} active={editor?.isActive('link')} disabled={!editor} icon={<LinkIcon size={16} />} />
+                    <ToolbarButton label="이미지 업로드" onClick={onToolbarImageUpload} disabled={!editor || uploadingImage} icon={<ImageIcon size={16} />} className={uploadingImage ? 'animate-pulse' : ''} />
+                    <ToolbarButton label="이미지 URL" onClick={onInsertImageUrl} disabled={!editor} icon={<LinkIcon size={14} />} ><span className="text-[10px] ml-0.5">URL</span></ToolbarButton>
+                </div>
 
-                <ToolbarGroup>
-                    <ToolbarButton
-                        label="링크"
-                        onClick={onLink}
-                        active={editor?.isActive('link')}
-                        disabled={!editor}
-                    >
-                        ↗
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label={uploadingImage ? '업로드...' : '이미지'}
-                        onClick={onToolbarImageUpload}
-                        disabled={!editor || uploadingImage}
-                    >
-                        🖼
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="이미지 URL"
-                        onClick={onInsertImageUrl}
-                        disabled={!editor}
-                    >
-                        🔗
-                    </ToolbarButton>
-
-                </ToolbarGroup>
-
-                <div className="h-5 w-px bg-[var(--border)]" />
-
-                <ToolbarGroup>
-                    <ToolbarButton
-                        label="되돌리기"
-                        onClick={() => editor?.chain().focus().undo().run()}
-                        disabled={!editor}
-                    >
-                        ↺
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="다시"
-                        onClick={() => editor?.chain().focus().redo().run()}
-                        disabled={!editor}
-                    >
-                        ↻
-                    </ToolbarButton>
-                </ToolbarGroup>
-
-                <div className="ml-auto flex items-center gap-1">
-                    <ToolbarButton
-                        label="저장 (Ctrl+S)"
+                {/* --- Right Side Actions --- */}
+                <div className="ml-auto flex items-center gap-2">
+                    <button
                         onClick={onSave}
-                        disabled={!editor}
+                        className="flex items-center gap-1.5 rounded-full bg-[var(--text)] px-4 py-1.5 text-xs font-semibold text-[var(--bg)] shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+                        title="저장 (Ctrl+S)"
                     >
-                        💾
-                    </ToolbarButton>
-                    <div className="h-5 w-px bg-[var(--border)] mx-1" />
-                    <ToolbarButton
-                        label="편집 모드"
-                        onClick={() => setPreviewMode(false)}
-                        active={!previewMode}
-                        disabled={!editor}
-                    >
-                        ✎
-                    </ToolbarButton>
-                    <ToolbarButton
-                        label="미리보기"
-                        onClick={() => setPreviewMode(true)}
-                        active={previewMode}
-                        disabled={!editor}
-                    >
-                        👁
-                    </ToolbarButton>
+                        <Save size={14} />
+                        저장
+                    </button>
+
+                    <div className="h-5 w-px bg-[var(--border)]" />
+
+                    <div className="flex rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-0.5">
+                        <button
+                            onClick={() => setPreviewMode(false)}
+                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all ${!previewMode ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                                }`}
+                        >
+                            <Edit2 size={12} />
+                            편집
+                        </button>
+                        <button
+                            onClick={() => setPreviewMode(true)}
+                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all ${previewMode ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                                }`}
+                        >
+                            <Eye size={12} />
+                            미리보기
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Code Block Language Select (Contextual) */}
+            {isCodeBlockActive && (
+                <div className="mt-2 flex items-center gap-2 border-t border-[color:var(--border)] pt-2 animate-in slide-in-from-top-1">
+                    <span className="text-xs font-medium text-[var(--text-muted)]">코드 언어:</span>
+                    <div className="flex gap-1 flex-wrap">
+                        {CODE_LANGUAGES.map(lang => (
+                            <button
+                                key={lang.value}
+                                onClick={() => editor?.chain().focus().setCodeBlock({ language: lang.value }).run()}
+                                className={`px-2 py-0.5 text-[10px] rounded-full border transition-colors ${codeBlockLanguage === lang.value
+                                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                                    : 'border-[color:var(--border)] hover:bg-[var(--surface-muted)]'
+                                    }`}
+                            >
+                                {lang.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
