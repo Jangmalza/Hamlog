@@ -1,8 +1,18 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
+import { useEditorAction } from '../../../contexts/EditorActionContext';
 
 
 export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewProps) => {
     const { src, alt, width, style, caption } = node.attrs;
+
+    // Safely consume context - might be null if used outside provider (e.g. preview)
+    let onSetCover: ((src: string) => void) | undefined;
+    try {
+        const ctx = useEditorAction();
+        onSetCover = ctx.onSetCover;
+    } catch (e) {
+        // Ignore context error if not available
+    }
 
     const handleResize = (newWidth: string) => {
         updateAttributes({
@@ -33,23 +43,40 @@ export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewPro
                     />
 
                     {selected && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-[var(--surface-overlay)] border border-[color:var(--border)] p-1 shadow-xl backdrop-blur-sm animate-fade-in z-20">
-                            {['25%', '50%', '75%', '100%'].map((w) => (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20">
+                            {/* Size Controls */}
+                            <div className="flex items-center gap-1 rounded-full bg-[var(--surface-overlay)] border border-[color:var(--border)] p-1 shadow-xl backdrop-blur-sm animate-fade-in">
+                                {['25%', '50%', '75%', '100%'].map((w) => (
+                                    <button
+                                        key={w}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleResize(w);
+                                        }}
+                                        className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${(width === w || (!width && w === '100%'))
+                                            ? 'bg-[var(--accent)] text-white'
+                                            : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
+                                            }`}
+                                    >
+                                        {w}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Set Cover Button */}
+                            {onSetCover && (
                                 <button
-                                    key={w}
                                     type="button"
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        handleResize(w);
+                                        onSetCover?.(src);
                                     }}
-                                    className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${(width === w || (!width && w === '100%'))
-                                        ? 'bg-[var(--accent)] text-white'
-                                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
-                                        }`}
+                                    className="flex items-center gap-1 rounded-full bg-[var(--accent)] px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg hover:bg-[var(--accent-strong)] transition-colors animate-fade-in"
                                 >
-                                    {w}
+                                    <span>🖼 대표 이미지로 설정</span>
                                 </button>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>

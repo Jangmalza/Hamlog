@@ -143,12 +143,18 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         }
     };
 
-    const handleSetCoverFromContent = useCallback(() => {
+    const handleSetCoverFromContent = useCallback((srcOverride?: string) => {
+        if (srcOverride) {
+            updateDraft({ cover: srcOverride });
+            setNotice('선택한 이미지가 대표 이미지로 설정되었습니다.');
+            return;
+        }
+
         if (!editor) return;
         const { state } = editor;
         const { selection } = state;
 
-        // Check if an image is currently selected
+        // ... fallback to selection logic
         if (selection.empty) {
             setNotice('이미지를 선택해주세요.');
             return;

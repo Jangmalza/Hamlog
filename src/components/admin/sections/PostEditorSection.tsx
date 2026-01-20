@@ -8,6 +8,7 @@ import type { PostDraft } from '../../../types/admin';
 import type { CategoryTreeResult } from '../../../utils/categoryTree';
 import { EditorToolbar } from '../../editor/EditorToolbar';
 import { PostMetadata } from '../PostMetadata';
+import { EditorActionContext } from '../../../contexts/EditorActionContext';
 
 
 
@@ -45,7 +46,7 @@ interface PostEditorSectionProps {
   onImageUpload: (file: File) => void;
   onNoticeClick?: () => void;
   onCoverUpload?: (file: File) => Promise<void>;
-  onSetCoverFromContent?: () => void;
+  onSetCoverFromContent?: (src?: string) => void;
   isImageSelected?: boolean;
 }
 
@@ -211,18 +212,6 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               </span>
             </div>
 
-            {onSetCoverFromContent && (
-              <div className="mt-2 border-t border-[color:var(--border)] pt-2">
-                <button
-                  type="button"
-                  onClick={onSetCoverFromContent}
-                  className="flex items-center gap-1 rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[var(--accent-strong)] transition-colors"
-                >
-                  <span>🖼 대표 이미지로 설정</span>
-                </button>
-              </div>
-            )}
-
             {imageWidthError && (
               <p className="mt-2 text-xs text-red-500">{imageWidthError}</p>
             )}
@@ -258,7 +247,9 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
         ) : (
           <div className="min-h-[500px] border-none shadow-none outline-none ring-0">
             {/* Seamless Editor without border */}
-            <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
+            <EditorActionContext.Provider value={{ onSetCover: (src) => onSetCoverFromContent?.(src) }}>
+              <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
+            </EditorActionContext.Provider>
           </div>
         )}
 
