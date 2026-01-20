@@ -21,6 +21,7 @@ import { SlashCommand, getSuggestionItems, renderItems } from '../editor/extensi
 import { FontSize } from '../editor/extensions/fontSize';
 import { MathExtension } from '../components/editor/extensions/MathExtension';
 import { ImageGallery } from '../components/editor/extensions/ImageGallery';
+import { LinkCard } from '../editor/extensions/LinkCard';
 import { ImageComponent } from '../components/editor/extensions/ImageComponent';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 
@@ -146,7 +147,8 @@ export const useTiptapEditor = ({
             ImageGallery,
             Youtube.configure({
                 controls: false,
-            })
+            }),
+            LinkCard
         ],
         content: contentHtml || '',
         onUpdate: ({ editor }) => {

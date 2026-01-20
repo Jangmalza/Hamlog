@@ -159,6 +159,37 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                 }
             },
         },
+        // Link Card
+        {
+            title: '링크 카드',
+            description: 'URL을 카드 형태로 삽입',
+            searchTerms: ['link', 'card', 'preview', '링크', '카드'],
+            icon: '🔗',
+            command: async ({ editor, range }: any) => {
+                const url = window.prompt('URL을 입력하세요:');
+                if (url) {
+                    try {
+                        // Optimistic UI or Loading state could be added here
+                        // For now we just fetch and insert
+                        editor.chain().focus().deleteRange(range).run(); // Clear slash command
+
+                        // We need to fetch from our backend
+                        // Assuming the frontend is running on same origin or proxies correctly
+                        const response = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);
+                        if (!response.ok) throw new Error('Failed to fetch preview');
+
+                        const data = await response.json();
+
+                        editor.chain().focus().setLinkCard(data).run();
+                    } catch (error) {
+                        console.error(error);
+                        alert('링크 정보를 불러오는데 실패했습니다.');
+                        // Fallback to simple link?
+                        editor.chain().focus().insertContent(`<a href="${url}">${url}</a>`).run();
+                    }
+                }
+            },
+        },
     ].filter((item) => {
         if (typeof query === 'string' && query.length > 0) {
             const search = query.toLowerCase();
