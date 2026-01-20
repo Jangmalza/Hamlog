@@ -45,6 +45,7 @@ interface PostEditorSectionProps {
   onImageUpload: (file: File) => void;
   onNoticeClick?: () => void;
   onCoverUpload?: (file: File) => Promise<void>;
+  onSetCoverFromContent?: () => void; // New prop
 }
 
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
@@ -80,7 +81,8 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   fileInputRef,
   onImageUpload,
   onNoticeClick,
-  onCoverUpload
+  onCoverUpload,
+  onSetCoverFromContent
 }) => {
   const isImageActive = editor?.isActive('image') ?? false;
 
@@ -206,6 +208,19 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 px만 지원합니다. 숫자만 입력하면 px로 적용됩니다.
               </span>
             </div>
+
+            {onSetCoverFromContent && (
+              <div className="mt-2 border-t border-[color:var(--border)] pt-2">
+                <button
+                  type="button"
+                  onClick={onSetCoverFromContent}
+                  className="flex items-center gap-1 rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[var(--accent-strong)] transition-colors"
+                >
+                  <span>🖼 대표 이미지로 설정</span>
+                </button>
+              </div>
+            )}
+
             {imageWidthError && (
               <p className="mt-2 text-xs text-red-500">{imageWidthError}</p>
             )}

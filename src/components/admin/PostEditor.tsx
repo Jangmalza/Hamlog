@@ -142,6 +142,31 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         }
     };
 
+    const handleSetCoverFromContent = useCallback(() => {
+        if (!editor) return;
+        const { state } = editor;
+        const { selection } = state;
+
+        // Check if an image is currently selected
+        if (selection.empty) {
+            setNotice('이미지를 선택해주세요.');
+            return;
+        }
+
+        const node = editor.state.doc.nodeAt(selection.from);
+        if (node && node.type.name === 'image') {
+            const src = node.attrs.src;
+            if (src) {
+                updateDraft({ cover: src });
+                setNotice('선택한 이미지가 대표 이미지로 설정되었습니다.');
+            } else {
+                setNotice('이미지 주소를 찾을 수 없습니다.');
+            }
+        } else {
+            setNotice('이미지가 선택되지 않았습니다.');
+        }
+    }, [editor, updateDraft]);
+
     const handleLink = () => {
         if (!editor) return;
         const previousUrl = editor.getAttributes('link').href as string | undefined;
@@ -332,6 +357,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onImageUpload={(file) => void handleImageUpload(file)}
             onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
             onCoverUpload={handleCoverUpload}
+            onSetCoverFromContent={handleSetCoverFromContent}
         />
     );
 };
