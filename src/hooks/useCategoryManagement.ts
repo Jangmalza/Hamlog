@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { Post } from '../data/blogData';
 
 import type { PostDraft } from '../types/admin';
@@ -26,9 +26,6 @@ export const useCategoryManagement = ({
   refreshPosts,
   setNotice
 }: UseCategoryManagementProps) => {
-  const [categoryInput, setCategoryInput] = useState('');
-  const [parentCategoryId, setParentCategoryId] = useState('');
-
   const {
     categories,
     loading: categoriesLoading,
@@ -80,8 +77,13 @@ export const useCategoryManagement = ({
   const handleAddCategory = useCallback(
     async (overrideName?: string, overrideParentId?: string | null) => {
       if (categorySaving) return;
-      const rawName = overrideName !== undefined ? overrideName : categoryInput;
-      const normalized = normalizeCategoryName(rawName);
+
+      if (!overrideName) {
+        setCategoriesError('카테고리 이름을 입력하세요.');
+        return;
+      }
+
+      const normalized = normalizeCategoryName(overrideName);
       if (!normalized) {
         setCategoriesError('카테고리 이름을 입력하세요.');
         return;
@@ -89,7 +91,6 @@ export const useCategoryManagement = ({
       const key = normalizeCategoryKey(normalized);
       if (key === normalizeCategoryKey(DEFAULT_CATEGORY)) {
         setCategoriesError('기본 카테고리는 자동으로 포함됩니다.');
-        setCategoryInput('');
         return;
       }
       const exists = availableCategories.some(
@@ -97,24 +98,17 @@ export const useCategoryManagement = ({
       );
       if (exists) {
         setCategoriesError('이미 존재하는 카테고리입니다.');
-        setCategoryInput('');
         return;
       }
-      const parentId =
-        overrideParentId !== undefined ? overrideParentId : parentCategoryId.trim() || null;
+
+      const parentId = overrideParentId || null;
       if (parentId && !categoryTree.nodesById.has(parentId)) {
-        setCategoriesError('상위 카테고리를 다시 선택하세요.');
+        setCategoriesError('상위 카테고리가 유효하지 않습니다.');
         return;
       }
       setCategoriesError('');
       try {
         await addCategory(normalized, parentId);
-        if (overrideName === undefined) {
-          setCategoryInput('');
-        }
-        if (overrideParentId === undefined) {
-          setParentCategoryId('');
-        }
         setNotice('카테고리를 추가했습니다.');
       } catch (error) {
         const message =
@@ -127,10 +121,8 @@ export const useCategoryManagement = ({
     [
       addCategory,
       availableCategories,
-      categoryInput,
       categorySaving,
       categoryTree.nodesById,
-      parentCategoryId,
       setNotice,
       setCategoriesError
     ]
@@ -285,10 +277,6 @@ export const useCategoryManagement = ({
     categoriesError,
     setCategoriesError,
     loadCategories,
-    categoryInput,
-    parentCategoryId,
-    setCategoryInput,
-    setParentCategoryId,
     categoryTree,
     parentOptions,
     managedCategoryIds,

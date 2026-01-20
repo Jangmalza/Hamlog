@@ -41,12 +41,7 @@ const AdminPage: React.FC = () => {
     categoriesLoading,
     categorySaving,
     categoriesError,
-    setCategoriesError,
     loadCategories,
-    categoryInput,
-    parentCategoryId,
-    setCategoryInput,
-    setParentCategoryId,
     categoryTree,
     parentOptions,
     managedCategoryIds,
@@ -232,17 +227,7 @@ const AdminPage: React.FC = () => {
               managedCategoryIds={managedCategoryIds}
               categoriesLoading={categoriesLoading}
               categoriesError={categoriesError}
-              categoryInput={categoryInput}
-              parentCategoryId={parentCategoryId}
               parentOptions={parentOptions}
-              onCategoryInputChange={(value) => {
-                setCategoryInput(value);
-                setCategoriesError('');
-              }}
-              onParentCategoryChange={(value) => {
-                setParentCategoryId(value);
-                setCategoriesError('');
-              }}
               onAddCategory={(name, parentId) => void handleAddCategory(name, parentId)}
               onUpdateCategory={(category, updates) =>
                 void handleUpdateCategory(category, updates)

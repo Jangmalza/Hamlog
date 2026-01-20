@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ChevronRight, Edit2, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronRight, Edit2, Plus, Trash2, FolderPlus } from 'lucide-react';
 import type { CategoryNode, CategoryTreeResult } from '../../../utils/categoryTree';
 import { normalizeCategoryKey } from '../../../utils/category';
 
@@ -25,11 +25,7 @@ interface CategorySectionProps {
   managedCategoryIds: Set<string>;
   categoriesLoading: boolean;
   categoriesError: string;
-  categoryInput: string;
-  parentCategoryId: string;
   parentOptions: Array<{ id: string; label: string }>;
-  onCategoryInputChange: (value: string) => void;
-  onParentCategoryChange: (value: string) => void;
   onAddCategory: (name?: string, parentId?: string | null) => void | Promise<void>;
   onUpdateCategory: (
     category: CategoryNode,
@@ -113,14 +109,27 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   };
 
   const submitAddChild = async () => {
+    if (!childDraft.trim()) {
+      setIsAddingChild(false);
+      return;
+    }
     try {
       await onAddCategory(childDraft, node.id);
       setIsAddingChild(false);
       setChildDraft('');
-      // Force expand when adding child
       setIsExpanded(true);
     } catch {
       // keep input for retry
+    }
+  };
+
+  const handleChildKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void submitAddChild();
+    } else if (e.key === 'Escape') {
+      setIsAddingChild(false);
+      setChildDraft('');
     }
   };
 
@@ -139,7 +148,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   const descendantIds = isEditing ? getDescendantIds(node) : new Set<string>();
 
   return (
-    <div ref={setNodeRef} style={style} className="touch-none">
+    <div ref={setNodeRef} style={style} className="touch-none group">
       <div className="flex items-center gap-2 mb-2">
         {hasChildren ? (
           <button
@@ -154,7 +163,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
           <span className="h-6 w-6 flex-shrink-0" />
         )}
 
-        <div className="flex flex-1 items-center justify-between rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text)] transition-all hover:border-[var(--accent)] hover:shadow-sm">
+        <div className="flex flex-1 items-center justify-between rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5 text-sm text-[var(--text)] transition-all hover:border-[var(--accent)] hover:shadow-sm">
           <div className="flex items-center gap-3">
             {isManaged && !isDefault && !categorySaving && (
               <div
@@ -178,10 +187,13 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               type="button"
-              onClick={() => setIsAddingChild(true)}
+              onClick={() => {
+                setIsAddingChild(true);
+                setIsExpanded(true);
+              }}
               disabled={!isManaged || isDefault || categorySaving}
               className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--accent)] disabled:opacity-50 transition-colors"
               title="하위 카테고리 추가"
@@ -220,6 +232,11 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
                 value={editingName}
                 onChange={(e) => setEditingName(e.target.value)}
                 className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1.5 text-xs focus:border-[var(--accent)] outline-none"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void saveEdit();
+                  if (e.key === 'Escape') setIsEditing(false);
+                }}
               />
             </div>
             <div className="space-y-1">
@@ -258,45 +275,46 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
         </div>
       )}
 
-      {/* Adding Child State */}
-      {isAddingChild && (
-        <div className="mb-2 ml-8 rounded-xl border border-dashed border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-inner">
-          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">하위 카테고리 이름</label>
+      {/* Recursive Children */}
+      <div className={`transition-all overflow-hidden ${isExpanded ? 'opacity-100 max-h-screen' : 'opacity-0 max-h-0'}`}>
+        {children}
+
+        {/* Inline Add Child Input */}
+        {isAddingChild && (
+          <div className={`flex items-center gap-2 mb-2`} style={{ paddingLeft: (depth + 1) * 14 }}>
+            <span className="h-6 w-6 flex-shrink-0" /> {/* Indent spacer */}
+            <div className="flex-1 rounded-xl border border-dashed border-[var(--accent)] bg-[var(--surface-muted)] p-2 flex items-center gap-2">
+              <span className="text-[var(--accent)]"><Plus size={14} /></span>
               <input
                 value={childDraft}
                 onChange={(e) => setChildDraft(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && void submitAddChild()}
-                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1.5 text-xs focus:border-[var(--accent)] outline-none"
+                onKeyDown={handleChildKeyDown}
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--text-muted)] text-[var(--text)]"
+                placeholder="새 카테고리 이름..."
                 autoFocus
-                placeholder="예: 리액트"
               />
-            </div>
-            <div className="flex items-end gap-2">
-              <button
-                type="button"
-                onClick={submitAddChild}
-                disabled={categorySaving}
-                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-bold text-white hover:bg-[var(--accent-strong)] disabled:opacity-50"
-              >
-                추가
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsAddingChild(false)}
-                className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)] hover:bg-[var(--surface-muted)]"
-              >
-                취소
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={submitAddChild}
+                  className="text-[10px] uppercase font-bold text-[var(--accent)] hover:underline"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingChild(false);
+                    setChildDraft('');
+                  }}
+                  className="text-[10px] uppercase font-bold text-[var(--text-muted)] hover:underline"
+                >
+                  Esc
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Recursive Children - Only show if expanded */}
-      <div className={`transition-all overflow-hidden ${isExpanded ? 'opacity-100 max-h-screen' : 'opacity-0 max-h-0'}`}>
-        {children}
+        )}
       </div>
     </div>
   );
@@ -307,11 +325,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   managedCategoryIds,
   categoriesLoading,
   categoriesError,
-  categoryInput,
-  parentCategoryId,
   parentOptions,
-  onCategoryInputChange,
-  onParentCategoryChange,
   onAddCategory,
   onUpdateCategory,
   onReorderCategory,
@@ -320,6 +334,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   categorySaving,
   defaultCategory
 }) => {
+  const [isAddingRoot, setIsAddingRoot] = useState(false);
+  const [rootDraft, setRootDraft] = useState('');
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -404,9 +421,33 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     );
   };
 
+  const submitAddRoot = async () => {
+    if (!rootDraft.trim()) {
+      setIsAddingRoot(false);
+      return;
+    }
+    try {
+      await onAddCategory(rootDraft, null);
+      setIsAddingRoot(false);
+      setRootDraft('');
+    } catch {
+      // keep input
+    }
+  };
+
+  const handleRootKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void submitAddRoot();
+    } else if (e.key === 'Escape') {
+      setIsAddingRoot(false);
+      setRootDraft('');
+    }
+  };
+
   return (
     <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
             카테고리 관리
@@ -426,69 +467,55 @@ const CategorySection: React.FC<CategorySectionProps> = ({
         카테고리를 삭제하면 해당 글은 자동으로 미분류로 이동합니다.
       </p>
 
-      {/* Add New Category */}
-      <div className="mt-4 grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
-        <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-          이름
-          <input
-            value={categoryInput}
-            onChange={(event) => onCategoryInputChange(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                onAddCategory();
-              }
-            }}
-            placeholder="새 카테고리 입력"
-            className="mt-2 w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
-          />
-        </label>
-        <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-          상위 카테고리
-          <select
-            value={parentCategoryId}
-            onChange={(event) => onParentCategoryChange(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
-          >
-            <option value="">최상위</option>
-            {parentOptions.map(option => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end">
-          <button
-            type="button"
-            onClick={() => void onAddCategory()}
-            disabled={categorySaving}
-            className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            추가
-          </button>
-        </div>
-      </div>
-
       {categoriesLoading && (
         <p className="mt-3 text-xs text-[var(--text-muted)]">카테고리 불러오는 중...</p>
       )}
       {categoriesError && <p className="mt-3 text-xs text-red-500">{categoriesError}</p>}
 
-      <div className="mt-6">
+      <div className="mt-2">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
+          {/* Render Roots */}
           {categoryTree.roots.length > 0 ? (
             <SortableRecursiveList nodes={categoryTree.roots} depth={0} />
           ) : (
-            <span className="text-xs text-[var(--text-muted)]">
-              등록된 카테고리가 없습니다.
-            </span>
+            !isAddingRoot && <span className="text-xs text-[var(--text-muted)] block mb-4">등록된 카테고리가 없습니다.</span>
           )}
         </DndContext>
+
+        {/* Inline Add Root Input */}
+        {isAddingRoot ? (
+          <div className="flex items-center gap-2 mb-2 mt-2">
+            <span className="h-6 w-6 flex-shrink-0" />
+            <div className="flex-1 rounded-xl border border-dashed border-[var(--accent)] bg-[var(--surface-muted)] p-2.5 flex items-center gap-2 animate-fadeIn">
+              <span className="text-[var(--accent)]"><FolderPlus size={16} /></span>
+              <input
+                value={rootDraft}
+                onChange={(e) => setRootDraft(e.target.value)}
+                onKeyDown={handleRootKeyDown}
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--text-muted)] text-[var(--text)]"
+                placeholder="새 최상위 카테고리..."
+                autoFocus
+              />
+              <div className="flex items-center gap-2 mr-2">
+                <span className="text-[10px] text-[var(--text-muted)] hidden md:inline-block">Enter to save</span>
+                <span className="text-[10px] text-[var(--text-muted)] hidden md:inline-block">Esc to cancel</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingRoot(true)}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[color:var(--border)] p-3 text-sm text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all group"
+          >
+            <FolderPlus size={16} className="group-hover:scale-110 transition-transform" />
+            <span>새 카테고리 추가</span>
+          </button>
+        )}
       </div>
     </div>
   );
