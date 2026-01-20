@@ -184,28 +184,26 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           }}
         />
 
-        {previewMode ? (
-          <div className="min-h-[500px] p-2">
-            {draft.contentHtml.trim() ? (
-              <PostContent contentHtml={draft.contentHtml} />
-            ) : (
-              <p className="text-sm text-[var(--text-muted)]">
-                미리볼 내용이 없습니다. 본문을 입력해 주세요.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="min-h-[500px] border-none shadow-none outline-none ring-0">
-            {/* Seamless Editor without border */}
-            <EditorActionContext.Provider value={{
-              onSetCover: (src) => onSetCoverFromContent?.(src),
-              currentCoverUrl
-            }}>
-              <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
-              <TableBubbleMenu editor={editor} />
-            </EditorActionContext.Provider>
-          </div>
-        )}
+        <div className={previewMode ? 'block min-h-[500px] p-2' : 'hidden'}>
+          {draft.contentHtml.trim() ? (
+            <PostContent contentHtml={draft.contentHtml} />
+          ) : (
+            <p className="text-sm text-[var(--text-muted)]">
+              미리볼 내용이 없습니다. 본문을 입력해 주세요.
+            </p>
+          )}
+        </div>
+
+        <div className={!previewMode ? 'block min-h-[500px] border-none shadow-none outline-none ring-0' : 'hidden'}>
+          {/* Seamless Editor without border */}
+          <EditorActionContext.Provider value={{
+            onSetCover: (src) => onSetCoverFromContent?.(src),
+            currentCoverUrl
+          }}>
+            <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
+            <TableBubbleMenu editor={editor} />
+          </EditorActionContext.Provider>
+        </div>
 
         {/* Footer: Tags */}
         <div className="mt-8 -mx-6 -mb-6 rounded-b-3xl border-t border-[color:var(--border)] bg-[var(--surface-muted)] p-6">
