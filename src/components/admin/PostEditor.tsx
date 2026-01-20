@@ -5,20 +5,12 @@ import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
-import { usePostStore } from '../../store/postStore';
-import type { Post, PostInput, PostStatus } from '../../data/blogData';
-
-import { toIsoDateTime } from '../../utils/adminDate';
-import {
-    DEFAULT_CATEGORY,
-    normalizeDraftCategory
-} from '../../utils/category';
+import type { Post } from '../../data/blogData';
 import { stripHtml } from '../../utils/postContent';
-import { slugify } from '../../utils/slugify';
-import { normalizePostStatus } from '../../utils/postStatus';
 import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { usePostForm, toDraft } from '../../hooks/usePostForm';
 import { useAutosave } from '../../hooks/useAutosave';
+import { usePostPersistence } from '../../hooks/usePostPersistence';
 
 const MAX_UPLOAD_MB = 8;
 
@@ -32,16 +24,11 @@ interface PostEditorProps {
 
 const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSuccess, categoryTree, onLoadCategories }) => {
     const activeId = post?.id || null;
-    const posts = usePostStore(state => state.posts);
-    const addPost = usePostStore(state => state.addPost);
-    const updatePost = usePostStore(state => state.updatePost);
-    const deletePost = usePostStore(state => state.deletePost);
 
     // 1. Form Logic (extracted)
     const {
         draft,
         setDraft,
-        slugTouched,
         setSlugTouched,
         tagInput,
         setTagInput,
@@ -54,7 +41,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     } = usePostForm(post);
 
     const [notice, setNotice] = useState('');
-    const [saving, setSaving] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const editorRef = useRef<Editor | null>(null);
 
@@ -67,11 +53,35 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         onLoadDraft: () => toDraft(post || undefined)
     });
 
-    // Reset specific UI states on post change
+    // Reset UI on post change
     useEffect(() => {
         setNotice('');
         setPreviewMode(false);
     }, [post]);
+
+    // 3. Persistence Logic (extracted)
+    const {
+        handleSave,
+        handleDelete,
+        saving,
+    } = usePostPersistence({
+        draft,
+        activeId,
+        onSaveSuccess,
+        onDeleteSuccess,
+        setNotice,
+        onAfterSave: useCallback(() => {
+            setSlugTouched(true);
+            setTagInput('');
+            clearAutosave();
+            void onLoadCategories();
+        }, [setSlugTouched, setTagInput, clearAutosave, onLoadCategories])
+    });
+
+    // Reset notice when post changes
+    useEffect(() => {
+        setNotice('');
+    }, [post, setNotice]);
 
     const {
         fileInputRef,
@@ -125,14 +135,18 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
     const handleCoverUpload = async (file: File) => {
         try {
-            setSaving(true); // Reuse saving state for loading indication
+            setNotice(''); // Using existing declared state
+            // Note: saving state is now controlled by usePostPersistence, but we might want to show loading here.
+            // However, we don't have setSaving exposed. We can imply "uploading" effectively.
+            // Or we should expose setSaving? Let's assume uploadingImage from useEditorImageControls handles generic upload UI,
+            // but for cover it is separate.
+            // Let's just use a notice.
+            setNotice('업로드 중...');
             const { url } = await uploadLocalImage(file);
             updateDraft({ cover: url });
             setNotice('대표 이미지가 업로드되었습니다.');
         } catch (error) {
             setNotice('이미지 업로드에 실패했습니다.');
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -147,7 +161,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         const { state } = editor;
         const { selection } = state;
 
-        // ... fallback to selection logic
         if (selection.empty) {
             setNotice('이미지를 선택해주세요.');
             return;
@@ -167,123 +180,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         }
     }, [editor, updateDraft]);
 
-    const handleLink = () => {
-        if (!editor) return;
-        const previousUrl = editor.getAttributes('link').href as string | undefined;
-        const url = window.prompt('링크 URL을 입력하세요', previousUrl ?? '');
-        if (url === null) return;
-        if (!url) {
-            editor.chain().focus().unsetLink().run();
-            return;
-        }
-        editor.chain().focus().setLink({ href: url }).run();
-    };
-
-    const handleSave = useCallback(async (successMessage?: string, statusOverride?: PostStatus) => {
-        setNotice('');
-        const title = draft.title.trim();
-        const slug = slugify(draft.slug.trim() || title);
-        const contentHtml = draft.contentHtml?.trim() || '';
-        const contentText = stripHtml(contentHtml);
-        const status = normalizePostStatus(statusOverride ?? draft.status);
-        const scheduledAtIso =
-            status === 'scheduled' && draft.scheduledAt ? toIsoDateTime(draft.scheduledAt) : '';
-
-        if (!title) {
-            setNotice('제목을 입력하세요.');
-            return;
-        }
-
-        if (!slug) {
-            setNotice('슬러그를 입력하세요.');
-            return;
-        }
-
-        if (status !== 'draft' && !contentText) {
-            setNotice('본문 내용을 입력하세요.');
-            return;
-        }
-
-        if (status === 'scheduled' && !scheduledAtIso) {
-            setNotice('예약 발행 날짜를 입력하세요.');
-            return;
-        }
-
-        const slugTaken = posts.some(p => p.slug === slug && p.id !== activeId);
-        if (slugTaken) {
-            setNotice('슬러그가 이미 존재합니다.');
-            return;
-        }
-
-        const tags = draft.tags
-            .map(tag => tag.trim())
-            .filter(Boolean)
-            .filter((tag, index, list) => list.indexOf(tag) === index);
-
-        const seoKeywords = draft.seoKeywords
-            .split(',')
-            .map(keyword => keyword.trim())
-            .filter(Boolean);
-        const seo = {
-            title: draft.seoTitle.trim() || undefined,
-            description: draft.seoDescription.trim() || undefined,
-            ogImage: draft.seoOgImage.trim() || undefined,
-            canonicalUrl: draft.seoCanonicalUrl.trim() || undefined,
-            keywords: seoKeywords.length ? seoKeywords : undefined
-        };
-        const publishedAt =
-            status === 'scheduled' && scheduledAtIso
-                ? scheduledAtIso.slice(0, 10)
-                : draft.publishedAt || new Date().toISOString().slice(0, 10);
-
-        const payload: PostInput = {
-            slug,
-            title,
-            summary: draft.summary.trim() || '요약이 없습니다.',
-            category: normalizeDraftCategory(draft.category, DEFAULT_CATEGORY),
-            contentHtml: contentHtml || undefined,
-            publishedAt,
-            readingTime: draft.readingTime.trim() || '3분 읽기',
-            tags,
-            series: draft.series.trim() || undefined,
-            featured: draft.featured,
-            cover: draft.cover.trim() || undefined,
-            status,
-            scheduledAt: status === 'scheduled' ? scheduledAtIso || undefined : '',
-            seo:
-                seo.title || seo.description || seo.ogImage || seo.canonicalUrl || seo.keywords
-                    ? seo
-                    : undefined,
-            sections: []
-        };
-
-        setSaving(true);
-        try {
-            const saved = activeId
-                ? await updatePost(activeId, payload)
-                : await addPost(payload);
-
-            const fallbackMessage = activeId ? '글이 저장되었습니다.' : '새 글이 생성되었습니다.';
-            setNotice(successMessage ?? fallbackMessage);
-
-            // Notify Parent
-            onSaveSuccess(saved);
-
-            setSlugTouched(true);
-            setTagInput('');
-            clearAutosave();
-            void onLoadCategories();
-        } catch (error) {
-            if (error instanceof Error && error.message) {
-                setNotice(error.message);
-            } else {
-                setNotice('저장에 실패했습니다.');
-            }
-        } finally {
-            setSaving(false);
-        }
-    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, slugTouched, onLoadCategories, clearAutosave, setSlugTouched, setTagInput]);
-
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 's') {
@@ -296,25 +192,16 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleSave]);
 
-    const handleDelete = async () => {
-        if (!activeId) return;
-        const confirmed = window.confirm(`"${draft.title}" 글을 삭제할까요? 되돌릴 수 없습니다.`);
-        if (!confirmed) return;
-
-        setSaving(true);
-        try {
-            await deletePost(activeId);
-            setNotice('글이 삭제되었습니다.');
-            onDeleteSuccess();
-        } catch (error) {
-            if (error instanceof Error && error.message) {
-                setNotice(error.message);
-            } else {
-                setNotice('삭제에 실패했습니다.');
-            }
-        } finally {
-            setSaving(false);
+    const handleLink = () => {
+        if (!editor) return;
+        const previousUrl = editor.getAttributes('link').href as string | undefined;
+        const url = window.prompt('링크 URL을 입력하세요', previousUrl ?? '');
+        if (url === null) return;
+        if (!url) {
+            editor.chain().focus().unsetLink().run();
+            return;
         }
+        editor.chain().focus().setLink({ href: url }).run();
     };
 
     return (

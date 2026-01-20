@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import type { Editor } from '@tiptap/react';
+import {
+    CODE_LANGUAGES,
+    FONT_FAMILIES,
+    FONT_SIZES,
+    TEXT_COLORS,
+    HIGHLIGHT_COLORS
+} from '../../utils/editorConstants';
 
 interface ToolbarButtonProps {
     label: string;
@@ -35,56 +42,7 @@ const ToolbarGroup: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     <div className="flex flex-wrap items-center gap-1">{children}</div>
 );
 
-const CODE_LANGUAGES = [
-    { value: 'plaintext', label: '기본' },
-    { value: 'bash', label: 'Bash' },
-    { value: 'css', label: 'CSS' },
-    { value: 'xml', label: 'HTML' },
-    { value: 'javascript', label: 'JavaScript' },
-    { value: 'typescript', label: 'TypeScript' },
-    { value: 'json', label: 'JSON' },
-    { value: 'markdown', label: 'Markdown' },
-    { value: 'python', label: 'Python' },
-    { value: 'sql', label: 'SQL' }
-];
 
-const FONT_FAMILIES = [
-    { value: 'default', label: '기본서체' },
-    { value: 'Nanum Gothic', label: '나눔고딕' },
-    { value: 'JetBrains Mono, monospace', label: '모노' },
-    { value: 'serif', label: 'Serif' }
-];
-
-const FONT_SIZES = [
-    { value: 'default', label: '본문' },
-    { value: '12px', label: '12' },
-    { value: '14px', label: '14' },
-    { value: '16px', label: '16' },
-    { value: '18px', label: '18' },
-    { value: '20px', label: '20' },
-    { value: '24px', label: '24' },
-    { value: '28px', label: '28' },
-    { value: '32px', label: '32' }
-];
-
-const TEXT_COLORS = [
-    '#1d1916',
-    '#0f766e',
-    '#2563eb',
-    '#6b21a8',
-    '#b45309',
-    '#b91c1c',
-    '#4b5563'
-];
-
-const HIGHLIGHT_COLORS = [
-    '#fef3c7',
-    '#d1fae5',
-    '#dbeafe',
-    '#fee2e2',
-    '#ede9fe',
-    '#fce7f3'
-];
 
 interface EditorToolbarProps {
     editor: Editor | null;
