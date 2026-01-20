@@ -42,6 +42,7 @@ interface PostEditorSectionProps {
   onNoticeClick?: () => void;
   onCoverUpload?: (file: File) => Promise<void>;
   onSetCoverFromContent?: (src?: string) => void;
+  currentCoverUrl?: string;
   isImageSelected?: boolean;
 }
 
@@ -74,7 +75,8 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onImageUpload,
   onNoticeClick,
   onCoverUpload,
-  onSetCoverFromContent
+  onSetCoverFromContent,
+  currentCoverUrl
 }) => {
 
   return (
@@ -194,7 +196,10 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
         ) : (
           <div className="min-h-[500px] border-none shadow-none outline-none ring-0">
             {/* Seamless Editor without border */}
-            <EditorActionContext.Provider value={{ onSetCover: (src) => onSetCoverFromContent?.(src) }}>
+            <EditorActionContext.Provider value={{
+              onSetCover: (src) => onSetCoverFromContent?.(src),
+              currentCoverUrl
+            }}>
               <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
             </EditorActionContext.Provider>
           </div>

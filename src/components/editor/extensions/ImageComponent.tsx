@@ -7,12 +7,18 @@ export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewPro
 
     // Safely consume context - might be null if used outside provider (e.g. preview)
     let onSetCover: ((src: string) => void) | undefined;
+    let currentCoverUrl: string | undefined;
     try {
         const ctx = useEditorAction();
         onSetCover = ctx.onSetCover;
+        currentCoverUrl = ctx.currentCoverUrl;
     } catch (e) {
         // Ignore context error if not available
     }
+
+    // Normalize logic for comparison (handle potential relative vs absolute or query params if improved later)
+    // For now, strict string equality is likely sufficient if urls come from same source
+    const isCover = currentCoverUrl && src && currentCoverUrl === src;
 
     const handleResize = (newWidth: string) => {
         updateAttributes({
@@ -68,13 +74,26 @@ export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewPro
                             {onSetCover && (
                                 <button
                                     type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        onSetCover?.(src);
+                                    onClick={() => {
+                                        if (src && onSetCover) onSetCover(src);
                                     }}
-                                    className="flex items-center gap-1 rounded-full bg-[var(--accent)] px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg hover:bg-[var(--accent-strong)] transition-colors animate-fade-in"
+                                    className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${isCover
+                                            ? 'bg-[var(--accent)] text-white cursor-default'
+                                            : 'bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-muted)] border border-[color:var(--border)]'
+                                        }`}
+                                    disabled={isCover}
                                 >
-                                    <span>🖼 대표 이미지로 설정</span>
+                                    {isCover ? (
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            대표 이미지
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                            대표 이미지로 설정
+                                        </>
+                                    )}
                                 </button>
                             )}
                         </div>

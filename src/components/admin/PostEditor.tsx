@@ -350,6 +350,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
             onCoverUpload={handleCoverUpload}
             onSetCoverFromContent={handleSetCoverFromContent}
+            currentCoverUrl={draft.cover}
         />
     );
 };

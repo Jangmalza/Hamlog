@@ -1,7 +1,9 @@
+
 import { createContext, useContext } from 'react';
 
 interface EditorActionContextType {
     onSetCover: (src: string) => void;
+    currentCoverUrl?: string;
 }
 
 export const EditorActionContext = createContext<EditorActionContextType | null>(null);
