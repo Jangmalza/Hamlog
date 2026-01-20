@@ -8,6 +8,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
 import LinkExtension from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import Table from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
@@ -142,7 +143,10 @@ export const useTiptapEditor = ({
             ,
             MathExtension,
             Typography,
-            ImageGallery
+            ImageGallery,
+            Youtube.configure({
+                controls: false,
+            })
         ],
         content: contentHtml || '',
         onUpdate: ({ editor }) => {

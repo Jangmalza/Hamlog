@@ -123,7 +123,42 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                 }
             },
         },
-        // Future: Table, Youtube, etc.
+        // Table
+        {
+            title: '표',
+            description: '3x3 표 삽입',
+            searchTerms: ['table', 'grid', '표'],
+            icon: '▦',
+            command: ({ editor, range }: any) => {
+                editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+            },
+        },
+        // YouTube
+        {
+            title: '유튜브',
+            description: '유튜브 영상 삽입',
+            searchTerms: ['youtube', 'video', '유튜브', '영상'],
+            icon: '▶',
+            command: ({ editor, range }: any) => {
+                const url = window.prompt('유튜브 주소를 입력하세요:');
+                if (url) {
+                    editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run();
+                }
+            },
+        },
+        // Math
+        {
+            title: '수식',
+            description: 'LaTeX 수식 삽입',
+            searchTerms: ['math', 'latex', '수식'],
+            icon: '∑',
+            command: ({ editor, range }: any) => {
+                const latex = window.prompt('LaTeX 수식을 입력하세요:', 'E = mc^2');
+                if (latex) {
+                    editor.chain().focus().deleteRange(range).insertContent({ type: 'math', attrs: { latex } }).run();
+                }
+            },
+        },
     ].filter((item) => {
         if (typeof query === 'string' && query.length > 0) {
             const search = query.toLowerCase();
