@@ -45,7 +45,8 @@ interface PostEditorSectionProps {
   onImageUpload: (file: File) => void;
   onNoticeClick?: () => void;
   onCoverUpload?: (file: File) => Promise<void>;
-  onSetCoverFromContent?: () => void; // New prop
+  onSetCoverFromContent?: () => void;
+  isImageSelected?: boolean;
 }
 
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
@@ -82,9 +83,10 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   onImageUpload,
   onNoticeClick,
   onCoverUpload,
-  onSetCoverFromContent
+  onSetCoverFromContent,
+  isImageSelected
 }) => {
-  const isImageActive = editor?.isActive('image') ?? false;
+  const isImageActive = isImageSelected ?? (editor?.isActive('image') ?? false);
 
   return (
     <div className="mx-auto max-w-5xl">

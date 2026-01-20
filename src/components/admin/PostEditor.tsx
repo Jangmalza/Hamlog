@@ -88,7 +88,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         applyImageWidth,
         clearImageWidth,
         handleToolbarImageUpload,
-        handleInsertImageUrl
+        handleInsertImageUrl,
+        isImageSelected
     } = useEditorImageControls({
         editorRef,
         maxUploadMb: MAX_UPLOAD_MB,
@@ -358,6 +359,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
             onCoverUpload={handleCoverUpload}
             onSetCoverFromContent={handleSetCoverFromContent}
+            isImageSelected={isImageSelected}
         />
     );
 };

@@ -18,6 +18,7 @@ export const useEditorImageControls = ({
   const [uploadError, setUploadError] = useState('');
   const [imageWidthInput, setImageWidthInput] = useState('');
   const [imageWidthError, setImageWidthError] = useState('');
+  const [isImageSelected, setIsImageSelected] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const getImageFileFromTransfer = useCallback((transfer?: DataTransfer | null) => {
@@ -55,7 +56,10 @@ export const useEditorImageControls = ({
   );
 
   const handleSelectionUpdate = useCallback((editor: Editor) => {
-    if (!editor.isActive('image')) {
+    const active = editor.isActive('image');
+    setIsImageSelected(active);
+
+    if (!active) {
       setImageWidthInput('');
       setImageWidthError('');
       return;
@@ -256,6 +260,7 @@ export const useEditorImageControls = ({
     applyImageWidth,
     clearImageWidth,
     handleToolbarImageUpload,
-    handleInsertImageUrl
+    handleInsertImageUrl,
+    isImageSelected
   };
 };
