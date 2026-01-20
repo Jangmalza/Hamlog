@@ -175,7 +175,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
         />
 
         {isImageActive && (
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-xs text-[var(--text)]">
+          <div className="sticky top-[70px] z-10 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-xs text-[var(--text)] shadow-[var(--shadow)]">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-medium text-[var(--text-muted)]">
                 이미지 크기
