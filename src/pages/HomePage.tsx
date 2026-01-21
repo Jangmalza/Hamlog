@@ -40,8 +40,8 @@ const HomePage = () => {
 
     // 3. SEO Hook
     useSeo({
-        title: siteMeta.title,
-        description: siteMeta.description,
+        title: profile.title,
+        description: profile.description,
         url: siteMeta.siteUrl,
         type: 'website'
     });
