@@ -85,6 +85,7 @@ export const useProfile = () => {
         description: profileDraft.description.trim(),
         location: profileDraft.location.trim(),
         profileImage: profileDraft.profileImage.trim(),
+        favicon: profileDraft.favicon?.trim() || '/avatar.jpg',
         email: profileDraft.email.trim(),
         now: profileDraft.now.trim(),
         stack: profileDraft.stack, // Use array directly

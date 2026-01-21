@@ -50,6 +50,27 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     }
   };
 
+  const faviconInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFaviconUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const { url } = await uploadLocalImage(file);
+      onProfileChange('favicon', url);
+    } catch (error) {
+      console.error('Failed to upload favicon', error);
+      alert('파비콘 업로드에 실패했습니다.');
+    } finally {
+      setUploading(false);
+      if (faviconInputRef.current) {
+        faviconInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleStackKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!profileDraft) return;
 
@@ -182,6 +203,32 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 className="mt-2 shrink-0 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)] hover:bg-[var(--surface-muted)] disabled:opacity-50"
               >
                 {uploading ? '...' : '사진 변경'}
+              </button>
+            </div>
+          </label>
+          <label className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] md:col-span-2">
+            파비콘 이미지 URL (브라우저 탭 아이콘)
+            <div className="flex gap-2">
+              <input
+                value={profileDraft.favicon ?? ''}
+                onChange={(event) => onProfileChange('favicon', event.target.value)}
+                placeholder="/avatar.jpg 또는 https://..."
+                className="mt-2 w-full flex-1 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
+              />
+              <input
+                type="file"
+                ref={faviconInputRef}
+                onChange={(e) => void handleFaviconUpload(e)}
+                className="hidden"
+                accept="image/*"
+              />
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => faviconInputRef.current?.click()}
+                className="mt-2 shrink-0 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)] hover:bg-[var(--surface-muted)] disabled:opacity-50"
+              >
+                {uploading ? '...' : '아이콘 변경'}
               </button>
             </div>
           </label>

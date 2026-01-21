@@ -6,6 +6,7 @@ export interface SiteMeta {
     description: string;
     location: string;
     profileImage: string;
+    favicon?: string;
     email: string;
     siteUrl: string;
     social: {

@@ -43,7 +43,8 @@ const HomePage = () => {
         title: profile.title,
         description: profile.description,
         url: siteMeta.siteUrl,
-        type: 'website'
+        type: 'website',
+        favicon: profile.favicon
     });
 
     if (loading) {

@@ -7,6 +7,7 @@ interface SeoProps {
     keywords?: string[];
     url?: string;
     type?: 'article' | 'website';
+    favicon?: string;
 }
 
 export const useSeo = ({
@@ -16,6 +17,7 @@ export const useSeo = ({
     keywords,
     url,
     type = 'article',
+    favicon,
 }: SeoProps) => {
     useEffect(() => {
         if (typeof document === 'undefined') return;
@@ -25,6 +27,7 @@ export const useSeo = ({
         const seoImage = image ?? '';
         const seoKeywords = keywords?.join(', ') ?? '';
         const canonicalUrl = url ?? window.location.href;
+        const seoFavicon = favicon ?? '/avatar.jpg';
 
         if (seoTitle) {
             document.title = seoTitle;
@@ -72,5 +75,7 @@ export const useSeo = ({
         setMetaTag('twitter:description', seoDescription, 'name');
         setMetaTag('twitter:image', seoImage, 'name');
         setLinkTag('canonical', canonicalUrl);
-    }, [title, description, image, keywords, url, type]);
+        setLinkTag('icon', seoFavicon);
+        setLinkTag('apple-touch-icon', seoFavicon);
+    }, [title, description, image, keywords, url, type, favicon]);
 };
