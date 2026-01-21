@@ -1,5 +1,6 @@
 import React from 'react';
 import { EditorContent } from '@tiptap/react';
+import { ChevronDown } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import PostContent from '../../PostContent';
 import type { PostStatus } from '../../../data/blogData';
@@ -114,15 +115,19 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               <select
                 value={draft.status}
                 onChange={(event) => onStatusChange(event.target.value as PostStatus)}
-                className={`appearance-none rounded-full border px-4 py-2 text-xs font-semibold focus:outline-none ${draft.status === 'published'
+                className={`appearance-none cursor-pointer rounded-full border pl-4 pr-9 py-2 text-xs font-semibold transition-colors focus:outline-none ${draft.status === 'published'
                   ? 'border-transparent bg-[var(--accent)] text-white'
-                  : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]'
+                  : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]'
                   }`}
               >
                 <option value="draft">초안</option>
                 <option value="scheduled">예약</option>
                 <option value="published">발행</option>
               </select>
+              <div className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${draft.status === 'published' ? 'text-white/80' : 'text-[var(--text-muted)]'
+                }`}>
+                <ChevronDown size={14} strokeWidth={2.5} />
+              </div>
             </div>
 
             <button
