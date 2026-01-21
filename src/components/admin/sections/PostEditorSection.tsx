@@ -12,74 +12,71 @@ import { PostMetadata } from '../PostMetadata';
 import { EditorActionContext } from '../../../contexts/EditorActionContext';
 import { TableBubbleMenu } from '../../editor/extensions/TableBubbleMenu';
 
-
-
-interface PostEditorSectionProps {
-  draft: PostDraft;
-  categoryTree: CategoryTreeResult;
-  contentStats: { chars: number; readingMinutes: number };
-  notice: string;
-  saving: boolean;
-  activeId: string | null;
-  tagInput: string;
-  onTagInputChange: (value: string) => void;
-  onTagKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  onTagBlur: () => void;
-  onRemoveTag: (tag: string) => void;
+export interface EditorHandlers {
   onTitleChange: (value: string) => void;
   onStatusChange: (value: PostStatus) => void;
   onSave: (message?: string, statusOverride?: PostStatus) => void;
   onDelete: () => void;
   updateDraft: (patch: Partial<PostDraft>) => void;
-  previewMode: boolean;
   setPreviewMode: (value: boolean) => void;
-  editor: Editor | null;
   onLink: () => void;
-  onToolbarImageUpload: () => void;
+}
+
+export interface TagHandlers {
+  onInputChange: (value: string) => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onBlur: () => void;
+  onRemove: (tag: string) => void;
+}
+
+export interface MediaHandlers {
+  onToolbarUpload: () => void;
   onInsertImageUrl: () => void;
-  uploadingImage: boolean;
-  uploadError: string | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
   onImageUpload: (file: File) => void;
-  onNoticeClick?: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement>;
   onCoverUpload?: (file: File) => Promise<void>;
   onSetCoverFromContent?: (src?: string) => void;
+}
+
+export interface UIState {
+  notice: string;
+  saving: boolean;
+  activeId: string | null;
+  tagInput: string;
+  previewMode: boolean;
+  uploadingImage: boolean;
+  uploadError: string | null;
+  onNoticeClick?: () => void;
+}
+
+export interface EditorData {
+  draft: PostDraft;
+  categoryTree: CategoryTreeResult;
+  contentStats: { chars: number; readingMinutes: number };
   currentCoverUrl?: string;
-  isImageSelected?: boolean;
+  editor: Editor | null;
+}
+
+interface PostEditorSectionProps {
+  editorHandlers: EditorHandlers;
+  tagHandlers: TagHandlers;
+  mediaHandlers: MediaHandlers;
+  uiState: UIState;
+  data: EditorData;
 }
 
 const PostEditorSection: React.FC<PostEditorSectionProps> = ({
-  draft,
-  categoryTree,
-  contentStats,
-  notice,
-  saving,
-  activeId,
-  tagInput,
-  onTagInputChange,
-  onTagKeyDown,
-  onTagBlur,
-  onRemoveTag,
-  onTitleChange,
-  onStatusChange,
-  onSave,
-  onDelete,
-  updateDraft,
-  previewMode,
-  setPreviewMode,
-  editor,
-  onLink,
-  onToolbarImageUpload,
-  onInsertImageUrl,
-  uploadingImage,
-  uploadError,
-  fileInputRef,
-  onImageUpload,
-  onNoticeClick,
-  onCoverUpload,
-  onSetCoverFromContent,
-  currentCoverUrl
+  editorHandlers,
+  tagHandlers,
+  mediaHandlers,
+  uiState,
+  data
 }) => {
+  const { draft, categoryTree, contentStats, currentCoverUrl, editor } = data;
+  const { notice, saving, activeId, tagInput, previewMode, uploadingImage, uploadError, onNoticeClick } = uiState;
+  const { onTitleChange, onStatusChange, onSave, onDelete, updateDraft, setPreviewMode, onLink } = editorHandlers;
+  const { onInputChange, onKeyDown, onBlur, onRemove } = tagHandlers;
+  const { onToolbarUpload, onInsertImageUrl, onImageUpload, fileInputRef, onCoverUpload, onSetCoverFromContent } = mediaHandlers;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -165,13 +162,11 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           previewMode={previewMode}
           setPreviewMode={setPreviewMode}
           onLink={onLink}
-          onToolbarImageUpload={onToolbarImageUpload}
+          onToolbarImageUpload={onToolbarUpload}
           onInsertImageUrl={onInsertImageUrl}
           uploadingImage={uploadingImage}
           onSave={() => onSave('수동 저장되었습니다.')}
         />
-
-
 
         {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
 
@@ -229,7 +224,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 #{tag}
                 <button
                   type="button"
-                  onClick={() => onRemoveTag(tag)}
+                  onClick={() => onRemove(tag)}
                   className="text-[10px] text-[var(--text-muted)] hover:text-red-500"
                   aria-label="태그 삭제"
                 >
@@ -239,9 +234,9 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
             ))}
             <input
               value={tagInput}
-              onChange={(event) => onTagInputChange(event.target.value)}
-              onKeyDown={onTagKeyDown}
-              onBlur={onTagBlur}
+              onChange={(event) => onInputChange(event.target.value)}
+              onKeyDown={onKeyDown}
+              onBlur={onBlur}
               placeholder="태그 입력 후 Enter"
               className="min-w-[160px] flex-1 rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-xs text-[var(--text)] focus:border-[color:var(--accent)] focus:outline-none"
             />

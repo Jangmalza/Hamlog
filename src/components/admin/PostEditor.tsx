@@ -136,11 +136,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const handleCoverUpload = async (file: File) => {
         try {
             setNotice(''); // Using existing declared state
-            // Note: saving state is now controlled by usePostPersistence, but we might want to show loading here.
-            // However, we don't have setSaving exposed. We can imply "uploading" effectively.
-            // Or we should expose setSaving? Let's assume uploadingImage from useEditorImageControls handles generic upload UI,
-            // but for cover it is separate.
-            // Let's just use a notice.
             setNotice('업로드 중...');
             const { url } = await uploadLocalImage(file);
             updateDraft({ cover: url });
@@ -204,42 +199,50 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         editor.chain().focus().setLink({ href: url }).run();
     };
 
-    return (
-        <PostEditorSection
-            draft={draft}
-            categoryTree={categoryTree}
-            contentStats={contentStats}
-            notice={notice}
-            saving={saving}
-            activeId={activeId}
-            tagInput={tagInput}
-            onTagInputChange={(value) => setTagInput(value)}
-            onTagKeyDown={handleTagKeyDown}
-            onTagBlur={handleTagBlur}
-            onRemoveTag={removeTag}
-            onTitleChange={handleTitleChange}
-            onStatusChange={handleStatusChange}
-            onSave={(message, statusOverride) =>
-                void handleSave(message, statusOverride)
-            }
-            onDelete={() => void handleDelete()}
-            updateDraft={updateDraft}
-            previewMode={previewMode}
-            setPreviewMode={(value) => setPreviewMode(value)}
-            editor={editor}
-            onLink={handleLink}
-            onToolbarImageUpload={handleToolbarImageUpload}
-            onInsertImageUrl={handleInsertImageUrl}
-            uploadingImage={uploadingImage}
-            uploadError={uploadError}
-            fileInputRef={fileInputRef}
-            onImageUpload={(file) => void handleImageUpload(file)}
-            onNoticeClick={notice.includes('복구') ? handleRestoreAutosave : undefined}
-            onCoverUpload={handleCoverUpload}
-            onSetCoverFromContent={handleSetCoverFromContent}
-            currentCoverUrl={draft.cover}
-        />
-    );
+    const groupedProps = {
+        editorHandlers: {
+            onTitleChange: handleTitleChange,
+            onStatusChange: handleStatusChange,
+            onSave: (message?: string, statusOverride?: any) => void handleSave(message, statusOverride),
+            onDelete: () => void handleDelete(),
+            updateDraft,
+            setPreviewMode,
+            onLink: handleLink
+        },
+        tagHandlers: {
+            onInputChange: setTagInput,
+            onKeyDown: handleTagKeyDown,
+            onBlur: handleTagBlur,
+            onRemove: removeTag
+        },
+        mediaHandlers: {
+            onToolbarUpload: handleToolbarImageUpload,
+            onInsertImageUrl: handleInsertImageUrl,
+            onImageUpload: (file: File) => void handleImageUpload(file),
+            fileInputRef,
+            onCoverUpload: handleCoverUpload,
+            onSetCoverFromContent: handleSetCoverFromContent
+        },
+        uiState: {
+            notice,
+            saving,
+            activeId,
+            tagInput,
+            previewMode,
+            uploadingImage,
+            uploadError,
+            onNoticeClick: notice.includes('복구') ? handleRestoreAutosave : undefined
+        },
+        data: {
+            draft,
+            categoryTree,
+            contentStats,
+            currentCoverUrl: draft.cover,
+            editor
+        }
+    };
+
+    return <PostEditorSection {...groupedProps} />;
 };
 
 export default PostEditor;
