@@ -97,11 +97,10 @@ export const useEditorImageControls = ({
           const editorDom = view.dom as HTMLElement;
           const images = Array.from(editorDom.querySelectorAll('img.post-image, img.ProseMirror-selectednode, img[data-type="custom-image"]'));
           // Note: Selector might need adjustment depending on how CustomImage renders. 
+          // Note: Selector might need adjustment depending on how CustomImage renders. 
           // Standard customImage renders as <img ...> inside a wrapper or directly.
           // Let's use a broad query and filter.
 
-          let targetMiddleX = 0;
-          let targetRect: DOMRect | null = null;
           let targetImage: Element | null = null;
           let dropSide: 'left' | 'right' | null = null;
 
@@ -126,12 +125,10 @@ export const useEditorImageControls = ({
 
                 if (offsetX < width * 0.3) {
                   targetImage = img;
-                  targetRect = rect;
                   dropSide = 'left';
                   break;
                 } else if (offsetX > width * 0.7) {
                   targetImage = img;
-                  targetRect = rect;
                   dropSide = 'right';
                   break;
                 }
@@ -145,7 +142,6 @@ export const useEditorImageControls = ({
               const node = view.state.doc.nodeAt(domPos);
               // Verify it is an image or customImage
               if (node && (node.type.name === 'image' || node.type.name === 'customImage')) {
-                const existingSrc = node.attrs.src;
 
                 // Create Columns Structure
                 // Two columns.
