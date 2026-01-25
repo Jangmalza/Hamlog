@@ -24,6 +24,7 @@ import { MathExtension } from '../components/editor/extensions/MathExtension';
 import { ImageGallery } from '../components/editor/extensions/ImageGallery';
 import { LinkCard } from './extensions/LinkCard';
 import { CustomImage } from './extensions/CustomImage';
+import { Columns, Column } from './extensions/Column';
 
 const lowlight = createLowlight(common);
 
@@ -67,5 +68,7 @@ export const getEditorExtensions = () => [
     Youtube.configure({
         controls: false,
     }),
-    LinkCard
+    LinkCard,
+    Columns,
+    Column
 ];

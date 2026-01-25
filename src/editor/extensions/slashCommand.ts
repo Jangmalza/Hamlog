@@ -190,6 +190,50 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                 }
             },
         },
+        // Columns
+        {
+            title: '2단 레이아웃',
+            description: '화면을 2개로 분할',
+            searchTerms: ['2', 'column', 'layout', '분할'],
+            icon: '◫',
+            command: ({ editor, range }: any) => {
+                editor
+                    .chain()
+                    .focus()
+                    .deleteRange(range)
+                    .insertContent({
+                        type: 'columns',
+                        attrs: { layout: 'two-column' },
+                        content: [
+                            { type: 'column', content: [{ type: 'paragraph' }] },
+                            { type: 'column', content: [{ type: 'paragraph' }] },
+                        ],
+                    })
+                    .run();
+            },
+        },
+        {
+            title: '3단 레이아웃',
+            description: '화면을 3개로 분할',
+            searchTerms: ['3', 'column', 'layout', '분할'],
+            icon: '▥',
+            command: ({ editor, range }: any) => {
+                editor
+                    .chain()
+                    .focus()
+                    .deleteRange(range)
+                    .insertContent({
+                        type: 'columns',
+                        attrs: { layout: 'three-column' },
+                        content: [
+                            { type: 'column', content: [{ type: 'paragraph' }] },
+                            { type: 'column', content: [{ type: 'paragraph' }] },
+                            { type: 'column', content: [{ type: 'paragraph' }] },
+                        ],
+                    })
+                    .run();
+            },
+        },
     ].filter((item) => {
         if (typeof query === 'string' && query.length > 0) {
             const search = query.toLowerCase();
