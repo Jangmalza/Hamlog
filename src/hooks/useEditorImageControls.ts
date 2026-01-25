@@ -92,61 +92,88 @@ export const useEditorImageControls = ({
           const { url } = await uploadLocalImage(file);
           let grouped = false;
 
-          // STRATEGY: Magnet detection
+          // STRATEGY: Edge Detection for Columns
           // Find all images in the editor DOM
           const editorDom = view.dom as HTMLElement;
-          const images = Array.from(editorDom.querySelectorAll('img'));
+          const images = Array.from(editorDom.querySelectorAll('img.post-image, img.ProseMirror-selectednode, img[data-type="custom-image"]'));
+          // Note: Selector might need adjustment depending on how CustomImage renders. 
+          // Standard customImage renders as <img ...> inside a wrapper or directly.
+          // Let's use a broad query and filter.
 
-          let closestImage: HTMLImageElement | null = null;
-          let minDistance = Infinity;
-          const THRESHOLD = 100; // Increased threshold for easier grouping
+          let targetMiddleX = 0;
+          let targetRect: DOMRect | null = null;
+          let targetImage: Element | null = null;
+          let dropSide: 'left' | 'right' | null = null;
 
-          images.forEach(img => {
+          const SCAN_DISTANCE = 100; // Pixel distance to consider "near"
+
+          // Find the closest image vertically that we are horizontally within range of
+          for (const img of images) {
             const rect = img.getBoundingClientRect();
-            // Calculate distance from point to rectangle
-            const dx = Math.max(rect.left - clientX, 0, clientX - rect.right);
-            const dy = Math.max(rect.top - clientY, 0, clientY - rect.bottom);
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            // Check if Y is within reasonable range (e.g. same line)
+            if (clientY >= rect.top && clientY <= rect.bottom) {
+              // We are inside the vertical strip of this image.
+              // Now check X.
+              // We accept drops slightly outside the image too (gaps).
+              if (clientX >= rect.left - SCAN_DISTANCE && clientX <= rect.right + SCAN_DISTANCE) {
+                // Potential target
+                const width = rect.width;
+                const offsetX = clientX - rect.left;
 
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestImage = img;
+                // Define trigger zones
+                // 0% - 30%: Left
+                // 70% - 100%: Right
+
+                if (offsetX < width * 0.3) {
+                  targetImage = img;
+                  targetRect = rect;
+                  dropSide = 'left';
+                  break;
+                } else if (offsetX > width * 0.7) {
+                  targetImage = img;
+                  targetRect = rect;
+                  dropSide = 'right';
+                  break;
+                }
+              }
             }
-          });
+          }
 
-          if (closestImage && minDistance < THRESHOLD) {
-            const domPos = view.posAtDOM(closestImage, 0);
+          if (targetImage && dropSide) {
+            const domPos = view.posAtDOM(targetImage, 0);
             if (typeof domPos === 'number') {
               const node = view.state.doc.nodeAt(domPos);
-              // Verify it's effectively an image or we can resolve it
-              if (node && node.type.name === 'image') {
+              // Verify it is an image or customImage
+              if (node && (node.type.name === 'image' || node.type.name === 'customImage')) {
                 const existingSrc = node.attrs.src;
 
-                // Check if parent is already a gallery
-                const $pos = view.state.doc.resolve(domPos);
-                const parent = $pos.parent;
+                // Create Columns Structure
+                // Two columns.
+                // If dropSide is left: [New, Existing]
+                // If dropSide is right: [Existing, New]
 
-                if (parent.type.name === 'imageGallery') {
-                  // Append to existing gallery
-                  editorRef.current?.chain()
-                    .insertContentAt(domPos + node.nodeSize, { type: 'image', attrs: { src: url } })
-                    .run();
-                  grouped = true;
-                } else {
-                  // Create new gallery
-                  editorRef.current?.chain()
-                    .deleteRange({ from: domPos, to: domPos + node.nodeSize })
-                    .insertContentAt(domPos, {
-                      type: 'imageGallery',
-                      attrs: { columns: 2 },
-                      content: [
-                        { type: 'image', attrs: { src: existingSrc } },
-                        { type: 'image', attrs: { src: url } }
-                      ]
-                    })
-                    .run();
-                  grouped = true;
-                }
+                const newImageNode = { type: 'customImage', attrs: { src: url, size: 'full' } }; // Use customImage for consistency
+                const existingImageNode = { type: node.type.name, attrs: node.attrs }; // Preserve existing
+
+                const leftContent = dropSide === 'left' ? newImageNode : existingImageNode;
+                const rightContent = dropSide === 'left' ? existingImageNode : newImageNode;
+
+                const columnsNode = {
+                  type: 'columns',
+                  attrs: { layout: 'two-column' },
+                  content: [
+                    { type: 'column', content: [leftContent] },
+                    { type: 'column', content: [rightContent] }
+                  ]
+                };
+
+                // Replace the existing image node with the new columns node
+                editorRef.current?.chain()
+                  .deleteRange({ from: domPos, to: domPos + node.nodeSize })
+                  .insertContentAt(domPos, columnsNode)
+                  .run();
+
+                grouped = true;
               }
             }
           }
