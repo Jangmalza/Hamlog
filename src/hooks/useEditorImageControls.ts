@@ -95,11 +95,8 @@ export const useEditorImageControls = ({
           // STRATEGY: Edge Detection for Columns
           // Find all images in the editor DOM
           const editorDom = view.dom as HTMLElement;
-          const images = Array.from(editorDom.querySelectorAll('img.post-image, img.ProseMirror-selectednode, img[data-type="custom-image"]'));
-          // Note: Selector might need adjustment depending on how CustomImage renders. 
-          // Note: Selector might need adjustment depending on how CustomImage renders. 
-          // Standard customImage renders as <img ...> inside a wrapper or directly.
-          // Let's use a broad query and filter.
+          // Improved selector to catch images inside NodeViews (ImageComponent) and standard images
+          const images = Array.from(editorDom.querySelectorAll('.image-component img, img.post-image, img[data-type="custom-image"]'));
 
           let targetImage: Element | null = null;
           let dropSide: 'left' | 'right' | null = null;
@@ -137,19 +134,31 @@ export const useEditorImageControls = ({
           }
 
           if (targetImage && dropSide) {
-            const domPos = view.posAtDOM(targetImage, 0);
+            // Find the NodeView wrapper if possible (for React components)
+            const wrapper = targetImage.closest('.image-component') || targetImage;
+            const domPos = view.posAtDOM(wrapper, 0);
+
             if (typeof domPos === 'number') {
-              const node = view.state.doc.nodeAt(domPos);
-              // Verify it is an image or customImage
-              if (node && (node.type.name === 'image' || node.type.name === 'customImage')) {
+              // Try to resolve the node at this position
+              let node = view.state.doc.nodeAt(domPos);
+
+              // If not found directly, try resolving (sometimes posAtDOM points inside/before)
+              if (!node || node.type.name !== 'image') {
+                const $pos = view.state.doc.resolve(domPos);
+                node = $pos.nodeAfter || $pos.nodeBefore;
+              }
+
+              // Verify it is an image
+              if (node && node.type.name === 'image') {
 
                 // Create Columns Structure
                 // Two columns.
                 // If dropSide is left: [New, Existing]
                 // If dropSide is right: [Existing, New]
 
-                const newImageNode = { type: 'customImage', attrs: { src: url, size: 'full' } }; // Use customImage for consistency
-                const existingImageNode = { type: node.type.name, attrs: node.attrs }; // Preserve existing
+                // FIX: Use 'image' type, matching the schema
+                const newImageNode = { type: 'image', attrs: { src: url, size: 'full' } };
+                const existingImageNode = { type: 'image', attrs: { ...node.attrs } }; // Preserve existing
 
                 const leftContent = dropSide === 'left' ? newImageNode : existingImageNode;
                 const rightContent = dropSide === 'left' ? existingImageNode : newImageNode;
@@ -164,6 +173,7 @@ export const useEditorImageControls = ({
                 };
 
                 // Replace the existing image node with the new columns node
+                // Use domPos if it maps to the start of the node
                 editorRef.current?.chain()
                   .deleteRange({ from: domPos, to: domPos + node.nodeSize })
                   .insertContentAt(domPos, columnsNode)
