@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import type { Editor } from '@tiptap/react';
-
+import type { EditorView } from '@tiptap/pm/view';
+import { NodeSelection } from '@tiptap/pm/state';
 
 interface UseEditorImageControlsProps {
   editorRef: MutableRefObject<Editor | null>;
@@ -56,7 +57,7 @@ export const useEditorImageControls = ({
   const handleSelectionUpdate = useCallback((editor: Editor) => {
     const { selection } = editor.state;
     // Check both standard isActive and explicit NodeSelection for 'image' type
-    const active = editor.isActive('image') || ((selection as any).node?.type.name === 'image');
+    const active = editor.isActive('image') || (selection instanceof NodeSelection && selection.node.type.name === 'image');
 
     setIsImageSelected(active);
 
@@ -77,7 +78,7 @@ export const useEditorImageControls = ({
   );
 
   const handleDrop = useCallback(
-    (view: any, event: DragEvent, _slice: unknown, moved: boolean) => {
+    (view: EditorView, event: DragEvent, _slice: unknown, moved: boolean) => {
       if (moved) return false;
       const file = getImageFileFromTransfer(event.dataTransfer);
       if (!file) return false;
