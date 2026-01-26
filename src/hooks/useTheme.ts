@@ -4,10 +4,11 @@ export type Theme = 'light' | 'dark';
 
 export const useTheme = () => {
     const [theme, setTheme] = useState<Theme>(() => {
-        if (typeof window === 'undefined') return 'light';
+        if (typeof window === 'undefined') return 'dark';
         const saved = window.localStorage.getItem('hamlog:theme') as Theme;
         if (saved) return saved;
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        // Default to dark mode
+        return 'dark';
     });
 
     useEffect(() => {
