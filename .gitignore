@@ -25,3 +25,4 @@ dist-ssr
 *.sw?
 server/data/*.json
 server/uploads/
+.env
