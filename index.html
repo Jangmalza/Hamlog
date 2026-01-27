@@ -2,6 +2,17 @@
 <html lang="ko">
 
 <head>
+  <script>
+    (function() {
+      // Default to dark mode if no preference is saved
+      const saved = localStorage.getItem('hamlog:theme');
+      if (saved === 'dark' || !saved) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 

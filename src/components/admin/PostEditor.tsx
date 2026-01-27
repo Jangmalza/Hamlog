@@ -5,7 +5,7 @@ import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
-import type { Post } from '../../data/blogData';
+import type { Post, PostStatus } from '../../data/blogData';
 import { stripHtml } from '../../utils/postContent';
 import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { usePostForm, toDraft } from '../../hooks/usePostForm';
@@ -203,7 +203,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         editorHandlers: {
             onTitleChange: handleTitleChange,
             onStatusChange: handleStatusChange,
-            onSave: (message?: string, statusOverride?: any) => void handleSave(message, statusOverride),
+            onSave: (message?: string, statusOverride?: PostStatus) => void handleSave(message, statusOverride),
             onDelete: () => void handleDelete(),
             updateDraft,
             setPreviewMode,

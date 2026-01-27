@@ -13,7 +13,7 @@ export const getPreview = async (req, res) => {
 
         const data = await fetchOpenGraphData(String(url));
         res.json(data);
-    } catch (error) {
+    } catch {
         res.status(400).json({ error: 'Invalid URL' });
     }
 };
