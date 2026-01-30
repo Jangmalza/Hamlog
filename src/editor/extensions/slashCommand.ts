@@ -234,6 +234,16 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                     .run();
             },
         },
+        // Mermaid
+        {
+            title: 'Mermaid 차트',
+            description: '다이어그램 삽입',
+            searchTerms: ['mermaid', 'diagram', 'chart', '차트'],
+            icon: '📊',
+            command: ({ editor, range }: any) => {
+                editor.chain().focus().deleteRange(range).setCodeBlock({ language: 'mermaid' }).run();
+            },
+        },
     ].filter((item) => {
         if (typeof query === 'string' && query.length > 0) {
             const search = query.toLowerCase();
