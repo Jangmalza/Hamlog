@@ -84,8 +84,12 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
       replace: (domNode: any) => {
         // Check if the node is <pre><code>...</code></pre>
         if (domNode instanceof Element && domNode.name === 'pre') {
-          const codeNode = domNode.children[0];
-          if (codeNode instanceof Element && codeNode.name === 'code') {
+          // Robustly find the code element (ignore whitespace text nodes)
+          const codeNode = domNode.children.find(
+            (child: any) => child instanceof Element && child.name === 'code'
+          ) as Element | undefined;
+
+          if (codeNode) {
             // Extract language class from code block if exists (e.g., class="language-js")
             const className = codeNode.attribs.class || '';
             const languageMatch = className.match(/language-(\w+)/);
