@@ -23,8 +23,19 @@ const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
 
             try {
                 const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-                // Sanitize code: replace non-breaking spaces with normal spaces
-                const sanitizedCode = code.replace(/\u00A0/g, ' ').trim();
+
+                // Aggressive sanitization:
+                // 1. Replace non-breaking spaces (\u00A0) with normal spaces
+                // 2. Remove zero-width spaces (\u200B) and other hidden controls
+                // 3. Decode common entities manually just in case
+                let sanitizedCode = code
+                    .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&amp;/g, '&')
+                    .trim();
+
                 const { svg: svgContent } = await mermaid.render(id, sanitizedCode);
                 setSvg(svgContent);
                 setError(null);
