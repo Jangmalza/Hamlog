@@ -25,17 +25,13 @@ const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
                 // Ensure ID starts with a letter to be a valid CSS selector
                 const id = `mermaid-chart-${Math.random().toString(36).substr(2, 9)}`;
 
-                // Robust HTML decoding using browser DOM
-                const txt = document.createElement('textarea');
-                txt.innerHTML = code;
-                let decodedCode = txt.value;
-
                 // Aggressive sanitization (remove ZWS, NBSP, etc)
-                decodedCode = decodedCode
+                // We do NOT use innerHTML/DOMParser here to prevent stripping <AngleBrackets> in mermaid code (e.g. Generics)
+                const sanitizedCode = code
                     .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
                     .trim();
 
-                const { svg: svgContent } = await mermaid.render(id, decodedCode);
+                const { svg: svgContent } = await mermaid.render(id, sanitizedCode);
                 setSvg(svgContent);
                 setError(null);
             } catch (err) {
