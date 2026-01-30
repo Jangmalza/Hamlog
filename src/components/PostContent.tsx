@@ -103,7 +103,14 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
               return '';
             };
 
-            const codeContent = getText(codeNode);
+            let codeContent = getText(codeNode);
+
+            // Simple unescape for common entities if html-react-parser missed them
+            codeContent = codeContent
+              .replace(/&gt;/g, '>')
+              .replace(/&lt;/g, '<')
+              .replace(/&quot;/g, '"')
+              .replace(/&amp;/g, '&');
 
             if (language === 'mermaid') {
               return <MermaidBlock code={codeContent.trim()} />;

@@ -23,12 +23,15 @@ const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
 
             try {
                 const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-                const { svg: svgContent } = await mermaid.render(id, code);
+                // Sanitize code: replace non-breaking spaces with normal spaces
+                const sanitizedCode = code.replace(/\u00A0/g, ' ').trim();
+                const { svg: svgContent } = await mermaid.render(id, sanitizedCode);
                 setSvg(svgContent);
                 setError(null);
             } catch (err) {
                 console.error('Mermaid rendering failed:', err);
-                setError('다이어그램을 렌더링할 수 없습니다. 문법을 확인해주세요.');
+                const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+                setError(`다이어그램을 렌더링할 수 없습니다. (${errorMessage})`);
                 // Mermaid leaves error text in the DOM, so we might want to clean up or handle it
             }
         };
