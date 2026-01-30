@@ -22,28 +22,30 @@ const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
             if (!containerRef.current) return;
 
             try {
-                const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+                // Ensure ID starts with a letter to be a valid CSS selector
+                const id = `mermaid-chart-${Math.random().toString(36).substr(2, 9)}`;
 
-                // Aggressive sanitization:
-                // 1. Replace non-breaking spaces (\u00A0) with normal spaces
-                // 2. Remove zero-width spaces (\u200B) and other hidden controls
-                // 3. Decode common entities manually just in case
-                let sanitizedCode = code
+                // Robust HTML decoding using browser DOM
+                const txt = document.createElement('textarea');
+                txt.innerHTML = code;
+                let decodedCode = txt.value;
+
+                // Aggressive sanitization (remove ZWS, NBSP, etc)
+                decodedCode = decodedCode
                     .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&quot;/g, '"')
-                    .replace(/&amp;/g, '&')
                     .trim();
 
-                const { svg: svgContent } = await mermaid.render(id, sanitizedCode);
+                const { svg: svgContent } = await mermaid.render(id, decodedCode);
                 setSvg(svgContent);
                 setError(null);
             } catch (err) {
                 console.error('Mermaid rendering failed:', err);
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-                setError(`다이어그램을 렌더링할 수 없습니다. (${errorMessage})`);
-                // Mermaid leaves error text in the DOM, so we might want to clean up or handle it
+
+                // Debug info: show first few chars in Hex to detect hidden bombs
+                const debugHex = code.substring(0, 20).split('').map(c => c.charCodeAt(0).toString(16)).join(' ');
+
+                setError(`다이어그램을 렌더링할 수 없습니다. (${errorMessage})\nDebug: ${debugHex}`);
             }
         };
 
