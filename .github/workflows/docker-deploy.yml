@@ -91,3 +91,23 @@ jobs:
           
           # Cleanup unused images
           docker image prune -f
+
+      - name: Send Telegram Notification
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d text="✅ *Deployment Successful!*
+          
+          New version is live on HamLog. 🚀" \
+          -d parse_mode="Markdown"
+
+      - name: Send Failure Notification
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d text="❌ *Deployment Failed!*
+          
+          Please check GitHub Actions for details." \
+          -d parse_mode="Markdown"
