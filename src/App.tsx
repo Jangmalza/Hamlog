@@ -4,9 +4,25 @@ import LoadingSpinner from './components/LoadingSpinner';
 import AdminGuard from './pages/AdminGuard';
 import HomePage from './pages/HomePage';
 
-// Lazy load pages
-const PostPage = lazy(() => import('./pages/PostPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
+// Helper to auto-reload page on chunk load error (deployment update)
+const lazyWithRetry = (importFn: () => Promise<any>) => {
+  return lazy(async () => {
+    try {
+      return await importFn();
+    } catch (error: any) {
+      // If the error confirms a missing chunk (version mismatch), reload the page
+      if (error.message?.includes('Failed to fetch dynamically imported module') ||
+        error.message?.includes('Importing a module script failed')) {
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+};
+
+// Lazy load pages with retry
+const PostPage = lazyWithRetry(() => import('./pages/PostPage'));
+const AdminPage = lazyWithRetry(() => import('./pages/AdminPage'));
 
 const LoadingFallback = () => (
   <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
