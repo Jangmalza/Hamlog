@@ -99,8 +99,17 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
             // Helper to get text from nested children
             const getText = (node: any): string => {
               if (node.type === 'text') return node.data;
-              if (node.type === 'tag' && node.name === 'br') return '\n';
-              if (node.children) return node.children.map(getText).join('');
+              if (node.type === 'tag') {
+                if (node.name === 'br') return '\n';
+
+                const content = node.children ? node.children.map(getText).join('') : '';
+
+                // Add newline after block elements if not empty
+                if (['p', 'div', 'li', 'tr'].includes(node.name)) {
+                  return content + '\n';
+                }
+                return content;
+              }
               return '';
             };
 

@@ -56,6 +56,15 @@ const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
                 <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded bg-white/50 p-2 text-xs dark:bg-black/20">
                     {code}
                 </pre>
+                <details className="mt-2">
+                    <summary className="cursor-pointer text-xs opacity-50 hover:opacity-100">Debug Raw Code</summary>
+                    <div className="mt-1 rounded bg-black/20 p-2 text-[10px] font-mono whitespace-pre-wrap">
+                        <p>Raw Code:</p>
+                        <pre>{code}</pre>
+                        <p className="mt-2">Hex Dump (First 20 chars):</p>
+                        <pre>{code.substring(0, 20).split('').map(c => `${c} (${c.charCodeAt(0).toString(16)})`).join(' ')}</pre>
+                    </div>
+                </details>
             </div>
         );
     }
