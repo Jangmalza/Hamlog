@@ -235,6 +235,29 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             },
         },
 
+        // 2 Photos (Image Columns)
+        {
+            title: '2단 이미지',
+            description: '이미지 2개를 나란히 배치',
+            searchTerms: ['2', 'photo', 'image', 'picture', '이미지', '사진'],
+            icon: '🖼',
+            command: ({ editor, range }: any) => {
+                editor
+                    .chain()
+                    .focus()
+                    .deleteRange(range)
+                    .insertContent({
+                        type: 'columns',
+                        attrs: { layout: 'two-column' },
+                        content: [
+                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
+                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
+                        ],
+                    })
+                    .run();
+            },
+        },
+
     ].filter((item) => {
         if (typeof query === 'string' && query.length > 0) {
             const search = query.toLowerCase();

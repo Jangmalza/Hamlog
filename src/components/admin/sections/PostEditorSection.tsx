@@ -36,6 +36,7 @@ export interface MediaHandlers {
   fileInputRef: React.RefObject<HTMLInputElement>;
   onCoverUpload?: (file: File) => Promise<void>;
   onSetCoverFromContent?: (src?: string) => void;
+  uploadLocalImage?: (file: File) => Promise<{ url: string }>;
 }
 
 export interface UIState {
@@ -198,7 +199,9 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           {/* Seamless Editor without border */}
           <EditorActionContext.Provider value={{
             onSetCover: (src) => onSetCoverFromContent?.(src),
-            currentCoverUrl
+            currentCoverUrl,
+            onToolbarUpload,
+            uploadLocalImage: mediaHandlers.uploadLocalImage
           }}>
             <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
             <TableBubbleMenu editor={editor} />

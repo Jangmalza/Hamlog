@@ -221,7 +221,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onImageUpload: (file: File) => void handleImageUpload(file),
             fileInputRef,
             onCoverUpload: handleCoverUpload,
-            onSetCoverFromContent: handleSetCoverFromContent
+            onSetCoverFromContent: handleSetCoverFromContent,
+            uploadLocalImage
         },
         uiState: {
             notice,
