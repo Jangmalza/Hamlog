@@ -28,6 +28,22 @@ export const SlashCommand = Extension.create({
     },
 });
 
+const createColumnContent = (count: 2 | 3, contentType: 'paragraph' | 'image') => {
+    const layout = count === 3 ? 'three-column' : 'two-column';
+    const columnContent = contentType === 'image'
+        ? { type: 'image', attrs: { src: '' } }
+        : { type: 'paragraph' };
+
+    return {
+        type: 'columns',
+        attrs: { layout },
+        content: Array.from({ length: count }, () => ({
+            type: 'column',
+            content: [columnContent]
+        }))
+    };
+};
+
 export const getSuggestionItems = ({ query }: { query: string }) => {
     return [
         {
@@ -201,14 +217,7 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                     .chain()
                     .focus()
                     .deleteRange(range)
-                    .insertContent({
-                        type: 'columns',
-                        attrs: { layout: 'two-column' },
-                        content: [
-                            { type: 'column', content: [{ type: 'paragraph' }] },
-                            { type: 'column', content: [{ type: 'paragraph' }] },
-                        ],
-                    })
+                    .insertContent(createColumnContent(2, 'paragraph'))
                     .run();
             },
         },
@@ -222,15 +231,7 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                     .chain()
                     .focus()
                     .deleteRange(range)
-                    .insertContent({
-                        type: 'columns',
-                        attrs: { layout: 'three-column' },
-                        content: [
-                            { type: 'column', content: [{ type: 'paragraph' }] },
-                            { type: 'column', content: [{ type: 'paragraph' }] },
-                            { type: 'column', content: [{ type: 'paragraph' }] },
-                        ],
-                    })
+                    .insertContent(createColumnContent(3, 'paragraph'))
                     .run();
             },
         },
@@ -246,14 +247,7 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                     .chain()
                     .focus()
                     .deleteRange(range)
-                    .insertContent({
-                        type: 'columns',
-                        attrs: { layout: 'two-column' },
-                        content: [
-                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
-                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
-                        ],
-                    })
+                    .insertContent(createColumnContent(2, 'image'))
                     .run();
             },
         },
@@ -269,15 +263,7 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
                     .chain()
                     .focus()
                     .deleteRange(range)
-                    .insertContent({
-                        type: 'columns',
-                        attrs: { layout: 'three-column' },
-                        content: [
-                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
-                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
-                            { type: 'column', content: [{ type: 'image', attrs: { src: '' } }] },
-                        ],
-                    })
+                    .insertContent(createColumnContent(3, 'image'))
                     .run();
             },
         },

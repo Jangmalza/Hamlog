@@ -3,6 +3,7 @@ import type { MutableRefObject } from 'react';
 import type { Editor } from '@tiptap/react';
 import type { EditorView } from '@tiptap/pm/view';
 import { NodeSelection } from '@tiptap/pm/state';
+import { detectImageDropZone } from '../editor/utils/dragDropUtils';
 
 interface UseEditorImageControlsProps {
   editorRef: MutableRefObject<Editor | null>;
@@ -88,6 +89,7 @@ export const useEditorImageControls = ({
       const clientX = event.clientX;
       const clientY = event.clientY;
 
+
       const handleUploadAndInsert = async () => {
         try {
           const { url } = await uploadLocalImage(file);
@@ -96,43 +98,9 @@ export const useEditorImageControls = ({
           // STRATEGY: Edge Detection for Columns
           // Find all images in the editor DOM
           const editorDom = view.dom as HTMLElement;
-          // Improved selector to catch images inside NodeViews (ImageComponent) and standard images
-          const images = Array.from(editorDom.querySelectorAll('.image-component img, img.post-image, img[data-type="custom-image"]'));
 
-          let targetImage: Element | null = null;
-          let dropSide: 'left' | 'right' | null = null;
-
-          const SCAN_DISTANCE = 100; // Pixel distance to consider "near"
-
-          // Find the closest image vertically that we are horizontally within range of
-          for (const img of images) {
-            const rect = img.getBoundingClientRect();
-            // Check if Y is within reasonable range (e.g. same line)
-            if (clientY >= rect.top && clientY <= rect.bottom) {
-              // We are inside the vertical strip of this image.
-              // Now check X.
-              // We accept drops slightly outside the image too (gaps).
-              if (clientX >= rect.left - SCAN_DISTANCE && clientX <= rect.right + SCAN_DISTANCE) {
-                // Potential target
-                const width = rect.width;
-                const offsetX = clientX - rect.left;
-
-                // Define trigger zones
-                // 0% - 30%: Left
-                // 70% - 100%: Right
-
-                if (offsetX < width * 0.3) {
-                  targetImage = img;
-                  dropSide = 'left';
-                  break;
-                } else if (offsetX > width * 0.7) {
-                  targetImage = img;
-                  dropSide = 'right';
-                  break;
-                }
-              }
-            }
-          }
+          // Use extracted utility
+          const { targetImage, dropSide } = detectImageDropZone(editorDom, clientX, clientY);
 
           if (targetImage && dropSide) {
             // Find the NodeView wrapper if possible (for React components)
