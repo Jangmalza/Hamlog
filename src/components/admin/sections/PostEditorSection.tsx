@@ -11,6 +11,7 @@ import { EditorToolbar } from '../../editor/EditorToolbar';
 import { PostMetadata } from '../PostMetadata';
 import { EditorActionContext } from '../../../contexts/EditorActionContext';
 import { TableBubbleMenu } from '../../editor/extensions/TableBubbleMenu';
+import { ColumnBubbleMenu } from '../../editor/extensions/ColumnBubbleMenu';
 
 export interface EditorHandlers {
   onTitleChange: (value: string) => void;
@@ -205,6 +206,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           }}>
             <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
             <TableBubbleMenu editor={editor} />
+            <ColumnBubbleMenu editor={editor} />
           </EditorActionContext.Provider>
         </div>
 

@@ -4,6 +4,8 @@ export type DropSide = 'left' | 'right' | null;
 interface ImageDetectionResult {
     targetImage: Element | null;
     dropSide: DropSide;
+    parentColumn?: Element | null;
+    parentColumns?: Element | null;
 }
 
 export const detectImageDropZone = (
@@ -16,6 +18,8 @@ export const detectImageDropZone = (
 
     let targetImage: Element | null = null;
     let dropSide: DropSide = null;
+    let parentColumn: Element | null = null;
+    let parentColumns: Element | null = null;
 
     const SCAN_DISTANCE = 100; // Pixel distance to consider "near"
 
@@ -49,5 +53,13 @@ export const detectImageDropZone = (
         }
     }
 
-    return { targetImage, dropSide };
+    if (targetImage) {
+        // Detect if inside a column
+        const imageComponent = targetImage.closest('.image-component');
+        const leafNode = imageComponent || targetImage;
+        parentColumn = leafNode.closest('[data-type="column"]');
+        parentColumns = leafNode.closest('[data-type="columns"]');
+    }
+
+    return { targetImage, dropSide, parentColumn, parentColumns };
 };

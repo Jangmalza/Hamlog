@@ -100,55 +100,123 @@ export const useEditorImageControls = ({
           const editorDom = view.dom as HTMLElement;
 
           // Use extracted utility
-          const { targetImage, dropSide } = detectImageDropZone(editorDom, clientX, clientY);
+          const { targetImage, dropSide, parentColumns } = detectImageDropZone(editorDom, clientX, clientY);
 
           if (targetImage && dropSide) {
-            // Find the NodeView wrapper if possible (for React components)
             const wrapper = targetImage.closest('.image-component') || targetImage;
             const domPos = view.posAtDOM(wrapper, 0);
 
             if (typeof domPos === 'number') {
               // Try to resolve the node at this position
               let node = view.state.doc.nodeAt(domPos);
-
-              // If not found directly, try resolving (sometimes posAtDOM points inside/before)
               if (!node || node.type.name !== 'image') {
                 const $pos = view.state.doc.resolve(domPos);
                 node = $pos.nodeAfter || $pos.nodeBefore;
               }
 
-              // Verify it is an image
               if (node && node.type.name === 'image') {
+                // LOGIC: Check for existing columns
+                if (parentColumns) {
+                  // We are dropping onto an image that is ALREADY IN A COLUMN.
+                  // Check current layout
+                  const layout = parentColumns.getAttribute('data-layout');
 
-                // Create Columns Structure
-                // Two columns.
-                // If dropSide is left: [New, Existing]
-                // If dropSide is right: [Existing, New]
+                  if (layout === 'two-column') {
+                    // EXPAND TO 3 COLUMNS
+                    const columnsPos = view.posAtDOM(parentColumns, 0);
+                    const columnsNode = view.state.doc.nodeAt(columnsPos);
 
-                // FIX: Use 'image' type, matching the schema
-                const newImageNode = { type: 'image', attrs: { src: url, size: 'full' } };
-                const existingImageNode = { type: 'image', attrs: { ...node.attrs } }; // Preserve existing
+                    // Let's implement robust "Expand 2 to 3"
+                    if (columnsNode && columnsNode.type.name === 'columns') {
 
-                const leftContent = dropSide === 'left' ? newImageNode : existingImageNode;
-                const rightContent = dropSide === 'left' ? existingImageNode : newImageNode;
+                      // Simple Heuristic: 
+                      // If dropSide is LEFT of the LEFTMOST image -> Prepend
+                      // If dropSide is RIGHT of the RIGHTMOST image -> Append
 
-                const columnsNode = {
-                  type: 'columns',
-                  attrs: { layout: 'two-column' },
-                  content: [
-                    { type: 'column', content: [leftContent] },
-                    { type: 'column', content: [rightContent] }
-                  ]
-                };
+                      const allImagesInRow = Array.from(parentColumns.querySelectorAll('.image-component img'));
+                      const targetIndex = allImagesInRow.indexOf(targetImage as HTMLImageElement);
 
-                // Replace the existing image node with the new columns node
-                // Use domPos if it maps to the start of the node
-                editorRef.current?.chain()
-                  .deleteRange({ from: domPos, to: domPos + node.nodeSize })
-                  .insertContentAt(domPos, columnsNode)
-                  .run();
+                      if (targetIndex !== -1) {
+                        const isLeftCol = targetIndex === 0;
+                        const isRightCol = targetIndex === 1;
 
-                grouped = true;
+                        let insertIndex = -1;
+
+                        if (isLeftCol && dropSide === 'left') insertIndex = 0;
+                        if (isLeftCol && dropSide === 'right') insertIndex = 1; // Middle
+                        if (isRightCol && dropSide === 'left') insertIndex = 1; // Middle
+                        if (isRightCol && dropSide === 'right') insertIndex = 2;
+
+                        if (insertIndex !== -1) {
+                          // Construct new 3-column node using existing contents
+                          // We need to access the actual nodes from the document
+                          // columnsNode.content is a Fragment, child(i) gives the node
+
+                          const col1 = columnsNode.child(0);
+                          const col2 = columnsNode.child(1);
+
+                          // Create new column node with the uploaded image
+                          const newSchema = view.state.schema;
+                          const newImageNode = newSchema.nodes.image.create({ src: url, size: 'full' });
+                          const newColumn = newSchema.nodes.column.create(null, [newImageNode]);
+
+                          const newCols = [col1, col2];
+                          newCols.splice(insertIndex, 0, newColumn);
+
+                          const newColumnsNode = newSchema.nodes.columns.create(
+                            { layout: 'three-column' },
+                            newCols
+                          );
+
+                          editorRef.current?.chain()
+                            .deleteRange({ from: columnsPos, to: columnsPos + columnsNode.nodeSize })
+                            .insertContentAt(columnsPos, newColumnsNode.toJSON())
+                            .run();
+
+                          grouped = true;
+                        }
+                      }
+                    }
+                  } else {
+                    // Already 3 columns or unknown. Prevent nesting.
+                    console.warn("Max columns reached or unknown layout.");
+                    grouped = true;
+                  }
+                } else {
+                  // ORIGINAL LOGIC: Create 2-Column from scratch
+                  // Re-resolve node if needed, though we know we are at the same position
+                  // node is let-scoped in if-block, need to re-access or rely on closure if hoisted (which failed).
+                  // Safest: Re-resolve since we are in the same scope context as `domPos`.
+
+                  let fallbackNode = view.state.doc.nodeAt(domPos as number);
+                  if (!fallbackNode || fallbackNode.type.name !== 'image') {
+                    const $pos = view.state.doc.resolve(domPos as number);
+                    fallbackNode = $pos.nodeAfter || $pos.nodeBefore;
+                  }
+
+                  if (fallbackNode) {
+                    const newImageNode = { type: 'image', attrs: { src: url, size: 'full' } };
+                    const existingImageNode = { type: 'image', attrs: { ...fallbackNode.attrs } };
+                    const leftContent = dropSide === 'left' ? newImageNode : existingImageNode;
+                    const rightContent = dropSide === 'left' ? existingImageNode : newImageNode;
+
+                    const columnsNode = {
+                      type: 'columns',
+                      attrs: { layout: 'two-column' },
+                      content: [
+                        { type: 'column', content: [leftContent] },
+                        { type: 'column', content: [rightContent] }
+                      ]
+                    };
+
+                    editorRef.current?.chain()
+                      .deleteRange({ from: domPos as number, to: (domPos as number) + fallbackNode.nodeSize })
+                      .insertContentAt(domPos as number, columnsNode)
+                      .run();
+
+                    grouped = true;
+                  }
+                }
               }
             }
           }
@@ -172,8 +240,6 @@ export const useEditorImageControls = ({
     },
     [editorRef, getImageFileFromTransfer, uploadLocalImage]
   );
-
-
 
   const handleToolbarImageUpload = useCallback(() => {
     fileInputRef.current?.click();
