@@ -18,11 +18,12 @@ export const getRss = async (req, res) => {
       <guid>${BASE_URL}/posts/${post.slug}</guid>
       <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
       <description><![CDATA[${post.summary}]]></description>
+      <content:encoded><![CDATA[${post.contentHtml || ''}]]></content:encoded>
       ${post.category ? `<category>${post.category}</category>` : ''}
     </item>`).join('');
 
     const rss = `<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0">
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>${profile.title}</title>
     <link>${BASE_URL}</link>

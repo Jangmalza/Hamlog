@@ -34,3 +34,7 @@ export async function updatePost(id: string, payload: PostInput): Promise<Post> 
 export async function deletePost(id: string): Promise<void> {
   await requestVoid(`/posts/${id}`, { method: 'DELETE' });
 }
+
+export async function searchPosts(query: string): Promise<Post[]> {
+  return requestJson<Post[]>(`/search?q=${encodeURIComponent(query)}`);
+}

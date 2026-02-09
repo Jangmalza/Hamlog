@@ -16,6 +16,7 @@ import { healthRouter } from './routes/health.js';
 import { seoRouter } from './routes/seo.js';
 import { commentRouter } from './routes/comments.js';
 import { authRouter } from './routes/auth.js';
+import { searchPosts } from './controllers/searchController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +41,7 @@ app.use('/api/profile', profileRouter);
 app.use('/api/uploads', uploadRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/auth', authRouter);
+app.get('/api/search', searchPosts);
 app.use('/', seoRouter);
 
 // Fallback for SPA
