@@ -20,7 +20,10 @@ export const injectPostMeta = async (req, res) => {
     if (post) {
       const title = post.seo?.title || post.title;
       const description = post.seo?.description || post.summary;
-      const image = post.seo?.ogImage || post.cover || `${BASE_URL}/avatar.jpg`;
+      let image = post.seo?.ogImage || post.cover || '/avatar.jpg';
+      if (image.startsWith('/')) {
+        image = `${BASE_URL}${image}`;
+      }
       const fullUrl = `${BASE_URL}/posts/${post.slug}`;
 
       // Update basic meta
