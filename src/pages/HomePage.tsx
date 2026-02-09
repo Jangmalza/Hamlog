@@ -68,13 +68,13 @@ const HomePage = () => {
 
                 <main>
                     {!hasLoaded && posts.length === 0 && (
-                        <section className="mx-auto max-w-5xl px-4 py-12">
+                        <section className="mx-auto max-w-6xl px-4 py-12">
                             <LoadingSpinner message="글 불러오는 중..." />
                         </section>
                     )}
 
                     {error && posts.length === 0 && (
-                        <section className="mx-auto max-w-5xl px-4 py-12">
+                        <section className="mx-auto max-w-6xl px-4 py-12">
                             <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 text-center shadow-[var(--shadow)]">
                                 <p className="text-sm text-[var(--text-muted)]">{error}</p>
                                 <button

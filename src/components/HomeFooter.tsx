@@ -7,7 +7,7 @@ interface HomeFooterProps {
 export const HomeFooter = ({ profile }: HomeFooterProps) => {
     return (
         <footer id="about" className="border-t border-[color:var(--border)]">
-            <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
                         소개

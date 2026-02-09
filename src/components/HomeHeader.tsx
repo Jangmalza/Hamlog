@@ -16,7 +16,7 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
 
     return (
         <header className="border-b border-[color:var(--border)]">
-            <div className="mx-auto max-w-5xl px-4 py-10">
+            <div className="mx-auto max-w-6xl px-4 py-10">
                 <nav className="flex flex-wrap items-center justify-between gap-4 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                     <span className="font-display text-base font-semibold text-[var(--text)]">
                         {profile.title}
