@@ -80,10 +80,12 @@ body::before {
 
 .tiptap-editor {
   display: block;
-  min-height: 360px;
-  padding: 24px;
-  border-radius: 24px;
-  background: var(--surface);
+  /* In admin, the editor is already inside a padded card.
+     Keep the canvas visually integrated and maximize usable writing area. */
+  min-height: max(640px, 60vh);
+  padding: 16px 0;
+  border-radius: 0;
+  background: transparent;
   outline: none;
   width: 100%;
   max-width: 100%;

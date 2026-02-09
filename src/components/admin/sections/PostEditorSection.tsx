@@ -266,7 +266,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           }}
         />
 
-        <div className={previewMode ? 'block min-h-[500px] p-2' : 'hidden'}>
+        <div className={previewMode ? 'block min-h-[640px] p-2' : 'hidden'}>
           {draft.contentHtml.trim() ? (
             <PostContent contentHtml={draft.contentHtml} />
           ) : (
@@ -276,7 +276,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           )}
         </div>
 
-        <div className={!previewMode ? 'block min-h-[500px] border-none shadow-none outline-none ring-0' : 'hidden'}>
+        <div className={!previewMode ? 'block min-h-[640px] border-none shadow-none outline-none ring-0' : 'hidden'}>
           {/* Seamless Editor without border */}
           <EditorActionContext.Provider value={{
             onSetCover: (src) => onSetCoverFromContent?.(src),
@@ -329,7 +329,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
         </div>
 
         {/* Editor TOC Sidebar (Desktop only) */}
-        <div className="fixed right-8 top-32 hidden xl:block w-64">
+        <div className="fixed right-8 top-32 hidden 2xl:block w-64">
           {tocItems.length > 0 && (
             <TableOfContents
               tocItems={tocItems}
