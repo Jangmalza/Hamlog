@@ -43,6 +43,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const [notice, setNotice] = useState('');
     const [previewMode, setPreviewMode] = useState(false);
     const editorRef = useRef<Editor | null>(null);
+    const loadDraftSnapshot = useCallback(() => toDraft(post || undefined), [post]);
 
     // 2. Auto-save Logic (extracted)
     const { clearAutosave, handleRestoreAutosave } = useAutosave({
@@ -50,7 +51,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         draft,
         setDraft,
         setNotice,
-        onLoadDraft: () => toDraft(post || undefined)
+        onLoadDraft: loadDraftSnapshot
     });
 
     // Reset UI on post change
@@ -140,7 +141,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             const { url } = await uploadLocalImage(file);
             updateDraft({ cover: url });
             setNotice('대표 이미지가 업로드되었습니다.');
-        } catch (error) {
+        } catch (error: unknown) {
+            console.error(error);
             setNotice('이미지 업로드에 실패했습니다.');
         }
     };

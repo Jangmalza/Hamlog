@@ -2,15 +2,35 @@ import {
     forwardRef,
     useEffect,
     useImperativeHandle,
+    type ReactNode,
     useState,
 } from 'react';
+import type { Editor, Range } from '@tiptap/core';
 
-interface SlashCommandListProps {
-    items: any[];
-    command: (item: any) => void;
+export interface SlashCommandContext {
+    editor: Editor;
+    range: Range;
 }
 
-export const SlashCommandList = forwardRef((props: SlashCommandListProps, ref) => {
+export interface SlashCommandItem {
+    title: string;
+    description?: string;
+    searchTerms?: string[];
+    icon?: ReactNode;
+    element?: ReactNode;
+    command: (context: SlashCommandContext) => void | Promise<void>;
+}
+
+export interface SlashCommandListProps {
+    items: SlashCommandItem[];
+    command: (item: SlashCommandItem) => void;
+}
+
+export interface SlashCommandListHandle {
+    onKeyDown: ({ event }: { event: KeyboardEvent }) => boolean;
+}
+
+export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandListProps>((props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     const selectItem = (index: number) => {

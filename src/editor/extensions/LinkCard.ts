@@ -1,17 +1,20 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import type { CommandProps } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { LinkCardComponent } from '../../components/editor/extensions/LinkCardComponent';
+
+interface LinkCardAttributes {
+    url: string;
+    title: string;
+    description: string;
+    image: string;
+    domain: string;
+}
 
 declare module '@tiptap/core' {
     interface Commands<ReturnType> {
         linkCard: {
-            setLinkCard: (options: {
-                url: string;
-                title: string;
-                description: string;
-                image: string;
-                domain: string;
-            }) => ReturnType;
+            setLinkCard: (options: LinkCardAttributes) => ReturnType;
         };
     }
 }
@@ -55,13 +58,14 @@ export const LinkCard = Node.create({
     },
 
     addNodeView() {
-        // @ts-ignore - Component props matching Tiptap NodeViewProps is tricky with strict types
-        return ReactNodeViewRenderer(LinkCardComponent);
+        return ReactNodeViewRenderer(
+            LinkCardComponent as unknown as Parameters<typeof ReactNodeViewRenderer>[0]
+        );
     },
 
     addCommands() {
         return {
-            setLinkCard: (options: any) => ({ commands }: any) => {
+            setLinkCard: (options: LinkCardAttributes) => ({ commands }: Pick<CommandProps, 'commands'>) => {
                 return commands.insertContent({
                     type: this.name,
                     attrs: options,

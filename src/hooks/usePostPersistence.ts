@@ -132,7 +132,7 @@ export const usePostPersistence = ({
         } finally {
             setSaving(false);
         }
-    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, onAfterSave]);
+    }, [draft, posts, activeId, updatePost, addPost, onSaveSuccess, onAfterSave, setNotice]);
 
     const handleDelete = async () => {
         if (!activeId) return;

@@ -1,7 +1,5 @@
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'hamlog-secret-key-change-me';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234'; // Server-side source of truth
+import { ADMIN_PASSWORD, JWT_SECRET } from '../config/auth.js';
 
 export const login = (req, res) => {
     const { password } = req.body;

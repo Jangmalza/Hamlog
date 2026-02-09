@@ -8,7 +8,11 @@ export const fetchOpenGraphData = async (url) => {
                 'User-Agent': 'Mozilla/5.0 (compatible; HamLogBot/1.0; +http://localhost:3000)',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
             },
-            timeout: 5000
+            timeout: 5000,
+            maxRedirects: 0,
+            maxContentLength: 1024 * 1024,
+            maxBodyLength: 1024 * 1024,
+            responseType: 'text'
         });
 
         const $ = cheerio.load(data);

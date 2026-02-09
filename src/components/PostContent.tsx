@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import DOMPurify from 'dompurify';
 import parse from 'html-react-parser';
+import type { DOMNode, HTMLReactParserOptions, Element } from 'html-react-parser';
+import type { ChildNode } from 'domhandler';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Copy, Check, Terminal } from 'lucide-react';
@@ -15,6 +17,28 @@ const sanitizeHtml = (html: string) =>
     ADD_ATTR: ['data-size', 'data-width', 'style', 'width', 'class', 'colspan', 'rowspan', 'colwidth', 'data-caption', 'id'],
     ADD_TAGS: ['figure', 'figcaption']
   });
+
+type HtmlNode = DOMNode | ChildNode;
+
+const isElementNode = (node: HtmlNode): node is Element => node.type === 'tag';
+
+const getNodeText = (node: HtmlNode): string => {
+  if (node.type === 'text' && 'data' in node) return node.data;
+  if (!isElementNode(node)) return '';
+  return (node.children ?? []).map(child => getNodeText(child)).join('');
+};
+
+const getCodeText = (node: HtmlNode): string => {
+  if (node.type === 'text' && 'data' in node) return node.data;
+  if (!isElementNode(node)) return '';
+  if (node.name === 'br') return '\n';
+
+  const content = (node.children ?? []).map(child => getCodeText(child)).join('');
+  if (['p', 'div', 'li', 'tr'].includes(node.name)) {
+    return `${content}\n`;
+  }
+  return content;
+};
 
 const CodeBlock = ({ language, code }: { language: string; code: string }) => {
   const [copied, setCopied] = useState(false);
@@ -88,20 +112,16 @@ const PostContent: React.FC<PostContentProps> = ({ contentHtml }) => {
 
   const sanitized = sanitizeHtml(contentHtml);
 
-  const options = {
-    replace: (domNode: any) => {
+  const options: HTMLReactParserOptions = {
+    replace: (domNode: DOMNode) => {
+      if (!isElementNode(domNode)) return undefined;
+
       // 1. Handle Headings: Add IDs for TOC
-      if (domNode.type === 'tag' && ['h1', 'h2', 'h3'].includes(domNode.name)) {
+      if (['h1', 'h2', 'h3'].includes(domNode.name)) {
         if (!domNode.attribs.id) {
-          const text = (domNode.children
-            ? domNode.children
-              .filter((child: any) => child.type === 'text' || child.type === 'tag')
-              .map((child: any) => child.data || (child.children?.[0]?.data) || '')
-              .join('')
-            : '') || 'heading';
+          const text = getNodeText(domNode).trim() || 'heading';
 
           const slug = text
-            .trim()
             .toLowerCase()
             .replace(/[^a-z0-9가-힣\s-]/g, '')
             .replace(/\s+/g, '-')
@@ -112,9 +132,9 @@ const PostContent: React.FC<PostContentProps> = ({ contentHtml }) => {
       }
 
       // 2. Handle Code Blocks
-      if (domNode.type === 'tag' && domNode.name === 'pre') {
-        const codeNode = domNode.children && domNode.children.find(
-          (child: any) => child.name === 'code'
+      if (domNode.name === 'pre') {
+        const codeNode = (domNode.children ?? []).find(
+          (child): child is Element => isElementNode(child) && child.name === 'code'
         );
 
         if (codeNode) {
@@ -122,20 +142,7 @@ const PostContent: React.FC<PostContentProps> = ({ contentHtml }) => {
           const languageMatch = className.match(/language-(\w+)/);
           const language = languageMatch ? languageMatch[1] : 'plaintext';
 
-          const getText = (node: any): string => {
-            if (node.type === 'text') return node.data;
-            if (node.type === 'tag') {
-              if (node.name === 'br') return '\n';
-              const content = node.children ? node.children.map(getText).join('') : '';
-              if (['p', 'div', 'li', 'tr'].includes(node.name)) {
-                return content + '\n';
-              }
-              return content;
-            }
-            return '';
-          };
-
-          let codeContent = getText(codeNode);
+          let codeContent = (codeNode.children ?? []).map(getCodeText).join('');
           codeContent = codeContent
             .replace(/&gt;/g, '>')
             .replace(/&lt;/g, '<')
@@ -145,6 +152,7 @@ const PostContent: React.FC<PostContentProps> = ({ contentHtml }) => {
           return <CodeBlock language={language} code={codeContent.trimEnd()} />;
         }
       }
+      return undefined;
     }
   };
 

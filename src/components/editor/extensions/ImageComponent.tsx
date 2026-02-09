@@ -19,7 +19,7 @@ export const ImageComponent = ({ node, updateAttributes, selected }: NodeViewPro
         currentCoverUrl = ctx.currentCoverUrl;
         onToolbarUpload = ctx.onToolbarUpload;
         uploadLocalImage = ctx.uploadLocalImage;
-    } catch (e) {
+    } catch {
         // Ignore context error if not available
     }
 

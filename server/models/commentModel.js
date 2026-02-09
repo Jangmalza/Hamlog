@@ -3,8 +3,10 @@ import { writeJsonAtomic } from '../utils/fsUtils.js';
 import { randomUUID } from 'crypto';
 import { dataDir } from '../config/paths.js';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 
 const commentsFilePath = path.join(dataDir, 'comments.json');
+const BCRYPT_SALT_ROUNDS = 10;
 
 
 export async function ensureCommentsFile() {
@@ -42,11 +44,12 @@ export async function getCommentsByPostId(postId) {
 
 export async function createComment(data) {
     const all = await readComments();
+    const passwordHash = await bcrypt.hash(String(data.password), BCRYPT_SALT_ROUNDS);
     const newComment = {
         id: randomUUID(),
         postId: data.postId,
         author: data.author || 'Anonymous',
-        password: data.password, // Plain text for simplicity as per plan, or simple hash if strict? Plan said simple equality check.
+        password: passwordHash,
         content: data.content,
         createdAt: new Date().toISOString()
     };
@@ -59,7 +62,22 @@ export async function deleteComment(id, password) {
     const target = all.find(c => c.id === id);
 
     if (!target) return { success: false, reason: 'not_found' };
-    if (target.password !== password) return { success: false, reason: 'wrong_password' };
+    const inputPassword = String(password ?? '');
+    const storedPassword = String(target.password ?? '');
+
+    let isPasswordMatched = false;
+    if (
+        storedPassword.startsWith('$2a$')
+        || storedPassword.startsWith('$2b$')
+        || storedPassword.startsWith('$2y$')
+    ) {
+        isPasswordMatched = await bcrypt.compare(inputPassword, storedPassword);
+    } else {
+        // Legacy compatibility for pre-hash comments.
+        isPasswordMatched = storedPassword === inputPassword;
+    }
+
+    if (!isPasswordMatched) return { success: false, reason: 'wrong_password' };
 
     const next = all.filter(c => c.id !== id);
     await writeComments(next);

@@ -5,6 +5,9 @@ export interface LogLevel {
   DEBUG: 'debug';
 }
 
+type LogLevelKey = keyof LogLevel;
+type LogData = Record<string, unknown> | string | number | boolean | null | undefined;
+
 export const LOG_LEVELS: LogLevel = {
   ERROR: 'error',
   WARN: 'warn',
@@ -13,10 +16,10 @@ export const LOG_LEVELS: LogLevel = {
 };
 
 interface LogEntry {
-  level: keyof LogLevel;
+  level: LogLevelKey;
   message: string;
   timestamp: Date;
-  data?: any;
+  data?: LogData;
   error?: Error;
 }
 
@@ -24,7 +27,7 @@ class Logger {
   private isDevelopment = import.meta.env.DEV;
   private logs: LogEntry[] = [];
   
-  private createLogEntry(level: keyof LogLevel, message: string, data?: any, error?: Error): LogEntry {
+  private createLogEntry(level: LogLevelKey, message: string, data?: LogData, error?: Error): LogEntry {
     return {
       level,
       message,
@@ -34,23 +37,24 @@ class Logger {
     };
   }
 
-  private shouldLog(level: keyof LogLevel): boolean {
+  private shouldLog(level: LogLevelKey): boolean {
     if (this.isDevelopment) return true;
     
     // 프로덕션에서는 ERROR와 WARN만 로깅
     return level === 'ERROR' || level === 'WARN';
   }
 
-  private log(level: keyof LogLevel, message: string, data?: any, error?: Error) {
+  private log(level: LogLevelKey, message: string, data?: LogData, error?: Error) {
     if (!this.shouldLog(level)) return;
 
     const logEntry = this.createLogEntry(level, message, data, error);
     this.logs.push(logEntry);
 
     // 콘솔 출력
-    const consoleMethod = console[level.toLowerCase() as keyof Console] as Function;
-    if (consoleMethod) {
-      consoleMethod(`[${level}] ${message}`, data || '', error || '');
+    const consoleKey = level.toLowerCase() as Lowercase<LogLevelKey>;
+    const consoleMethod = console[consoleKey];
+    if (typeof consoleMethod === 'function') {
+      consoleMethod.call(console, `[${level}] ${message}`, data ?? '', error ?? '');
     }
 
     // 로그 버퍼 관리 (최대 100개 유지)
@@ -64,7 +68,8 @@ class Logger {
     }
   }
 
-  private sendToErrorService(_logEntry: LogEntry) {
+  private sendToErrorService(logEntry: LogEntry) {
+    void logEntry;
     // 실제 프로덕션에서는 Sentry, LogRocket, Bugsnag 등에 전송
     // fetch('/api/log-error', {
     //   method: 'POST',
@@ -78,24 +83,24 @@ class Logger {
     // });
   }
 
-  error(message: string, error?: Error, data?: any) {
+  error(message: string, error?: Error, data?: LogData) {
     this.log('ERROR', message, data, error);
   }
 
-  warn(message: string, data?: any) {
+  warn(message: string, data?: LogData) {
     this.log('WARN', message, data);
   }
 
-  info(message: string, data?: any) {
+  info(message: string, data?: LogData) {
     this.log('INFO', message, data);
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, data?: LogData) {
     this.log('DEBUG', message, data);
   }
 
   // 사용자 액션 트래킹
-  trackUserAction(action: string, data?: any) {
+  trackUserAction(action: string, data?: LogData) {
     this.info(`User Action: ${action}`, data);
   }
 
@@ -128,7 +133,11 @@ window.addEventListener('error', (event) => {
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  logger.error('Unhandled Promise Rejection', new Error(event.reason), {
+  const rejectionError = event.reason instanceof Error
+    ? event.reason
+    : new Error(typeof event.reason === 'string' ? event.reason : 'Unhandled promise rejection');
+
+  logger.error('Unhandled Promise Rejection', rejectionError, {
     reason: event.reason
   });
 });

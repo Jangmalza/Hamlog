@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import type { PostDraft } from '../../types/admin';
 import type { CategoryNode, CategoryTreeResult } from '../../utils/categoryTree';
 import { DEFAULT_CATEGORY, normalizeCategoryKey } from '../../utils/category';
@@ -21,7 +21,7 @@ export const PostMetadata: React.FC<PostMetadataProps> = ({
     const [categoryExpanded, setCategoryExpanded] = useState<Record<string, boolean>>({});
     const coverInputRef = React.useRef<HTMLInputElement>(null);
 
-    const getNodePath = (node: CategoryNode) => {
+    const getNodePath = useCallback((node: CategoryNode) => {
         const path: string[] = [];
         let current: CategoryNode | undefined = node;
         while (current) {
@@ -29,7 +29,7 @@ export const PostMetadata: React.FC<PostMetadataProps> = ({
             current = current.parentId ? categoryTree.nodesById.get(current.parentId) : undefined;
         }
         return path.join(' > ');
-    };
+    }, [categoryTree.nodesById]);
 
     const categoryPath = useMemo(() => {
         const name = draft.category || DEFAULT_CATEGORY;
@@ -37,7 +37,7 @@ export const PostMetadata: React.FC<PostMetadataProps> = ({
         const node = categoryTree.nodesByKey.get(key);
         if (!node) return name;
         return getNodePath(node);
-    }, [categoryTree, draft.category]);
+    }, [categoryTree, draft.category, getNodePath]);
 
     const categoryResults = useMemo(() => {
         const query = categoryQuery.trim().toLowerCase();
@@ -46,7 +46,7 @@ export const PostMetadata: React.FC<PostMetadataProps> = ({
             .filter(node => node.name.toLowerCase().includes(query))
             .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
             .map(node => ({ node, path: getNodePath(node) }));
-    }, [categoryQuery, categoryTree]);
+    }, [categoryQuery, categoryTree, getNodePath]);
 
     const toggleCategoryNode = (id: string) => {
         setCategoryExpanded(prev => {

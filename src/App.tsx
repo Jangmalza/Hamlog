@@ -1,18 +1,28 @@
 import { Suspense, lazy } from 'react';
+import type { ComponentType } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import LoadingSpinner from './components/LoadingSpinner';
 import AdminGuard from './pages/AdminGuard';
 import HomePage from './pages/HomePage';
 
 // Helper to auto-reload page on chunk load error (deployment update)
-const lazyWithRetry = (importFn: () => Promise<any>) => {
+type LazyImport = Promise<{ default: ComponentType<object> }>;
+
+const isChunkLoadError = (error: unknown) => {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes('Failed to fetch dynamically imported module')
+    || error.message.includes('Importing a module script failed')
+  );
+};
+
+const lazyWithRetry = (importFn: () => LazyImport) => {
   return lazy(async () => {
     try {
       return await importFn();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If the error confirms a missing chunk (version mismatch), reload the page
-      if (error.message?.includes('Failed to fetch dynamically imported module') ||
-        error.message?.includes('Importing a module script failed')) {
+      if (isChunkLoadError(error)) {
         window.location.reload();
       }
       throw error;

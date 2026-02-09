@@ -66,7 +66,7 @@ export const MathExtension = Node.create({
                     throwOnError: false,
                     output: 'html' // Use HTML mostly
                 });
-            } catch (e) {
+            } catch {
                 renderSpan.innerText = 'Error';
             }
 

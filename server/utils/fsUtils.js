@@ -21,7 +21,7 @@ export async function writeJsonAtomic(filePath, data) {
         try {
             const { unlink } = await import('fs/promises');
             await unlink(tempPath);
-        } catch (unlinkError) {
+        } catch {
             // Ignore unlink errors
         }
         throw error;

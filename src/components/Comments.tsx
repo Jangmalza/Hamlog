@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { formatDate } from '../utils/formatDate';
 import type { Comment } from '../types/comment';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 interface CommentsProps {
     postId: string;
@@ -24,13 +24,7 @@ export const Comments: React.FC<CommentsProps> = ({ postId }) => {
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState('');
 
-    useEffect(() => {
-        if (postId) {
-            fetchComments();
-        }
-    }, [postId]);
-
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE}/comments?postId=${postId}`);
@@ -43,7 +37,13 @@ export const Comments: React.FC<CommentsProps> = ({ postId }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [postId]);
+
+    useEffect(() => {
+        if (postId) {
+            void fetchComments();
+        }
+    }, [postId, fetchComments]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,7 +91,8 @@ export const Comments: React.FC<CommentsProps> = ({ postId }) => {
                 const data = await res.json();
                 setDeleteError(data.message || '삭제 실패');
             }
-        } catch (error) {
+        } catch (error: unknown) {
+            console.error(error);
             setDeleteError('오류가 발생했습니다.');
         } finally {
             setDeleting(false);

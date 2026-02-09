@@ -30,11 +30,11 @@ export const useAutosave = ({
                 if (parsed.contentHtml !== currentInit.contentHtml || parsed.title !== currentInit.title) {
                     setNotice('임시 저장된 내용이 있습니다. 복구하시겠습니까? (클릭)');
                 }
-            } catch (e) {
+            } catch {
                 // ignore invalid json
             }
         }
-    }, [activeId, autosaveKey]); // Check once per post switch
+    }, [autosaveKey, onLoadDraft, setNotice]); // Check once per post switch
 
     // Save to LocalStorage (Debounced)
     useEffect(() => {
@@ -57,7 +57,7 @@ export const useAutosave = ({
                 const parsed = JSON.parse(saved);
                 setDraft(parsed);
                 setNotice('임시 저장된 내용을 복구했습니다.');
-            } catch (e) {
+            } catch {
                 setNotice('복구에 실패했습니다.');
             }
         }

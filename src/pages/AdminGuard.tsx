@@ -32,7 +32,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
       await authApi.login(password);
       setIsAuthed(true);
       setError('');
-    } catch (err) {
+    } catch {
       setError('비밀번호가 올바르지 않습니다.');
     }
   };
