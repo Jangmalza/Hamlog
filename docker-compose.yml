@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server/data:/app/server/data
+      - ./server/uploads:/app/server/uploads
+    env_file:
+      - .env
+    restart: always

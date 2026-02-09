@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { readFile, mkdir } from 'fs/promises';
 import { profileFilePath, dataDir } from '../config/paths.js';
+import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
     normalizeProfile,
     defaultProfile
@@ -20,7 +21,7 @@ export async function readProfile() {
 
 export async function writeProfile(profile) {
     const normalized = normalizeProfile(profile);
-    await writeFile(profileFilePath, JSON.stringify(normalized, null, 2), 'utf8');
+    await writeJsonAtomic(profileFilePath, normalized);
     return normalized;
 }
 

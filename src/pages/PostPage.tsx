@@ -237,7 +237,7 @@ const PostPage: React.FC = () => {
 
 
               <div className="prose prose-lg max-w-none">
-                <PostContent sections={post.sections} contentHtml={post.contentHtml} />
+                <PostContent contentHtml={post.contentHtml} />
               </div>
 
               <hr className="my-12 border-[color:var(--border)]" />
