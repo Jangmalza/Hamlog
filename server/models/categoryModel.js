@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { readFile, mkdir } from 'fs/promises';
 import { categoriesFilePath, dataDir } from '../config/paths.js';
+import { writeJsonAtomic } from '../utils/fsUtils.js';
 import { normalizeCategoryList } from '../utils/normalizers.js';
 
 export async function readCategories() {
@@ -10,7 +11,7 @@ export async function readCategories() {
 
 export async function writeCategories(categories) {
     const normalized = normalizeCategoryList(categories);
-    await writeFile(categoriesFilePath, JSON.stringify(normalized, null, 2), 'utf8');
+    await writeJsonAtomic(categoriesFilePath, normalized);
     return normalized;
 }
 

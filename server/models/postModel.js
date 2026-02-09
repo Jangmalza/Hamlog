@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { readFile, mkdir } from 'fs/promises';
 import { postsFilePath, dataDir } from '../config/paths.js';
+import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
     normalizeCategory,
     normalizePostStatus,
@@ -24,7 +25,7 @@ export async function readPosts() {
 }
 
 export async function writePosts(posts) {
-    await writeFile(postsFilePath, JSON.stringify(posts, null, 2), 'utf8');
+    await writeJsonAtomic(postsFilePath, posts);
 }
 
 export async function ensurePostsFile() {

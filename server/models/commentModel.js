@@ -1,19 +1,18 @@
-import { readFile, writeFile, access, mkdir } from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { readFile, access, mkdir } from 'fs/promises';
+import { writeJsonAtomic } from '../utils/fsUtils.js';
 import { randomUUID } from 'crypto';
+import { dataDir } from '../config/paths.js';
+import path from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, '../data');
 const commentsFilePath = path.join(dataDir, 'comments.json');
+
 
 export async function ensureCommentsFile() {
     await mkdir(dataDir, { recursive: true });
     try {
         await access(commentsFilePath);
     } catch {
-        await writeFile(commentsFilePath, JSON.stringify([], null, 2), 'utf8');
+        await writeComments([]);
     }
 }
 
@@ -31,7 +30,7 @@ export async function readComments() {
 }
 
 export async function writeComments(comments) {
-    await writeFile(commentsFilePath, JSON.stringify(comments, null, 2), 'utf8');
+    await writeJsonAtomic(commentsFilePath, comments);
 }
 
 export async function getCommentsByPostId(postId) {
