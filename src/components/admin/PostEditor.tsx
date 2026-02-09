@@ -46,7 +46,13 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const loadDraftSnapshot = useCallback(() => toDraft(post || undefined), [post]);
 
     // 2. Auto-save Logic (extracted)
-    const { clearAutosave, handleRestoreAutosave } = useAutosave({
+    const {
+        clearAutosave,
+        handleRestoreAutosave,
+        discardAutosave,
+        hasRestorableDraft,
+        autosaveUpdatedAt
+    } = useAutosave({
         activeId,
         draft,
         setDraft,
@@ -123,9 +129,11 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
     const contentStats = useMemo(() => {
         const plainText = stripHtml(draft.contentHtml || '');
+        const words = plainText ? plainText.split(/\s+/).filter(Boolean).length : 0;
         const readingMinutes = Math.max(1, Math.ceil(plainText.length / 450));
         return {
             chars: plainText.length,
+            words,
             readingMinutes
         };
     }, [draft.contentHtml]);
@@ -179,9 +187,27 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+            const key = e.key.toLowerCase();
+
+            if ((e.metaKey || e.ctrlKey) && key === 's') {
                 e.preventDefault();
+                if (e.shiftKey) {
+                    void handleSave('초안으로 저장되었습니다.', 'draft');
+                    return;
+                }
                 void handleSave('수동 저장되었습니다.');
+                return;
+            }
+
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                void handleSave('발행되었습니다.', 'published');
+                return;
+            }
+
+            if (e.altKey && e.shiftKey && key === 'p') {
+                e.preventDefault();
+                setPreviewMode(prev => !prev);
             }
         };
 
@@ -234,7 +260,11 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             previewMode,
             uploadingImage,
             uploadError,
-            onNoticeClick: notice.includes('복구') ? handleRestoreAutosave : undefined
+            onNoticeClick: notice.includes('복구') ? handleRestoreAutosave : undefined,
+            hasRestorableDraft,
+            autosaveUpdatedAt,
+            onRestoreAutosave: handleRestoreAutosave,
+            onDiscardAutosave: discardAutosave
         },
         data: {
             draft,

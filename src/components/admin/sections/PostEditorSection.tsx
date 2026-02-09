@@ -51,12 +51,16 @@ export interface UIState {
   uploadingImage: boolean;
   uploadError: string | null;
   onNoticeClick?: () => void;
+  hasRestorableDraft?: boolean;
+  autosaveUpdatedAt?: string | null;
+  onRestoreAutosave?: () => void;
+  onDiscardAutosave?: () => void;
 }
 
 export interface EditorData {
   draft: PostDraft;
   categoryTree: CategoryTreeResult;
-  contentStats: { chars: number; readingMinutes: number };
+  contentStats: { chars: number; words: number; readingMinutes: number };
   currentCoverUrl?: string;
   editor: Editor | null;
 }
@@ -77,10 +81,35 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   data
 }) => {
   const { draft, categoryTree, contentStats, currentCoverUrl, editor } = data;
-  const { notice, saving, activeId, tagInput, previewMode, uploadingImage, uploadError, onNoticeClick } = uiState;
+  const {
+    notice,
+    saving,
+    activeId,
+    tagInput,
+    previewMode,
+    uploadingImage,
+    uploadError,
+    onNoticeClick,
+    hasRestorableDraft,
+    autosaveUpdatedAt,
+    onRestoreAutosave,
+    onDiscardAutosave
+  } = uiState;
   const { onTitleChange, onStatusChange, onSave, onDelete, updateDraft, setPreviewMode, onLink } = editorHandlers;
   const { onInputChange, onKeyDown, onBlur, onRemove } = tagHandlers;
   const { onToolbarUpload, onInsertImageUrl, onImageUpload, fileInputRef, onCoverUpload, onSetCoverFromContent } = mediaHandlers;
+
+  const autosaveLabel = (() => {
+    if (!autosaveUpdatedAt) return '';
+    const timestamp = new Date(autosaveUpdatedAt);
+    if (Number.isNaN(timestamp.getTime())) return '';
+    return timestamp.toLocaleString('ko-KR', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  })();
 
   // Live TOC Logic
   const [tocItems, setTocItems] = React.useState<TocItem[]>([]);
@@ -138,6 +167,25 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 >
                   {notice}
                 </button>
+              )}
+              {hasRestorableDraft && (
+                <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                  <span>임시 저장본 {autosaveLabel ? `(${autosaveLabel})` : ''}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRestoreAutosave?.()}
+                    className="rounded-full border border-[color:var(--border)] px-2 py-0.5 text-[var(--text)] hover:border-[color:var(--accent)]"
+                  >
+                    복구
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDiscardAutosave?.()}
+                    className="rounded-full border border-[color:var(--border)] px-2 py-0.5 text-[var(--text-muted)] hover:border-red-300 hover:text-red-500"
+                  >
+                    삭제
+                  </button>
+                </div>
               )}
             </div>
             {/* Status Badge Select - Compact */}
@@ -199,6 +247,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           onInsertImageUrl={onInsertImageUrl}
           uploadingImage={uploadingImage}
           onSave={() => onSave('수동 저장되었습니다.')}
+          onPublish={() => onSave('발행되었습니다.', 'published')}
         />
 
         {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
@@ -248,7 +297,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               태그
             </p>
             <p className="text-[10px] text-[var(--text-muted)]">
-              {contentStats.chars}자 · {contentStats.readingMinutes}분
+              {contentStats.chars}자 · {contentStats.words}단어 · {contentStats.readingMinutes}분
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

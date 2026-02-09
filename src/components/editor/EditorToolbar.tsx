@@ -130,6 +130,7 @@ interface EditorToolbarProps {
     onInsertImageUrl: () => void;
     uploadingImage: boolean;
     onSave: () => void;
+    onPublish: () => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -140,7 +141,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     onToolbarImageUpload,
     onInsertImageUrl,
     uploadingImage,
-    onSave
+    onSave,
+    onPublish
 }) => {
     const [toolbarMenu, setToolbarMenu] = useState<'color' | 'highlight' | 'table' | null>(null);
 
@@ -347,10 +349,17 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     <button
                         onClick={onSave}
                         className="flex items-center gap-1.5 rounded-full bg-[var(--text)] px-4 py-1.5 text-xs font-semibold text-[var(--bg)] shadow-sm hover:shadow-md transition-all disabled:opacity-50"
-                        title="저장 (Ctrl+S)"
+                        title="저장 (Ctrl+S), 초안 저장 (Ctrl+Shift+S)"
                     >
                         <Save size={14} />
                         저장
+                    </button>
+                    <button
+                        onClick={onPublish}
+                        className="rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-4 py-1.5 text-xs font-semibold text-[var(--accent-strong)] transition-colors hover:bg-[var(--accent)] hover:text-white"
+                        title="발행 (Ctrl+Enter)"
+                    >
+                        발행
                     </button>
 
                     <div className="h-5 w-px bg-[var(--border)]" />
@@ -396,6 +405,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     </div>
                 </div>
             )}
+            <p className="mt-2 text-[10px] text-[var(--text-muted)]">
+                단축키: Ctrl/Cmd+S 저장 · Ctrl/Cmd+Shift+S 초안 저장 · Ctrl/Cmd+Enter 발행 · Alt+Shift+P 미리보기 전환
+            </p>
         </div>
     );
 };
