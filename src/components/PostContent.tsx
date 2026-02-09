@@ -82,8 +82,28 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
   if (contentHtml && contentHtml.trim()) {
     const options = {
       replace: (domNode: any) => {
-        // Check if the node is <pre><code>...</code></pre>
-        // Check if the node is <pre><code>...</code></pre>
+        // 1. Handle Headings: Add IDs for TOC
+        if (['h1', 'h2', 'h3'].includes(domNode.name)) {
+          // Check if ID already exists
+          if (!domNode.attribs.id) {
+            // Generate ID from text content
+            const text = domNode.children
+              ?.filter((child: any) => child.type === 'text')
+              .map((child: any) => child.data)
+              .join('') || '';
+
+            // Simple slugify
+            const id = text
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9가-힣\s-]/g, '') // Remove special chars
+              .replace(/\s+/g, '-');
+
+            domNode.attribs.id = `heading-${id}-${Math.random().toString(36).substr(2, 5)}`;
+          }
+        }
+
+        // 2. Handle Code Blocks
         if (domNode.name === 'pre') {
           // Robustly find the code element (ignore whitespace text nodes)
           const codeNode = domNode.children && domNode.children.find(
@@ -97,10 +117,6 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
             const language = languageMatch ? languageMatch[1] : 'plaintext';
 
             // Extract text content from children
-            // domToReact(codeNode.children) might return React Nodes, but we want raw text for highlighter
-            // So we traverse manually or let parser helper do it?
-            // Simplest is to assume text node child.
-
             // Helper to get text from nested children
             const getText = (node: any): string => {
               if (node.type === 'text') return node.data;
@@ -126,8 +142,6 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
               .replace(/&lt;/g, '<')
               .replace(/&quot;/g, '"')
               .replace(/&amp;/g, '&');
-
-
 
             return <CodeBlock language={language} code={codeContent.trimEnd()} />;
           }

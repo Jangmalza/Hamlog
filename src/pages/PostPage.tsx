@@ -16,6 +16,7 @@ import { DEFAULT_CATEGORY } from '../utils/category';
 import { buildCategoryTree } from '../utils/categoryTree';
 import { useSeo } from '../hooks/useSeo';
 import { useSchema } from '../hooks/useSchema';
+import { TableOfContents } from '../components/TableOfContents';
 
 const PostPage: React.FC = () => {
   const { slug } = useParams();
@@ -129,8 +130,8 @@ const PostPage: React.FC = () => {
       <div className="min-h-screen text-[var(--text)]">
         <div className="mx-auto max-w-6xl px-4 py-12 grid gap-12 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* Sidebar */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-8">
+          <aside className="hidden lg:block relative">
+            <div className="sticky top-8 space-y-8">
               <CategorySidebar
                 categoryTree={categoryTree}
                 selectedCategory={post.category ?? null}
@@ -142,6 +143,9 @@ const PostPage: React.FC = () => {
                   }
                 }}
               />
+
+              {/* Table of Contents */}
+              <TableOfContents contentSelector=".prose" />
             </div>
           </aside>
 

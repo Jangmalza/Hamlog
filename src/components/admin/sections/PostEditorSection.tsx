@@ -12,6 +12,8 @@ import { PostMetadata } from '../PostMetadata';
 import { EditorActionContext } from '../../../contexts/EditorActionContext';
 import { TableBubbleMenu } from '../../editor/extensions/TableBubbleMenu';
 import { ColumnBubbleMenu } from '../../editor/extensions/ColumnBubbleMenu';
+import { TableOfContents } from '../../TableOfContents';
+import type { TocItem } from '../../TableOfContents';
 
 export interface EditorHandlers {
   onTitleChange: (value: string) => void;
@@ -79,6 +81,35 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   const { onTitleChange, onStatusChange, onSave, onDelete, updateDraft, setPreviewMode, onLink } = editorHandlers;
   const { onInputChange, onKeyDown, onBlur, onRemove } = tagHandlers;
   const { onToolbarUpload, onInsertImageUrl, onImageUpload, fileInputRef, onCoverUpload, onSetCoverFromContent } = mediaHandlers;
+
+  // Live TOC Logic
+  const [tocItems, setTocItems] = React.useState<TocItem[]>([]);
+
+  React.useEffect(() => {
+    if (!editor) return;
+
+    const updateToc = () => {
+      const items: TocItem[] = [];
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'heading') {
+          const id = `heading-${pos}`; // Temporary ID for editor
+          items.push({
+            id,
+            text: node.textContent,
+            level: node.attrs.level
+          });
+        }
+      });
+      setTocItems(items);
+    };
+
+    updateToc();
+    editor.on('update', updateToc);
+
+    return () => {
+      editor.off('update', updateToc);
+    };
+  }, [editor]);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -246,6 +277,16 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               className="min-w-[160px] flex-1 rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-xs text-[var(--text)] focus:border-[color:var(--accent)] focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* Editor TOC Sidebar (Desktop only) */}
+        <div className="fixed right-8 top-32 hidden xl:block w-64">
+          {tocItems.length > 0 && (
+            <TableOfContents
+              tocItems={tocItems}
+              className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+            />
+          )}
         </div>
       </div>
     </div>

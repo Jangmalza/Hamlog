@@ -89,6 +89,97 @@ export const Columns = Node.create({
                 }
                 return true;
             },
+            moveColumnLeft: () => ({ state, dispatch }) => {
+                const { selection } = state;
+                const { $from } = selection;
+
+                let columnIndex = -1;
+                let columnsPos = -1;
+                let columnsNode = null;
+
+                // Find 'column' and 'columns'
+                for (let d = $from.depth; d > 0; d--) {
+                    const node = $from.node(d);
+                    if (node.type.name === 'column') {
+                        // Parent should be columns
+                        const parent = $from.node(d - 1);
+                        if (parent && parent.type.name === 'columns') {
+                            columnsNode = parent;
+                            columnsPos = $from.before(d - 1);
+                            columnIndex = $from.index(d - 1);
+                        }
+                        break;
+                    }
+                }
+
+                if (columnIndex <= 0 || !columnsNode) return false;
+
+                if (dispatch) {
+                    const tr = state.tr;
+                    const columnNode = columnsNode.child(columnIndex);
+                    const prevColumnNode = columnsNode.child(columnIndex - 1);
+
+                    const currentSize = columnNode.nodeSize;
+                    const prevSize = prevColumnNode.nodeSize;
+
+                    // Calculate positions
+                    let prevPos = columnsPos + 1;
+                    for (let i = 0; i < columnIndex - 1; i++) {
+                        prevPos += columnsNode.child(i).nodeSize;
+                    }
+                    const currentPos = prevPos + prevSize;
+
+                    tr.delete(currentPos, currentPos + currentSize);
+                    tr.insert(prevPos, columnNode);
+
+                    dispatch(tr);
+                }
+                return true;
+            },
+            moveColumnRight: () => ({ state, dispatch }) => {
+                const { selection } = state;
+                const { $from } = selection;
+
+                let columnIndex = -1;
+                let columnsPos = -1;
+                let columnsNode = null;
+
+                // Find 'column' and 'columns'
+                for (let d = $from.depth; d > 0; d--) {
+                    const node = $from.node(d);
+                    if (node.type.name === 'column') {
+                        const parent = $from.node(d - 1);
+                        if (parent && parent.type.name === 'columns') {
+                            columnsNode = parent;
+                            columnsPos = $from.before(d - 1);
+                            columnIndex = $from.index(d - 1);
+                        }
+                        break;
+                    }
+                }
+
+                if (!columnsNode || columnIndex === -1 || columnIndex >= columnsNode.childCount - 1) return false;
+
+                if (dispatch) {
+                    const tr = state.tr;
+                    const columnNode = columnsNode.child(columnIndex);
+                    const nextColumnNode = columnsNode.child(columnIndex + 1);
+
+                    const currentSize = columnNode.nodeSize;
+                    const nextSize = nextColumnNode.nodeSize;
+
+                    let currentPos = columnsPos + 1;
+                    for (let i = 0; i < columnIndex; i++) {
+                        currentPos += columnsNode.child(i).nodeSize;
+                    }
+
+                    tr.delete(currentPos, currentPos + currentSize);
+                    tr.insert(currentPos + nextSize, columnNode);
+
+                    dispatch(tr);
+                }
+                return true;
+            }
         };
     },
 
