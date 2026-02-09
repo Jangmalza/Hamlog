@@ -41,7 +41,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
         headings.forEach((heading, index) => {
             // Ensure ID exists
             if (!heading.id) {
-                heading.id = `heading-${index}-${heading.textContent?.slice(0, 10).replace(/\s+/g, '-')}`;
+                heading.id = `heading-${index}`;
             }
 
             newItems.push({

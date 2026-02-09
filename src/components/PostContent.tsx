@@ -86,20 +86,22 @@ const PostContent: React.FC<PostContentProps> = ({ sections = [], contentHtml })
         if (['h1', 'h2', 'h3'].includes(domNode.name)) {
           // Check if ID already exists
           if (!domNode.attribs.id) {
-            // Generate ID from text content
-            const text = domNode.children
-              ?.filter((child: any) => child.type === 'text')
-              .map((child: any) => child.data)
-              .join('') || '';
+            // Improved deterministic ID logic
+            const text = (domNode.children
+              ? domNode.children
+                .filter((child: any) => child.type === 'text' || child.type === 'tag')
+                .map((child: any) => child.data || (child.children?.[0]?.data) || '')
+                .join('')
+              : '') || 'heading';
 
-            // Simple slugify
-            const id = text
+            const slug = text
               .trim()
               .toLowerCase()
-              .replace(/[^a-z0-9가-힣\s-]/g, '') // Remove special chars
-              .replace(/\s+/g, '-');
+              .replace(/[^a-z0-9가-힣\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .slice(0, 30); // Limit length
 
-            domNode.attribs.id = `heading-${id}-${Math.random().toString(36).substr(2, 5)}`;
+            domNode.attribs.id = `heading-${domNode.startIndex ?? ''}-${slug}`;
           }
         }
 

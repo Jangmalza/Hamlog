@@ -284,6 +284,17 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           {tocItems.length > 0 && (
             <TableOfContents
               tocItems={tocItems}
+              onLinkClick={(id) => {
+                const pos = parseInt(id.replace('heading-', ''));
+                if (!isNaN(pos) && editor) {
+                  editor.commands.focus(pos);
+                  // Also scroll manually if focus doesn't scroll enough
+                  const element = editor.view.nodeDOM(pos) as HTMLElement;
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+              }}
               className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-sm"
             />
           )}
