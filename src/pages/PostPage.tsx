@@ -128,27 +128,7 @@ const PostPage: React.FC = () => {
   return (
     <ErrorBoundary>
       <div className="min-h-screen text-[var(--text)]">
-        <div className="mx-auto max-w-6xl px-4 py-12 grid gap-12 lg:grid-cols-[280px_minmax(0,1fr)]">
-          {/* Sidebar */}
-          <aside className="hidden lg:block relative">
-            <div className="sticky top-8 space-y-8">
-              <CategorySidebar
-                categoryTree={categoryTree}
-                selectedCategory={post.category ?? null}
-                onSelectCategory={(category) => {
-                  if (category) {
-                    navigate(`/?category=${category}`);
-                  } else {
-                    navigate('/');
-                  }
-                }}
-              />
-
-              {/* Table of Contents */}
-              <TableOfContents contentSelector=".prose" />
-            </div>
-          </aside>
-
+        <div className="mx-auto max-w-6xl px-4 py-12 grid gap-12 lg:grid-cols-[minmax(0,1fr)_280px]">
           {/* Main Content */}
           <main className="min-w-0">
             <Link
@@ -235,6 +215,25 @@ const PostPage: React.FC = () => {
               </section>
             )}
           </main>
+
+          {/* Sidebar (Right) */}
+          <aside className="hidden lg:block relative">
+            <div className="sticky top-8 space-y-8">
+              <CategorySidebar
+                categoryTree={categoryTree}
+                selectedCategory={post.category ?? null}
+                onSelectCategory={(category) => {
+                  if (category) {
+                    navigate(`/?category=${category}`);
+                  } else {
+                    navigate('/');
+                  }
+                }}
+              />
+
+              <TableOfContents contentSelector=".prose" />
+            </div>
+          </aside>
         </div>
       </div>
     </ErrorBoundary>
