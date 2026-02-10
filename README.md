@@ -1,76 +1,97 @@
 # HamLog (Technical Blog)
 
-Node.js Backend와 React Frontend로 구성된 기술 블로그 프로젝트입니다.
-복잡한 RDBMS 없이 **파일 시스템(JSON)을 DB로 사용**하여 가볍고 이식성이 뛰어난 것이 특징입니다.
+Node.js(Express) 백엔드와 React(Vite) 프론트엔드로 구성된 기술 블로그 프로젝트입니다.  
+복잡한 RDBMS 없이 **파일 시스템의 JSON 파일을 데이터 저장소로 사용**하여 가볍고 이식성이 뛰어난 것이 특징입니다.
+
+## Architecture
+- **Frontend**: `src/` (React + Vite)
+- **Backend**: `server/` (Express API + 정적 파일 서빙)
+- **Storage**: `server/data/` (JSON), `server/uploads/` (이미지 업로드)
+- **Prod Serving**: 백엔드가 `dist/` 정적 자산을 서빙하고 SPA fallback을 제공합니다. (`server/app.js`)
 
 ## Tech Stack
-- **Frontend**: MySQL 없이 JSON 파일로 데이터 관리
-- **Framework**: React, Vite, TypeScript
+- **Frontend**: React, Vite, TypeScript
 - **Styling**: TailwindCSS
-- **State Management**: Zustand
+- **State**: Zustand
 - **Editor**: Tiptap (Headless WYSIWYG)
-- **Backend**: Node.js (Express), JWT Auth
-- **Infrastructure**: Docker, GitHub Actions (Self-Hosted Runner), Cloudflare Tunnel
+- **Backend**: Node.js(Express), JWT(Auth cookie)
+- **Infra**: Docker, GitHub Actions, Self-Hosted Runner(옵션)
 
 ## Key Features
+- **Admin 글쓰기/관리**: Tiptap 기반 편집, 이미지 업로드/붙여넣기, 미리보기
+- **자동 목차(TOC)**: 글 본문의 `h1/h2/h3` 기반 TOC 생성 + 스크롤 스파이
+- **검색/필터링**: 카테고리/태그/검색 기반 탐색
+- **SEO**: 메타/OG, 라우트 기반 메타 주입, 사이트맵/RSS
+- **보안**: JWT 인증(쿠키), 링크 프리뷰 SSRF 방어 등
 
-### 1. Robust Security
-- **JWT Authentication**: `access_token`을 HttpOnly Cookie로 관리하여 XSS/CSRF 방지
-- **Server-Side Validation**: 모든 데이터 입력에 대한 엄격한 서버 측 검증 및 정규화
-- **Secure Deployment**: `.env` 파일 관리 및 사설망 배포 지원
+## Local Development
+### Prerequisites
+- Node.js 20+ 권장
 
-### 2. Admin System
-- **게시글 관리**: Tiptap 에디터 기반의 직관적인 글 작성/수정
-- **이미지 처리**: Drag & Drop 업로드 및 자동 최적화
-- **다크 모드**: 시스템 설정 연동 및 수동 토글 지원
-- **자동 목차(TOC)**: 헤더 구조에 따른 TOC 자동 생성
-
-### 3. Modern User Interface
-- **성능 최적화**: 렌더링 최적화 및 커스텀 훅(`useHomeData`, `usePostFilter`) 기반 아키텍처
-- **검색 & 필터링**: 카테고리별 필터링 및 실시간 검색
-- **반응형 디자인**: 모바일 우선(Mobile-First) 설계
-- **소통**: Giscus 댓글 시스템 연동
-
-### 4. SEO & Performance
-- **Sitemap & RSS**: `/sitemap.xml`, `/rss.xml` 자동 생성
-- **Meta Tags**: 게시글별 동적 메타 태그(Open Graph) 적용
-
-## DevOps (CI/CD)
-
-**Security-First Deployment Pipeline**이 구축되어 있습니다.
-
-### Workflow
-1.  **Develop**: `develop` 브랜치에서 기능 개발 및 `npm run build` 검증
-2.  **Trigger**: `main` 브랜치로 PR Merge 시 배포 시작
-3.  **Build**: GitHub Cloud Runner에서 Docker 이미지 빌드 및 GHCR 업로드
-4.  **Deploy**: **Self-Hosted Runner**가 운영 서버 내부에서 이미지를 Pull 하고 컨테이너 교체 (SSH 접속 불필요)
-
-### Production Setup
-운영 서버는 **Cloudflare Tunnel**을 통해 외부와 안전하게 연결됩니다.
-
+### 1) Install
 ```bash
-  -e ADMIN_PASSWORD=*** \
-  ghcr.io/jangmalza/hamlog:latest
+npm ci
 ```
 
----
+### 2) Run (Dev)
+터미널 2개를 사용합니다.
 
-## Custom Built & Usability
+```bash
+# API server (http://localhost:4000)
+npm run server
+```
 
-**이 블로그는 상용 플랫폼(WordPress, Tistory 등)을 사용하지 않고 밑바닥부터 직접 설계하고 개발했습니다.**
-사용자 경험(UX)과 성능을 최우선으로 고려하여, 글 쓰는 즐거움을 느낄 수 있도록 세심하게 다듬었습니다.
+```bash
+# Vite dev server (http://localhost:5173)
+npm run dev
+```
 
-### 주요 사용 기능 (User Guide)
+Vite는 기본적으로 `/api`, `/uploads`를 `http://localhost:4000`으로 프록시합니다. (`vite.config.ts`)
 
-#### 1. 강력한 에디터 (Rich Text & Markdown)
-- **WYSIWYG**: 노션(Notion)처럼 직관적인 블록 기반 에디터를 제공합니다.
-- **마크다운 지원**: `#` 제목, `-` 리스트, ` ``` ` 코드 블록 등 익숙한 마크다운 문법을 그대로 사용할 수 있습니다.
-- **이미지 업로드**: 이미지를 드래그 앤 드롭하거나 붙여넣기(`Ctrl+V`)하여 즉시 업로드할 수 있습니다.
+### 3) Build
+```bash
+npm run build
+```
 
-#### 2. 안전한 저장 시스템
-- **수동 저장 (`Ctrl + S`)**: 글 작성 중 언제든지 단축키를 눌러 저장할 수 있습니다. 저장된 내용은 서버에 즉시 반영되며, 나중에 다시 이어서 작성할 수 있습니다.
-- **임시 저장(Draft)**: 발행하지 않은 글은 '임시 저장' 상태로 안전하게 보관됩니다.
+## Environment Variables
+### Backend (`server`)
+- `PORT` (default: `4000`)
+- `JWT_SECRET`
+  - production에서는 **필수**
+- `ADMIN_PASSWORD`
+  - production에서는 **필수**
 
-#### 3. 쾌적한 탐색 경험
-- **다크 모드**: 우측 상단 달 모양 아이콘을 클릭하여 눈이 편안한 다크 모드로 전환할 수 있습니다.
-- **반응형 목차(TOC)**: 긴 글을 읽을 때 현재 위치를 쉽게 파악할 수 있는 목차를 제공합니다.
+### Frontend (`vite`)
+- `VITE_API_BASE_URL` (optional)
+  - 기본값은 `'/api'`이며, dev에서는 Vite proxy로 백엔드에 연결됩니다.
+
+## Editor Guide (Admin)
+### Shortcuts
+- 저장: `Ctrl/Cmd+S`
+- 초안 저장: `Ctrl/Cmd+Shift+S`
+- 발행: `Ctrl/Cmd+Enter`
+- 미리보기 토글: `Alt+Shift+P`
+
+### Autosave
+편집 중 자동 저장본이 남아있으면 관리자 화면에서 **복구/삭제**가 가능합니다.
+
+## TOC Placement (Post Page)
+포스트 읽기 화면은 큰 화면에서만 우측에 TOC를 표시합니다.  
+현재 정책은 `2xl` 이상에서만 TOC 사이드바가 나타나도록 되어 있습니다. (`src/pages/PostPage.tsx`)
+
+## Docker
+### docker-compose (추천)
+```bash
+docker compose up -d --build
+```
+
+`docker-compose.yml`은 아래를 볼륨으로 마운트합니다.
+- `./server/data:/app/server/data`
+- `./server/uploads:/app/server/uploads`
+
+환경변수는 `.env`를 사용합니다. (`docker-compose.yml`)
+
+## CI/CD (GitHub Actions)
+`.github/workflows/docker-deploy.yml`
+- `main` push 시 Docker 이미지를 빌드하여 GHCR에 업로드
+- Self-Hosted Runner가 운영 서버에서 최신 이미지를 pull/run (포트 4000)
