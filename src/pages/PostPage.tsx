@@ -128,7 +128,7 @@ const PostPage: React.FC = () => {
   return (
     <ErrorBoundary>
       <div className="min-h-screen text-[var(--text)]">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[90rem] px-4 py-12 grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] 2xl:grid-cols-[240px_minmax(0,1fr)_260px]">
+        <div className="mx-auto max-w-7xl xl:max-w-[90rem] 2xl:max-w-[110rem] px-4 py-12 grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[220px_minmax(0,1fr)_220px]">
           {/* Sidebar (Left): Categories */}
           <aside className="hidden lg:block relative">
             <div className="sticky top-8 space-y-8">
