@@ -245,12 +245,12 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                         </div>
 
                         <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-sm">
-                            <div className="flex items-center justify-start gap-1.5 text-[11px]">
+                            <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5 text-[11px]">
                                 <span className="whitespace-nowrap rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                                     방문자
                                 </span>
-                                <span className="whitespace-nowrap rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
-                                    전체{' '}
+                                <span className="flex min-w-0 items-center justify-between gap-1 rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
+                                    <span className="text-[10px]">전체</span>
                                     <strong
                                         className="inline-block min-w-[3ch] text-right font-display text-sm tabular-nums text-[var(--text)]"
                                         title={visitorStats ? visitorStats.totalVisitors.toLocaleString('ko-KR') : '-'}
@@ -258,8 +258,8 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                         {visitorStats ? formatVisitorCount(visitorStats.totalVisitors) : '-'}
                                     </strong>
                                 </span>
-                                <span className="whitespace-nowrap rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
-                                    오늘{' '}
+                                <span className="flex min-w-0 items-center justify-between gap-1 rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
+                                    <span className="text-[10px]">오늘</span>
                                     <strong
                                         className="inline-block min-w-[3ch] text-right font-display text-sm tabular-nums text-[var(--text)]"
                                         title={visitorStats ? visitorStats.todayVisitors.toLocaleString('ko-KR') : '-'}
