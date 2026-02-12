@@ -245,10 +245,7 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                         </div>
 
                         <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-sm">
-                            <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5 text-[11px]">
-                                <span className="whitespace-nowrap rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                                    방문자
-                                </span>
+                            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5 text-[11px]">
                                 <span className="flex min-w-0 items-center justify-between gap-1 rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
                                     <span className="text-[10px]">전체</span>
                                     <strong
