@@ -13,6 +13,15 @@ interface HomeHeaderProps {
     seriesCount: number;
 }
 
+const compactNumber = new Intl.NumberFormat('ko-KR', {
+    notation: 'compact',
+    maximumFractionDigits: 1
+});
+
+const formatVisitorCount = (value: number) => (
+    value >= 100000 ? compactNumber.format(value) : value.toLocaleString('ko-KR')
+);
+
 export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, seriesCount }: HomeHeaderProps) => {
     const { theme, toggleTheme } = useTheme();
     const [visitorStats, setVisitorStats] = useState<VisitorStatsResponse | null>(null);
@@ -236,25 +245,28 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                         </div>
 
                         <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-sm">
-                            <div className="flex items-center justify-between gap-2 text-[11px] whitespace-nowrap">
-                                <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                            <div className="flex items-center justify-center gap-1.5 text-[11px] whitespace-nowrap">
+                                <span className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                                     방문자
                                 </span>
-                                <div className="flex items-center gap-2 text-[var(--text-muted)]">
-                                    <span>
-                                        전체{' '}
-                                        <strong className="font-display text-sm text-[var(--text)]">
-                                            {visitorStats ? visitorStats.totalVisitors.toLocaleString('ko-KR') : '-'}
-                                        </strong>
-                                    </span>
-                                    <span className="opacity-40">|</span>
-                                    <span>
-                                        오늘{' '}
-                                        <strong className="font-display text-sm text-[var(--text)]">
-                                            {visitorStats ? visitorStats.todayVisitors.toLocaleString('ko-KR') : '-'}
-                                        </strong>
-                                    </span>
-                                </div>
+                                <span className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
+                                    전체{' '}
+                                    <strong
+                                        className="inline-block min-w-[3ch] text-right font-display text-sm tabular-nums text-[var(--text)]"
+                                        title={visitorStats ? visitorStats.totalVisitors.toLocaleString('ko-KR') : '-'}
+                                    >
+                                        {visitorStats ? formatVisitorCount(visitorStats.totalVisitors) : '-'}
+                                    </strong>
+                                </span>
+                                <span className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[var(--text-muted)]">
+                                    오늘{' '}
+                                    <strong
+                                        className="inline-block min-w-[3ch] text-right font-display text-sm tabular-nums text-[var(--text)]"
+                                        title={visitorStats ? visitorStats.todayVisitors.toLocaleString('ko-KR') : '-'}
+                                    >
+                                        {visitorStats ? formatVisitorCount(visitorStats.todayVisitors) : '-'}
+                                    </strong>
+                                </span>
                             </div>
                             {visitorError && (
                                 <p className="mt-1.5 text-[9px] text-[var(--text-muted)]">
