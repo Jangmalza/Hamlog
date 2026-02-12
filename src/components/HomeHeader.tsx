@@ -235,30 +235,30 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                             </div>
                         </div>
 
-                        <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+                        <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow)]">
                             <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                                 방문자 통계
                             </p>
-                            <div className="mt-4 grid grid-cols-2 gap-3">
-                                <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                                <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2">
+                                    <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)]">
                                         전체 방문자
                                     </p>
-                                    <p className="mt-2 font-display text-2xl font-bold text-[var(--text)]">
+                                    <p className="mt-1 font-display text-xl font-bold leading-none text-[var(--text)]">
                                         {visitorStats ? visitorStats.totalVisitors.toLocaleString('ko-KR') : '-'}
                                     </p>
                                 </div>
-                                <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                                <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2">
+                                    <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)]">
                                         오늘 방문자
                                     </p>
-                                    <p className="mt-2 font-display text-2xl font-bold text-[var(--text)]">
+                                    <p className="mt-1 font-display text-xl font-bold leading-none text-[var(--text)]">
                                         {visitorStats ? visitorStats.todayVisitors.toLocaleString('ko-KR') : '-'}
                                     </p>
                                 </div>
                             </div>
                             {visitorError && (
-                                <p className="mt-3 text-[11px] text-[var(--text-muted)]">
+                                <p className="mt-2 text-[10px] text-[var(--text-muted)]">
                                     방문자 통계를 불러오지 못했습니다.
                                 </p>
                             )}
