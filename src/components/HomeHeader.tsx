@@ -236,25 +236,24 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                         </div>
 
                         <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3 shadow-sm">
-                            <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
-                                방문자 통계
-                            </p>
-                            <div className="mt-2 grid grid-cols-2 gap-1.5">
-                                <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-2.5 py-1.5">
-                                    <p className="text-[8px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                                        전체
-                                    </p>
-                                    <p className="mt-0.5 font-display text-lg font-bold leading-none text-[var(--text)]">
-                                        {visitorStats ? visitorStats.totalVisitors.toLocaleString('ko-KR') : '-'}
-                                    </p>
-                                </div>
-                                <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-2.5 py-1.5">
-                                    <p className="text-[8px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                                        오늘
-                                    </p>
-                                    <p className="mt-0.5 font-display text-lg font-bold leading-none text-[var(--text)]">
-                                        {visitorStats ? visitorStats.todayVisitors.toLocaleString('ko-KR') : '-'}
-                                    </p>
+                            <div className="flex items-center justify-between gap-2 text-[11px] whitespace-nowrap">
+                                <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                                    방문자
+                                </span>
+                                <div className="flex items-center gap-2 text-[var(--text-muted)]">
+                                    <span>
+                                        전체{' '}
+                                        <strong className="font-display text-sm text-[var(--text)]">
+                                            {visitorStats ? visitorStats.totalVisitors.toLocaleString('ko-KR') : '-'}
+                                        </strong>
+                                    </span>
+                                    <span className="opacity-40">|</span>
+                                    <span>
+                                        오늘{' '}
+                                        <strong className="font-display text-sm text-[var(--text)]">
+                                            {visitorStats ? visitorStats.todayVisitors.toLocaleString('ko-KR') : '-'}
+                                        </strong>
+                                    </span>
                                 </div>
                             </div>
                             {visitorError && (
