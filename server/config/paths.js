@@ -13,3 +13,4 @@ export const categoriesFilePath = path.join(dataDir, 'categories.json');
 export const profileFilePath = path.join(dataDir, 'profile.json');
 export const postsDir = path.join(dataDir, 'posts');
 export const uploadDir = path.join(serverDir, 'uploads');
+export const visitorsFilePath = path.join(dataDir, 'visitors.json');
