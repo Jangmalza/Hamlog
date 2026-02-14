@@ -4,6 +4,7 @@ import type { Editor } from '@tiptap/react';
 import type { EditorView } from '@tiptap/pm/view';
 import { NodeSelection } from '@tiptap/pm/state';
 import { detectImageDropZone } from '../editor/utils/dragDropUtils';
+import { promptForText } from '../utils/editorDialog';
 
 interface UseEditorImageControlsProps {
   editorRef: MutableRefObject<Editor | null>;
@@ -248,10 +249,17 @@ export const useEditorImageControls = ({
   const handleInsertImageUrl = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
-    const url = window.prompt('이미지 URL을 입력하세요');
-    if (!url) return;
-    const imageAttrs = { src: url, size: 'full' };
-    editor.chain().focus().setImage(imageAttrs).run();
+
+    void (async () => {
+      const rawUrl = await promptForText({
+        title: '이미지 URL 입력',
+        placeholder: 'https://'
+      });
+      const url = rawUrl?.trim();
+      if (!url) return;
+      const imageAttrs = { src: url, size: 'full' };
+      editor.chain().focus().setImage(imageAttrs).run();
+    })();
   }, [editorRef]);
 
   return {

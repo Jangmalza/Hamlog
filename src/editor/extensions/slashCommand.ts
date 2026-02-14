@@ -5,6 +5,8 @@ import type { SuggestionKeyDownProps, SuggestionOptions, SuggestionProps } from 
 import { ReactRenderer } from '@tiptap/react';
 import tippy from 'tippy.js';
 import type { Instance } from 'tippy.js';
+import { API_BASE_URL } from '../../api/client';
+import { promptForText, showEditorToast } from '../../utils/editorDialog';
 import {
     SlashCommandList,
     type SlashCommandContext,
@@ -63,6 +65,18 @@ const createColumnContent = (count: 2 | 3, contentType: 'paragraph' | 'image') =
             content: [columnContent]
         }))
     };
+};
+
+const insertFallbackLink = (editor: Editor, url: string) => {
+    editor
+        .chain()
+        .focus()
+        .insertContent({
+            type: 'text',
+            text: url,
+            marks: [{ type: 'link', attrs: { href: url } }]
+        })
+        .run();
 };
 
 export const getSuggestionItems = ({ query }: { query: string }) => {
@@ -153,11 +167,14 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             description: 'URL로 이미지 삽입',
             searchTerms: ['image', 'photo', 'picture', '이미지'],
             icon: '🖼',
-            command: ({ editor, range }: SlashCommandContext) => {
-                const url = window.prompt('이미지 URL을 입력하세요:');
-                if (url) {
-                    editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
-                }
+            command: async ({ editor, range }: SlashCommandContext) => {
+                const rawUrl = await promptForText({
+                    title: '이미지 URL 입력',
+                    placeholder: 'https://'
+                });
+                const url = rawUrl?.trim();
+                if (!url) return;
+                editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
             },
         },
         {
@@ -174,11 +191,14 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             description: '유튜브 영상 삽입',
             searchTerms: ['youtube', 'video', '유튜브', '영상'],
             icon: '▶',
-            command: ({ editor, range }: SlashCommandContext) => {
-                const url = window.prompt('유튜브 주소를 입력하세요:');
-                if (url) {
-                    editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run();
-                }
+            command: async ({ editor, range }: SlashCommandContext) => {
+                const rawUrl = await promptForText({
+                    title: '유튜브 URL 입력',
+                    placeholder: 'https://www.youtube.com/watch?v=...'
+                });
+                const url = rawUrl?.trim();
+                if (!url) return;
+                editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run();
             },
         },
         {
@@ -186,11 +206,14 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             description: 'LaTeX 수식 삽입',
             searchTerms: ['math', 'latex', '수식'],
             icon: '∑',
-            command: ({ editor, range }: SlashCommandContext) => {
-                const latex = window.prompt('LaTeX 수식을 입력하세요:', 'E = mc^2');
-                if (latex) {
-                    editor.chain().focus().deleteRange(range).insertContent({ type: 'math', attrs: { latex } }).run();
-                }
+            command: async ({ editor, range }: SlashCommandContext) => {
+                const rawLatex = await promptForText({
+                    title: 'LaTeX 수식 입력',
+                    defaultValue: 'E = mc^2'
+                });
+                const latex = rawLatex?.trim();
+                if (!latex) return;
+                editor.chain().focus().deleteRange(range).insertContent({ type: 'math', attrs: { latex } }).run();
             },
         },
         {
@@ -199,20 +222,27 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             searchTerms: ['link', 'card', 'preview', '링크', '카드'],
             icon: '🔗',
             command: async ({ editor, range }: SlashCommandContext) => {
-                const url = window.prompt('URL을 입력하세요:');
-                if (url) {
-                    try {
-                        editor.chain().focus().deleteRange(range).run();
-                        const response = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);
-                        if (!response.ok) throw new Error('Failed to fetch preview');
+                const rawUrl = await promptForText({
+                    title: '링크 URL 입력',
+                    placeholder: 'https://'
+                });
+                const url = rawUrl?.trim();
+                if (!url) return;
 
-                        const data = await response.json();
-                        editor.chain().focus().setLinkCard(data).run();
-                    } catch (error) {
-                        console.error(error);
-                        alert('링크 정보를 불러오는데 실패했습니다.');
-                        editor.chain().focus().insertContent(`<a href="${url}">${url}</a>`).run();
-                    }
+                try {
+                    editor.chain().focus().deleteRange(range).run();
+                    const response = await fetch(
+                        `${API_BASE_URL}/preview?url=${encodeURIComponent(url)}`,
+                        { credentials: 'include' }
+                    );
+                    if (!response.ok) throw new Error(`Failed to fetch preview (${response.status})`);
+
+                    const data = await response.json();
+                    editor.chain().focus().setLinkCard(data).run();
+                } catch (error) {
+                    console.error(error);
+                    showEditorToast('링크 정보를 불러오지 못해 일반 링크로 삽입했습니다.', 'error');
+                    insertFallbackLink(editor, url);
                 }
             },
         },

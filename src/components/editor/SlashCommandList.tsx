@@ -41,14 +41,17 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
     };
 
     const upHandler = () => {
-        setSelectedIndex((selectedIndex + props.items.length - 1) % props.items.length);
+        if (props.items.length === 0) return;
+        setSelectedIndex(prev => (prev + props.items.length - 1) % props.items.length);
     };
 
     const downHandler = () => {
-        setSelectedIndex((selectedIndex + 1) % props.items.length);
+        if (props.items.length === 0) return;
+        setSelectedIndex(prev => (prev + 1) % props.items.length);
     };
 
     const enterHandler = () => {
+        if (props.items.length === 0) return;
         selectItem(selectedIndex);
     };
 

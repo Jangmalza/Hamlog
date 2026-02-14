@@ -11,6 +11,7 @@ import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { usePostForm, toDraft } from '../../hooks/usePostForm';
 import { useAutosave } from '../../hooks/useAutosave';
 import { usePostPersistence } from '../../hooks/usePostPersistence';
+import { promptForText } from '../../utils/editorDialog';
 
 const MAX_UPLOAD_MB = 8;
 
@@ -218,13 +219,24 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const handleLink = () => {
         if (!editor) return;
         const previousUrl = editor.getAttributes('link').href as string | undefined;
-        const url = window.prompt('링크 URL을 입력하세요', previousUrl ?? '');
-        if (url === null) return;
-        if (!url) {
-            editor.chain().focus().unsetLink().run();
-            return;
-        }
-        editor.chain().focus().setLink({ href: url }).run();
+
+        void (async () => {
+            const rawUrl = await promptForText({
+                title: '링크 URL 입력',
+                defaultValue: previousUrl ?? '',
+                placeholder: 'https://'
+            });
+
+            if (rawUrl === null) return;
+
+            const url = rawUrl.trim();
+            if (!url) {
+                editor.chain().focus().unsetLink().run();
+                return;
+            }
+
+            editor.chain().focus().setLink({ href: url }).run();
+        })();
     };
 
     const groupedProps = {
