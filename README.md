@@ -22,7 +22,7 @@ Node.js(Express) 백엔드와 React(Vite) 프론트엔드로 구성된 기술 �
 - **자동 목차(TOC)**: 글 본문의 `h1/h2/h3` 기반 TOC 생성 + 스크롤 스파이
 - **검색/필터링**: 카테고리/태그/검색 기반 탐색
 - **SEO**: 메타/OG, 라우트 기반 메타 주입, 사이트맵/RSS
-- **보안**: JWT 인증(쿠키), 링크 프리뷰 SSRF 방어 등
+- **보안**: JWT 인증(쿠키), CORS 제어, Rate Limit, 링크 프리뷰 SSRF 방어
 
 ## Local Development
 ### Prerequisites
@@ -53,6 +53,11 @@ Vite는 기본적으로 `/api`, `/uploads`를 `http://localhost:4000`으로 프�
 npm run build
 ```
 
+### 4) Test
+```bash
+npm run test
+```
+
 ## Environment Variables
 ### Backend (`server`)
 - `PORT` (default: `4000`)
@@ -60,6 +65,12 @@ npm run build
   - production에서는 **필수**
 - `ADMIN_PASSWORD`
   - production에서는 **필수**
+- `CORS_ORIGINS` (optional)
+  - 허용할 Origin 목록을 콤마(`,`)로 구분
+  - 예: `https://hamlog.com,https://www.hamlog.com`
+- `RATE_LIMIT_LOGIN_MAX` (optional, default: `10`)
+- `RATE_LIMIT_UPLOAD_MAX` (optional, default: `30`)
+- `RATE_LIMIT_PREVIEW_MAX` (optional, default: `120`)
 
 ### Frontend (`vite`)
 - `VITE_API_BASE_URL` (optional)

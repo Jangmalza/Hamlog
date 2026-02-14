@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Config
 import { uploadDir } from './config/paths.js';
+import { resolveCorsOptions } from './config/security.js';
 
 // Routers
 import { categoryRouter } from './routes/categories.js';
@@ -26,7 +28,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
+app.use(cors((req, callback) => {
+    callback(null, resolveCorsOptions(req));
+}));
 app.use(cookieParser());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
