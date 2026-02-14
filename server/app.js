@@ -17,7 +17,6 @@ import { seoRouter } from './routes/seo.js';
 import { commentRouter } from './routes/comments.js';
 import { authRouter } from './routes/auth.js';
 import { previewRouter } from './routes/preview.js';
-import { visitorRouter } from './routes/visitors.js';
 import { searchPosts } from './controllers/searchController.js';
 import { injectPostMeta } from './controllers/seoController.js';
 
@@ -45,9 +44,8 @@ app.use('/api/uploads', uploadRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/auth', authRouter);
 app.use('/api', previewRouter);
-app.use('/api/analytics', visitorRouter);
 app.get('/api/search', searchPosts);
-app.get('/posts/:slug', injectPostMeta);
+app.get(['/posts/:slug', '/p/:slug'], injectPostMeta);
 app.use('/', seoRouter);
 
 // Fallback for SPA

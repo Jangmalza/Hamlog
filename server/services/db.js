@@ -4,7 +4,6 @@ import { ensurePostsFile } from '../models/postModel.js';
 import { ensureCategoriesFile } from '../models/categoryModel.js';
 import { ensureProfileFile } from '../models/profileModel.js';
 import { ensureCommentsFile } from '../models/commentModel.js';
-import { ensureVisitorFile } from '../models/visitorModel.js';
 
 export async function initializeDatabase() {
     try {
@@ -12,7 +11,6 @@ export async function initializeDatabase() {
         await ensureCategoriesFile();
         await ensureProfileFile();
         await ensureCommentsFile();
-        await ensureVisitorFile();
         await mkdir(uploadDir, { recursive: true });
         console.log('Database and directories initialized successfully');
     } catch (error) {
