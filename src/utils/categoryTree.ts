@@ -35,6 +35,34 @@ export interface FlattenedCategoryNode {
   depth: number;
 }
 
+export const getCategoryPath = (
+  node: CategoryNode,
+  nodesById: Map<string, CategoryNode>
+): string[] => {
+  const path: string[] = [];
+  let current: CategoryNode | undefined = node;
+
+  while (current) {
+    path.unshift(current.name);
+    current = current.parentId ? nodesById.get(current.parentId) : undefined;
+  }
+
+  return path;
+};
+
+export const getCategoryPathLabel = (
+  node: CategoryNode,
+  nodesById: Map<string, CategoryNode>
+) => getCategoryPath(node, nodesById).join(' > ');
+
+export const collectCategoryNames = (node: CategoryNode): string[] => {
+  const names = [node.name];
+  node.children.forEach(child => {
+    names.push(...collectCategoryNames(child));
+  });
+  return names;
+};
+
 const normalizePostCategory = (value: string | null | undefined, fallback: string) => {
   const normalized = normalizeCategoryName(String(value ?? '')).trim();
   return normalized || fallback;

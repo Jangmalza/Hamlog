@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import LoadingSpinner from '../LoadingSpinner';
 import type { Post, PostStatus } from '../../data/blogData';
 
@@ -7,6 +7,9 @@ import { formatScheduleLabel } from '../../utils/adminDate';
 import { getPostStatusLabel, normalizePostStatus } from '../../utils/postStatus';
 import { TableOfContents } from './TableOfContents';
 import type { Editor } from '@tiptap/react';
+import type { CategoryTreeResult } from '../../utils/categoryTree';
+import { normalizeCategoryKey } from '../../utils/category';
+import CategoryPicker from './category/CategoryPicker';
 
 interface AdminSidebarProps {
   show: boolean;
@@ -16,6 +19,8 @@ interface AdminSidebarProps {
   onFilterStatusChange: (value: string) => void;
   filterCategory: string;
   onFilterCategoryChange: (value: string) => void;
+  filterCategoryIncludeDescendants: boolean;
+  onFilterCategoryIncludeDescendantsChange: (value: boolean) => void;
   page: number;
   onPageChange: (page: number) => void;
   onNew: () => void;
@@ -28,8 +33,7 @@ interface AdminSidebarProps {
   onReload: () => void;
   totalCount: number;
   statusCount: Record<PostStatus, number>;
-
-  categories: string[];
+  categoryTree: CategoryTreeResult;
   editor: Editor | null;
 }
 
@@ -43,6 +47,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onFilterStatusChange,
   filterCategory,
   onFilterCategoryChange,
+  filterCategoryIncludeDescendants,
+  onFilterCategoryIncludeDescendantsChange,
   page,
   onPageChange,
   onNew,
@@ -55,18 +61,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onReload,
   totalCount,
   statusCount,
-  categories,
+  categoryTree,
   editor
 }) => {
   const [tab, setTab] = useState<'posts' | 'toc'>('posts');
-
-  useEffect(() => {
-    if (activeId) {
-      // Optional: Auto-switch to ToC when a post is selected? 
-      // Maybe not, user might want to switch posts. 
-      // Let's keep it manual or default to 'posts'.
-    }
-  }, [activeId]);
+  const quickCategoryNodes = useMemo(
+    () =>
+      [...categoryTree.roots]
+        .filter(node => normalizeCategoryKey(node.name) !== normalizeCategoryKey('미분류'))
+        .sort((left, right) => {
+          if (right.count !== left.count) return right.count - left.count;
+          return left.name.localeCompare(right.name, 'ko');
+        })
+        .slice(0, 4),
+    [categoryTree.roots]
+  );
 
   if (!show) return null;
 
@@ -116,29 +125,69 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-3">
             <select
               value={filterStatus}
               onChange={e => onFilterStatusChange(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-xs outline-none focus:border-[var(--accent)]"
+              className="w-full appearance-none rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2.5 text-xs outline-none focus:border-[var(--accent)]"
             >
               <option value="all">모든 상태</option>
               <option value="draft">임시 저장</option>
               <option value="published">공개됨</option>
               <option value="scheduled">예약됨</option>
             </select>
-            <select
+            <CategoryPicker
+              categoryTree={categoryTree}
               value={filterCategory}
-              onChange={e => onFilterCategoryChange(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-xs outline-none focus:border-[var(--accent)]"
-            >
-              <option value="all">모든 카테고리</option>
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+              onChange={onFilterCategoryChange}
+              defaultOptionLabel="모든 카테고리"
+              mode="filter"
+              includeDescendants={filterCategoryIncludeDescendants}
+              onIncludeDescendantsChange={onFilterCategoryIncludeDescendantsChange}
+              recentStorageKey="hamlog:admin:sidebar-categories"
+              triggerClassName="flex w-full items-center justify-between rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text)] transition hover:border-[color:var(--accent)]"
+              panelClassName="relative z-20 w-full rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl"
+            />
+            {quickCategoryNodes.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {quickCategoryNodes.map(node => (
+                  <button
+                    key={node.id}
+                    type="button"
+                    onClick={() => onFilterCategoryChange(node.name)}
+                    className={`rounded-full border px-3 py-1.5 text-[11px] transition ${
+                      normalizeCategoryKey(filterCategory) === normalizeCategoryKey(node.name)
+                        ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                        : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+                    }`}
+                  >
+                    {node.name} · {node.count}
+                  </button>
+                ))}
+              </div>
+            )}
+            {(filterStatus !== 'all' || filterCategory !== 'all') && (
+              <div className="flex flex-wrap gap-2">
+                {filterStatus !== 'all' && (
+                  <button
+                    type="button"
+                    onClick={() => onFilterStatusChange('all')}
+                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                  >
+                    상태: {filterStatus} 해제
+                  </button>
+                )}
+                {filterCategory !== 'all' && (
+                  <button
+                    type="button"
+                    onClick={() => onFilterCategoryChange('all')}
+                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                  >
+                    카테고리: {filterCategory} 해제
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">

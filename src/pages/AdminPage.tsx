@@ -65,6 +65,8 @@ const AdminPage: React.FC = () => {
     setFilterStatus,
     filterCategory,
     setFilterCategory,
+    filterCategoryIncludeDescendants,
+    setFilterCategoryIncludeDescendants,
     page,
     setPage,
     filteredPosts
@@ -182,6 +184,11 @@ const AdminPage: React.FC = () => {
             setFilterCategory(value);
             setPage(1);
           }}
+          filterCategoryIncludeDescendants={filterCategoryIncludeDescendants}
+          onFilterCategoryIncludeDescendantsChange={(value) => {
+            setFilterCategoryIncludeDescendants(value);
+            setPage(1);
+          }}
           page={page}
           onPageChange={setPage}
           onNew={handleNew}
@@ -194,7 +201,7 @@ const AdminPage: React.FC = () => {
           onReload={fetchPosts}
           totalCount={filteredPosts.length}
           statusCount={dashboardStats.statusCount}
-          categories={categoryTree.allNames}
+          categoryTree={categoryTree}
           editor={null} // Editor instance not needed here
         />
 
