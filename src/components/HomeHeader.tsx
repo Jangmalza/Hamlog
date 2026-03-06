@@ -43,9 +43,6 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                 <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
                     <div className="space-y-8">
                         <div>
-                            <p className="mb-4 text-xs font-bold uppercase tracking-[0.3em] text-[var(--accent)]">
-                                기술 저널
-                            </p>
                             <h1 className="break-keep font-display text-2xl font-bold leading-tight tracking-tight text-[var(--text)] sm:text-3xl lg:text-4xl">
                                 {profile.tagline}
                             </h1>
