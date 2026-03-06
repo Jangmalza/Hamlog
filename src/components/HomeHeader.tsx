@@ -54,23 +54,16 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                             </p>
                         </div>
 
-                        <div className="flex flex-wrap gap-3">
-                            <a
-                                href="#writing"
-                                className="group inline-flex items-center gap-2 rounded-lg bg-[var(--text)] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--bg)] transition-all hover:bg-[var(--accent)] hover:scale-105 active:scale-95"
-                            >
-                                최신 글 읽기
-                                <span className="transition-transform group-hover:translate-x-1">→</span>
-                            </a>
-                            {profile.display.showEmail && profile.email && (
+                        {profile.display.showEmail && profile.email && (
+                            <div className="flex flex-wrap gap-3">
                                 <a
                                     href={`mailto:${profile.email}`}
                                     className="group inline-flex items-center gap-2 rounded-lg border border-[color:var(--border)] bg-transparent px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] transition-all hover:border-[var(--text)] hover:text-[var(--text)] active:scale-95"
                                 >
                                     메일 보내기
                                 </a>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         <div className="pt-4">
                             <dl className="grid grid-cols-4 gap-6 border-t border-[color:var(--border)] pt-6">
