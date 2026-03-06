@@ -357,12 +357,49 @@ export function normalizeContentJson(contentJson) {
     }
 }
 
+function hasMeaningfulContentNode(node) {
+    if (!node || typeof node !== 'object') return false;
+
+    if (node.type === 'text') {
+        return typeof node.text === 'string' && node.text.trim().length > 0;
+    }
+
+    if (node.type === 'hardBreak' || node.type === 'horizontalRule') {
+        return true;
+    }
+
+    if (node.type === 'image') {
+        return typeof node.attrs?.src === 'string' && node.attrs.src.trim().length > 0;
+    }
+
+    if (node.type === 'linkCard') {
+        return typeof node.attrs?.url === 'string' && node.attrs.url.trim().length > 0;
+    }
+
+    if (node.type === 'youtube') {
+        return typeof node.attrs?.src === 'string' && node.attrs.src.trim().length > 0;
+    }
+
+    if (node.type === 'math') {
+        return typeof node.attrs?.latex === 'string' && node.attrs.latex.trim().length > 0;
+    }
+
+    if (node.type === 'table' || node.type === 'imageGallery' || node.type === 'columns') {
+        return true;
+    }
+
+    if (Array.isArray(node.content)) {
+        return node.content.some(child => hasMeaningfulContentNode(child));
+    }
+
+    return false;
+}
+
 export function hasContentJsonContent(contentJson) {
     return Boolean(
         contentJson
         && typeof contentJson === 'object'
-        && Array.isArray(contentJson.content)
-        && contentJson.content.length > 0
+        && hasMeaningfulContentNode(contentJson)
     );
 }
 

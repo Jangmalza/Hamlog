@@ -9,6 +9,7 @@ import {
     normalizeContentJson,
     hasContentJsonContent
 } from './normalizers.js';
+import { parseHtmlToContentJson, renderContentJsonToHtml } from './contentRenderer.js';
 
 /**
  * Normalizes and validates post data for creation or update.
@@ -42,9 +43,30 @@ export function normalizePostData(body, existing = {}) {
         ? normalizeContentHtml(contentHtml)
         : normalizeContentHtml(existing.contentHtml);
 
-    const normalizedContentJson = contentJson !== undefined
+    let normalizedContentJson = contentJson !== undefined
         ? normalizeContentJson(contentJson)
         : normalizeContentJson(existing.contentJson);
+
+    if (!hasContentJsonContent(normalizedContentJson) && normalizedContentHtml) {
+        try {
+            normalizedContentJson = normalizeContentJson(
+                parseHtmlToContentJson(normalizedContentHtml)
+            );
+        } catch (error) {
+            console.error('Failed to parse HTML to content JSON', error);
+            return { error: '본문 JSON 변환에 실패했습니다.', data: null };
+        }
+    }
+
+    let effectiveContentHtml = normalizedContentHtml;
+    if (hasContentJsonContent(normalizedContentJson)) {
+        try {
+            effectiveContentHtml = renderContentJsonToHtml(normalizedContentJson);
+        } catch (error) {
+            console.error('Failed to render content JSON to HTML', error);
+            return { error: '본문 HTML 생성에 실패했습니다.', data: null };
+        }
+    }
 
     // 3. Status
     const normalizedStatus = status !== undefined
@@ -55,7 +77,7 @@ export function normalizePostData(body, existing = {}) {
     if (
         normalizedStatus !== 'draft'
         && normalizedSections.length === 0
-        && !normalizedContentHtml
+        && !effectiveContentHtml
         && !hasContentJsonContent(normalizedContentJson)
     ) {
         return { error: '본문 내용이 필요합니다.', data: null };
@@ -98,7 +120,7 @@ export function normalizePostData(body, existing = {}) {
             summary: normalizedSummary,
             category: normalizedCategory,
             contentJson: normalizedContentJson,
-            contentHtml: normalizedContentHtml || undefined,
+            contentHtml: effectiveContentHtml || undefined,
             status: normalizedStatus,
             scheduledAt: normalizedScheduledAt || undefined,
             publishedAt: effectivePublishedAt,

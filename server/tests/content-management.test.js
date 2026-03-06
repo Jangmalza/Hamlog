@@ -2,14 +2,14 @@ import test, { after, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { access, cp, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { access, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import request from 'supertest';
 
 import app from '../app.js';
-import { dataDir, uploadDir } from '../config/paths.js';
+import { dataDir, postsDir, postsFilePath, uploadDir } from '../config/paths.js';
 import { readCategories, writeCategories } from '../models/categoryModel.js';
 import { readComments, writeComments } from '../models/commentModel.js';
-import { readPosts, writePosts } from '../models/postModel.js';
+import { ensurePostsFile, readPosts, writePosts } from '../models/postModel.js';
 import { readProfile, writeProfile } from '../models/profileModel.js';
 import { defaultProfile } from '../utils/normalizers.js';
 
@@ -22,6 +22,21 @@ const sampleContentJson = {
     content: [
         { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Heading' }] },
         { type: 'paragraph', content: [{ type: 'text', text: 'Body copy' }] }
+    ]
+};
+const parsedHtmlContentJson = {
+    type: 'doc',
+    content: [
+        {
+            type: 'heading',
+            attrs: { level: 1, textAlign: null },
+            content: [{ type: 'text', text: 'Heading' }]
+        },
+        {
+            type: 'paragraph',
+            attrs: { textAlign: null },
+            content: [{ type: 'text', text: 'Body copy' }]
+        }
     ]
 };
 
@@ -122,7 +137,7 @@ test('authenticated content routes persist posts and categories', async () => {
         summary: 'pipeline hardening summary',
         category: 'DevOps',
         contentJson: sampleContentJson,
-        contentHtml: '<h1>Heading</h1><p>Body copy</p>',
+        contentHtml: '<p>stale html should not be stored</p>',
         publishedAt: '2026-03-06',
         readingTime: '2분 읽기',
         tags: ['ci', 'deploy'],
@@ -138,6 +153,7 @@ test('authenticated content routes persist posts and categories', async () => {
     assert.equal(createPostResponse.status, 201);
     assert.equal(createPostResponse.body.slug, createPostPayload.slug);
     assert.deepEqual(createPostResponse.body.contentJson, sampleContentJson);
+    assert.equal(createPostResponse.body.contentHtml, '<h1>Heading</h1><p>Body copy</p>');
 
     const updateCategoryResponse = await request(app)
         .patch(`/api/categories/${encodeURIComponent(createdCategory.id)}`)
@@ -150,6 +166,7 @@ test('authenticated content routes persist posts and categories', async () => {
     assert.equal(postsAfterCategoryRename.length, 1);
     assert.equal(postsAfterCategoryRename[0].category, 'Platform');
     assert.deepEqual(postsAfterCategoryRename[0].contentJson, sampleContentJson);
+    assert.equal(postsAfterCategoryRename[0].contentHtml, '<h1>Heading</h1><p>Body copy</p>');
 
     const updatePostResponse = await request(app)
         .put(`/api/posts/${createPostResponse.body.id}`)
@@ -185,6 +202,37 @@ test('authenticated content routes persist posts and categories', async () => {
 
     const postsAfterDelete = await readPosts();
     assert.equal(postsAfterDelete.length, 0);
+});
+
+test('ensurePostsFile backfills contentJson for legacy html-only posts', async () => {
+    await rm(postsDir, { recursive: true, force: true });
+
+    const legacyPost = {
+        id: 'legacy-post-1',
+        slug: 'legacy-html-post',
+        title: 'Legacy HTML Post',
+        summary: 'legacy summary',
+        category: 'Legacy',
+        contentHtml: '<h1>Heading</h1><p>Body copy</p>',
+        publishedAt: '2026-03-06',
+        readingTime: '2분 읽기',
+        tags: [],
+        status: 'published',
+        sections: []
+    };
+
+    await writeFile(postsFilePath, JSON.stringify([legacyPost], null, 2), 'utf8');
+
+    await ensurePostsFile();
+
+    const posts = await readPosts();
+    assert.equal(posts.length, 1);
+    assert.deepEqual(posts[0].contentJson, parsedHtmlContentJson);
+    assert.equal(posts[0].contentHtml, '<h1>Heading</h1><p>Body copy</p>');
+
+    const postFilePath = path.join(postsDir, 'legacy-html-post.json');
+    const storedPost = JSON.parse(await readFile(postFilePath, 'utf8'));
+    assert.deepEqual(storedPost.contentJson, parsedHtmlContentJson);
 });
 
 test('profile update and uploads require authentication and persist', async () => {

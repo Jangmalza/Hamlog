@@ -8,12 +8,53 @@ import { normalizePostStatus } from '../utils/postStatus';
 import { toIsoDateTime } from '../utils/adminDate';
 import { normalizeDraftCategory, DEFAULT_CATEGORY } from '../utils/category';
 
+const hasMeaningfulContentNode = (node: unknown): boolean => {
+    if (!node || typeof node !== 'object') return false;
+
+    const typedNode = node as {
+        type?: string;
+        text?: string;
+        attrs?: Record<string, unknown>;
+        content?: unknown[];
+    };
+
+    if (typedNode.type === 'text') {
+        return typeof typedNode.text === 'string' && typedNode.text.trim().length > 0;
+    }
+
+    if (typedNode.type === 'hardBreak' || typedNode.type === 'horizontalRule') {
+        return true;
+    }
+
+    if (typedNode.type === 'image') {
+        return typeof typedNode.attrs?.src === 'string' && typedNode.attrs.src.trim().length > 0;
+    }
+
+    if (typedNode.type === 'linkCard') {
+        return typeof typedNode.attrs?.url === 'string' && typedNode.attrs.url.trim().length > 0;
+    }
+
+    if (typedNode.type === 'youtube') {
+        return typeof typedNode.attrs?.src === 'string' && typedNode.attrs.src.trim().length > 0;
+    }
+
+    if (typedNode.type === 'math') {
+        return typeof typedNode.attrs?.latex === 'string' && typedNode.attrs.latex.trim().length > 0;
+    }
+
+    if (typedNode.type === 'table' || typedNode.type === 'imageGallery' || typedNode.type === 'columns') {
+        return true;
+    }
+
+    if (Array.isArray(typedNode.content)) {
+        return typedNode.content.some(child => hasMeaningfulContentNode(child));
+    }
+
+    return false;
+};
+
 const hasDocumentContent = (contentJson: PostDraft['contentJson']) =>
-    Boolean(
-        contentJson
-        && Array.isArray(contentJson.content)
-        && contentJson.content.length > 0
-    );
+    Boolean(contentJson && hasMeaningfulContentNode(contentJson));
 
 interface UsePostPersistenceProps {
     draft: PostDraft;
@@ -103,7 +144,7 @@ export const usePostPersistence = ({
             summary: draft.summary.trim() || '요약이 없습니다.',
             category: normalizeDraftCategory(draft.category, DEFAULT_CATEGORY),
             contentJson: draft.contentJson,
-            contentHtml: contentHtml || undefined,
+            contentHtml: hasContentJson ? undefined : contentHtml || undefined,
             publishedAt,
             readingTime: draft.readingTime.trim() || '3분 읽기',
             tags,

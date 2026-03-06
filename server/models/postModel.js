@@ -5,10 +5,12 @@ import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
     normalizeCategory,
     normalizeContentJson,
+    hasContentJsonContent,
     normalizePostStatus,
     normalizeScheduledAt,
     normalizeSeo
 } from '../utils/normalizers.js';
+import { parseHtmlToContentJson } from '../utils/contentRenderer.js';
 
 function normalizePost(post) {
     if (!post || typeof post !== 'object') return post;
@@ -20,6 +22,34 @@ function normalizePost(post) {
         scheduledAt: normalizeScheduledAt(post.scheduledAt) || undefined,
         seo: normalizeSeo(post.seo)
     };
+}
+
+async function backfillLegacyContentJson(posts) {
+    let migratedCount = 0;
+
+    const nextPosts = posts.map((post) => {
+        if (hasContentJsonContent(post.contentJson) || !post.contentHtml) {
+            return post;
+        }
+
+        try {
+            const contentJson = normalizeContentJson(parseHtmlToContentJson(post.contentHtml));
+            if (hasContentJsonContent(contentJson)) {
+                migratedCount += 1;
+                return { ...post, contentJson };
+            }
+        } catch (error) {
+            console.error(`[Migration] Failed to backfill contentJson for "${post.slug}":`, error);
+        }
+
+        return post;
+    });
+
+    if (migratedCount > 0) {
+        console.log(`[Migration] Backfilling contentJson for ${migratedCount} posts...`);
+        await writePosts(nextPosts);
+        console.log('[Migration] contentJson backfill completed.');
+    }
 }
 
 /**
@@ -108,4 +138,7 @@ export async function ensurePostsFile() {
             await writePosts([]);
         }
     }
+
+    const normalizedPosts = await readPosts();
+    await backfillLegacyContentJson(normalizedPosts);
 }
