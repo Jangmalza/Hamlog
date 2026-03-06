@@ -38,6 +38,7 @@ export type PostSection =
     | { type: 'image'; content: string; alt?: string; caption?: string };
 
 export type PostStatus = 'draft' | 'scheduled' | 'published';
+export type PostRevisionEvent = 'baseline' | 'created' | 'updated' | 'restored';
 
 export interface PostSeo {
     title?: string;
@@ -65,6 +66,16 @@ export interface Post {
     scheduledAt?: string;
     seo?: PostSeo;
     sections: PostSection[];
+}
+
+export interface PostRevision {
+    id: string;
+    postId: string;
+    savedAt: string;
+    event: PostRevisionEvent;
+    title: string;
+    slug: string;
+    status: PostStatus;
 }
 
 export type PostInput = Omit<Post, 'id'>;

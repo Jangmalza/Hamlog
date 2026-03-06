@@ -2,7 +2,9 @@ import {
     getAllPostsService,
     createPostService,
     updatePostService,
-    deletePostService
+    deletePostService,
+    getPostRevisionsService,
+    restorePostRevisionService
 } from '../services/postService.js';
 
 export const getPosts = async (req, res) => {
@@ -50,6 +52,42 @@ export const updatePost = async (req, res) => {
     } catch (error) {
         console.error('Failed to update post', error);
         res.status(500).json({ message: '포스트 수정에 실패했습니다.' });
+    }
+};
+
+export const getPostRevisions = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await getPostRevisionsService(id);
+
+        if (!result.success) {
+            return res.status(404).json({ message: result.error });
+        }
+
+        res.json(result.data);
+    } catch (error) {
+        console.error('Failed to fetch post revisions', error);
+        res.status(500).json({ message: '리비전을 불러오지 못했습니다.' });
+    }
+};
+
+export const restorePostRevision = async (req, res) => {
+    try {
+        const { id, revisionId } = req.params;
+        const result = await restorePostRevisionService(id, revisionId);
+
+        if (!result.success) {
+            const status = result.code === 'not_found' ? 404
+                : result.code === 'validation_error' ? 400
+                    : result.code === 'duplicate_slug' ? 409
+                        : 500;
+            return res.status(status).json({ message: result.error });
+        }
+
+        res.json(result.data);
+    } catch (error) {
+        console.error('Failed to restore post revision', error);
+        res.status(500).json({ message: '리비전 복구에 실패했습니다.' });
     }
 };
 

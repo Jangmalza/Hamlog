@@ -1,4 +1,4 @@
-import type { Post, PostInput } from '../data/blogData';
+import type { Post, PostInput, PostRevision } from '../data/blogData';
 import { requestJson, requestVoid } from './client';
 
 interface PostListResponse {
@@ -33,6 +33,16 @@ export async function updatePost(id: string, payload: PostInput): Promise<Post> 
 
 export async function deletePost(id: string): Promise<void> {
   await requestVoid(`/posts/${id}`, { method: 'DELETE' });
+}
+
+export async function fetchPostRevisions(id: string): Promise<PostRevision[]> {
+  return requestJson<PostRevision[]>(`/posts/${id}/revisions`);
+}
+
+export async function restorePostRevision(id: string, revisionId: string): Promise<Post> {
+  return requestJson<Post>(`/posts/${id}/revisions/${revisionId}/restore`, {
+    method: 'POST'
+  });
 }
 
 export async function searchPosts(query: string): Promise<Post[]> {

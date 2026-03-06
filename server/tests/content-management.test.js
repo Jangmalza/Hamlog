@@ -11,6 +11,7 @@ import { readCategories, writeCategories } from '../models/categoryModel.js';
 import { readComments, writeComments } from '../models/commentModel.js';
 import { ensurePostsFile, readPosts, writePosts } from '../models/postModel.js';
 import { readProfile, writeProfile } from '../models/profileModel.js';
+import { readPostRevisions } from '../models/revisionModel.js';
 import { defaultProfile } from '../utils/normalizers.js';
 
 const adminPassword = process.env.ADMIN_PASSWORD ?? 'test-password';
@@ -181,6 +182,10 @@ test('authenticated content routes persist posts and categories', async () => {
     assert.equal(updatePostResponse.status, 200);
     assert.equal(updatePostResponse.body.slug, 'ci-hardening-updated');
 
+    const revisionsAfterUpdate = await readPostRevisions(createPostResponse.body.id);
+    assert.ok(revisionsAfterUpdate.length >= 2);
+    assert.equal(revisionsAfterUpdate[0].event, 'updated');
+
     const deleteCategoryResponse = await request(app)
         .delete(`/api/categories/${encodeURIComponent(createdCategory.id)}`)
         .set('Cookie', cookies);
@@ -202,6 +207,7 @@ test('authenticated content routes persist posts and categories', async () => {
 
     const postsAfterDelete = await readPosts();
     assert.equal(postsAfterDelete.length, 0);
+    assert.deepEqual(await readPostRevisions(createPostResponse.body.id), []);
 });
 
 test('ensurePostsFile backfills contentJson for legacy html-only posts', async () => {
@@ -233,6 +239,80 @@ test('ensurePostsFile backfills contentJson for legacy html-only posts', async (
     const postFilePath = path.join(postsDir, 'legacy-html-post.json');
     const storedPost = JSON.parse(await readFile(postFilePath, 'utf8'));
     assert.deepEqual(storedPost.contentJson, parsedHtmlContentJson);
+});
+
+test('post revisions can be listed and restored', async () => {
+    const cookies = await loginAsAdmin();
+
+    const createPostResponse = await request(app)
+        .post('/api/posts')
+        .set('Cookie', cookies)
+        .send({
+            slug: 'revision-driven-post',
+            title: 'Revision Driven Post',
+            summary: 'revision summary',
+            category: 'Engineering',
+            contentJson: sampleContentJson,
+            publishedAt: '2026-03-06',
+            readingTime: '2분 읽기',
+            tags: ['editor'],
+            status: 'published',
+            sections: []
+        });
+
+    assert.equal(createPostResponse.status, 201);
+
+    const createdPostId = createPostResponse.body.id;
+
+    const initialRevisionsResponse = await request(app)
+        .get(`/api/posts/${createdPostId}/revisions`)
+        .set('Cookie', cookies);
+
+    assert.equal(initialRevisionsResponse.status, 200);
+    assert.equal(initialRevisionsResponse.body.length, 1);
+    assert.equal(initialRevisionsResponse.body[0].event, 'created');
+    assert.equal(initialRevisionsResponse.body[0].title, 'Revision Driven Post');
+
+    const updatePostResponse = await request(app)
+        .put(`/api/posts/${createdPostId}`)
+        .set('Cookie', cookies)
+        .send({
+            ...createPostResponse.body,
+            title: 'Revision Driven Post Updated',
+            slug: 'revision-driven-post-updated',
+            category: 'Engineering'
+        });
+
+    assert.equal(updatePostResponse.status, 200);
+
+    const updatedRevisionsResponse = await request(app)
+        .get(`/api/posts/${createdPostId}/revisions`)
+        .set('Cookie', cookies);
+
+    assert.equal(updatedRevisionsResponse.status, 200);
+    assert.equal(updatedRevisionsResponse.body[0].event, 'updated');
+    assert.ok(updatedRevisionsResponse.body.some(revision => revision.event === 'created'));
+
+    const createdRevision = updatedRevisionsResponse.body.find(
+        revision => revision.event === 'created'
+    );
+    assert.ok(createdRevision);
+
+    const restoreResponse = await request(app)
+        .post(`/api/posts/${createdPostId}/revisions/${createdRevision.id}/restore`)
+        .set('Cookie', cookies);
+
+    assert.equal(restoreResponse.status, 200);
+    assert.equal(restoreResponse.body.title, 'Revision Driven Post');
+    assert.equal(restoreResponse.body.slug, 'revision-driven-post');
+
+    const restoredRevisionsResponse = await request(app)
+        .get(`/api/posts/${createdPostId}/revisions`)
+        .set('Cookie', cookies);
+
+    assert.equal(restoredRevisionsResponse.status, 200);
+    assert.equal(restoredRevisionsResponse.body[0].event, 'restored');
+    assert.ok(restoredRevisionsResponse.body.some(revision => revision.event === 'updated'));
 });
 
 test('profile update and uploads require authentication and persist', async () => {

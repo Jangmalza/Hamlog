@@ -3,7 +3,7 @@ import { EditorContent } from '@tiptap/react';
 import { ChevronDown } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import PostContent from '../../PostContent';
-import type { PostStatus } from '../../../data/blogData';
+import type { PostRevision, PostStatus } from '../../../data/blogData';
 import type { PostDraft } from '../../../types/admin';
 
 import type { CategoryTreeResult } from '../../../utils/categoryTree';
@@ -20,6 +20,7 @@ export interface EditorHandlers {
   onStatusChange: (value: PostStatus) => void;
   onSave: (message?: string, statusOverride?: PostStatus) => void;
   onDelete: () => void;
+  onRestoreRevision: (revisionId: string) => void;
   updateDraft: (patch: Partial<PostDraft>) => void;
   setPreviewMode: (value: boolean) => void;
   onLink: () => void;
@@ -50,6 +51,8 @@ export interface UIState {
   previewMode: boolean;
   uploadingImage: boolean;
   uploadError: string | null;
+  revisionsLoading?: boolean;
+  restoringRevisionId?: string | null;
   onNoticeClick?: () => void;
   hasRestorableDraft?: boolean;
   autosaveUpdatedAt?: string | null;
@@ -60,6 +63,7 @@ export interface UIState {
 export interface EditorData {
   draft: PostDraft;
   categoryTree: CategoryTreeResult;
+  revisions: PostRevision[];
   contentStats: { chars: number; words: number; readingMinutes: number };
   currentCoverUrl?: string;
   editor: Editor | null;
@@ -89,13 +93,24 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     previewMode,
     uploadingImage,
     uploadError,
+    revisionsLoading,
+    restoringRevisionId,
     onNoticeClick,
     hasRestorableDraft,
     autosaveUpdatedAt,
     onRestoreAutosave,
     onDiscardAutosave
   } = uiState;
-  const { onTitleChange, onStatusChange, onSave, onDelete, updateDraft, setPreviewMode, onLink } = editorHandlers;
+  const {
+    onTitleChange,
+    onStatusChange,
+    onSave,
+    onDelete,
+    onRestoreRevision,
+    updateDraft,
+    setPreviewMode,
+    onLink
+  } = editorHandlers;
   const { onInputChange, onKeyDown, onBlur, onRemove } = tagHandlers;
   const { onToolbarUpload, onInsertImageUrl, onImageUpload, fileInputRef, onCoverUpload, onSetCoverFromContent } = mediaHandlers;
 
@@ -110,6 +125,30 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
       minute: '2-digit'
     });
   })();
+
+  const formatRevisionLabel = (savedAt: string) => {
+    const timestamp = new Date(savedAt);
+    if (Number.isNaN(timestamp.getTime())) return '';
+    return timestamp.toLocaleString('ko-KR', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const describeRevisionEvent = (event: PostRevision['event']) => {
+    switch (event) {
+      case 'created':
+        return '생성';
+      case 'restored':
+        return '복구';
+      case 'baseline':
+        return '이전 상태';
+      default:
+        return '저장';
+    }
+  };
 
   // Live TOC Logic
   const [tocItems, setTocItems] = React.useState<TocItem[]>([]);
@@ -236,6 +275,59 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           categoryTree={categoryTree}
           onCoverUpload={onCoverUpload}
         />
+
+        {activeId && (
+          <div className="mt-6 rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold text-[var(--text)]">리비전 히스토리</p>
+                <p className="text-[11px] text-[var(--text-muted)]">
+                  최근 저장본을 확인하고 현재 글로 되돌릴 수 있습니다.
+                </p>
+              </div>
+              <p className="text-[11px] text-[var(--text-muted)]">{data.revisions.length}개 저장됨</p>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {revisionsLoading ? (
+                <p className="text-xs text-[var(--text-muted)]">리비전을 불러오는 중입니다.</p>
+              ) : data.revisions.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)]">아직 저장된 리비전이 없습니다.</p>
+              ) : (
+                data.revisions.slice(0, 6).map((revision) => (
+                  <div
+                    key={revision.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-semibold text-[var(--accent-strong)]">
+                          {describeRevisionEvent(revision.event)}
+                        </span>
+                        <span className="text-[11px] text-[var(--text-muted)]">
+                          {formatRevisionLabel(revision.savedAt)}
+                        </span>
+                        <span className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
+                          {revision.status}
+                        </span>
+                      </div>
+                      <p className="truncate text-sm font-medium text-[var(--text)]">{revision.title}</p>
+                      <p className="truncate text-[11px] text-[var(--text-muted)]">/{revision.slug}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onRestoreRevision(revision.id)}
+                      disabled={Boolean(restoringRevisionId)}
+                      className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {restoringRevisionId === revision.id ? '복구 중...' : '이 리비전 복구'}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Editor Toolbar - Sticky */}
         <EditorToolbar

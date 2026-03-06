@@ -6,13 +6,15 @@ import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
-import type { Post, PostStatus } from '../../data/blogData';
+import { fetchPostRevisions, restorePostRevision } from '../../api/postApi';
+import type { Post, PostRevision, PostStatus } from '../../data/blogData';
 import { stripHtml } from '../../utils/postContent';
 import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { usePostForm, toDraft } from '../../hooks/usePostForm';
 import { useAutosave } from '../../hooks/useAutosave';
 import { usePostPersistence } from '../../hooks/usePostPersistence';
 import { promptForText } from '../../utils/editorDialog';
+import { usePostStore } from '../../store/postStore';
 
 const MAX_UPLOAD_MB = 8;
 
@@ -29,6 +31,7 @@ interface PostEditorProps {
 
 const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSuccess, categoryTree, onLoadCategories }) => {
     const activeId = post?.id || null;
+    const refreshPosts = usePostStore(state => state.fetchPosts);
 
     // 1. Form Logic (extracted)
     const {
@@ -47,8 +50,24 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
 
     const [notice, setNotice] = useState('');
     const [previewMode, setPreviewMode] = useState(false);
+    const [revisions, setRevisions] = useState<PostRevision[]>([]);
+    const [revisionsLoading, setRevisionsLoading] = useState(false);
+    const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
     const editorRef = useRef<Editor | null>(null);
     const loadDraftSnapshot = useCallback(() => toDraft(post || undefined), [post]);
+
+    const loadRevisions = useCallback(async (postId: string) => {
+        setRevisionsLoading(true);
+        try {
+            const nextRevisions = await fetchPostRevisions(postId);
+            setRevisions(nextRevisions);
+        } catch (error) {
+            console.error(error);
+            setNotice('리비전 내역을 불러오지 못했습니다.');
+        } finally {
+            setRevisionsLoading(false);
+        }
+    }, []);
 
     // 2. Auto-save Logic (extracted)
     const {
@@ -79,7 +98,10 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     } = usePostPersistence({
         draft,
         activeId,
-        onSaveSuccess,
+        onSaveSuccess: useCallback((savedPost: Post) => {
+            onSaveSuccess(savedPost);
+            void loadRevisions(savedPost.id);
+        }, [onSaveSuccess, loadRevisions]),
         onDeleteSuccess,
         setNotice,
         onAfterSave: useCallback(() => {
@@ -94,6 +116,16 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     useEffect(() => {
         setNotice('');
     }, [post, setNotice]);
+
+    useEffect(() => {
+        if (!activeId) {
+            setRevisions([]);
+            setRevisionsLoading(false);
+            return;
+        }
+
+        void loadRevisions(activeId);
+    }, [activeId, loadRevisions]);
 
     const {
         fileInputRef,
@@ -204,6 +236,35 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         }
     }, [editor, updateDraft]);
 
+    const handleRestoreRevision = useCallback(async (revisionId: string) => {
+        if (!activeId) return;
+
+        const confirmed = window.confirm('선택한 리비전으로 복구할까요? 현재 저장본은 새 리비전으로 보관됩니다.');
+        if (!confirmed) return;
+
+        setRestoringRevisionId(revisionId);
+        setNotice('');
+
+        try {
+            const restoredPost = await restorePostRevision(activeId, revisionId);
+            clearAutosave();
+            setDraft(toDraft(restoredPost));
+            await refreshPosts();
+            onSaveSuccess(restoredPost);
+            await loadRevisions(restoredPost.id);
+            setNotice('리비전을 복구했습니다.');
+        } catch (error) {
+            console.error(error);
+            if (error instanceof Error && error.message) {
+                setNotice(error.message);
+            } else {
+                setNotice('리비전 복구에 실패했습니다.');
+            }
+        } finally {
+            setRestoringRevisionId(null);
+        }
+    }, [activeId, clearAutosave, loadRevisions, onSaveSuccess, refreshPosts, setDraft]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const key = e.key.toLowerCase();
@@ -263,6 +324,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onStatusChange: handleStatusChange,
             onSave: (message?: string, statusOverride?: PostStatus) => void handleSave(message, statusOverride),
             onDelete: () => void handleDelete(),
+            onRestoreRevision: (revisionId: string) => void handleRestoreRevision(revisionId),
             updateDraft,
             setPreviewMode,
             onLink: handleLink
@@ -290,6 +352,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             previewMode,
             uploadingImage,
             uploadError,
+            revisionsLoading,
+            restoringRevisionId,
             onNoticeClick: notice.includes('복구') ? handleRestoreAutosave : undefined,
             hasRestorableDraft,
             autosaveUpdatedAt,
@@ -299,6 +363,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         data: {
             draft,
             categoryTree,
+            revisions,
             contentStats,
             currentCoverUrl: draft.cover,
             editor
