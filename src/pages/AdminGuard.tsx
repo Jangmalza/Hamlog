@@ -42,7 +42,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 text-[var(--text)]">
-      <div className="w-full max-w-sm rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+      <div className="w-full max-w-sm rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
           관리자 접근
         </p>
@@ -58,7 +58,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
               autoFocus
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-soft)]"
+              className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-soft)]"
               placeholder="••••••••"
               aria-label="관리자 비밀번호"
             />
@@ -66,7 +66,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
           {error && <p className="text-sm text-[var(--accent-strong)]">{error}</p>}
           <button
             type="submit"
-            className="w-full rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+            className="w-full rounded-lg bg-[var(--accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
           >
             로그인
           </button>

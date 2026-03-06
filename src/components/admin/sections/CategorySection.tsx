@@ -184,7 +184,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
           <button
             type="button"
             onClick={() => setIsExpanded(prev => !prev)}
-            className="mt-2 flex h-6 w-6 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+            className="mt-2 flex h-6 w-6 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
             aria-label={`${node.name} 토글`}
           >
             <ChevronRight
@@ -197,7 +197,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
         )}
 
         <div
-          className={`group flex flex-1 items-start justify-between gap-3 rounded-2xl border p-3 transition-all ${
+          className={`group flex flex-1 items-start justify-between gap-3 rounded-lg border p-3 transition-all ${
             isActive
               ? 'border-[color:var(--accent)] bg-[var(--surface)] shadow-[0_18px_40px_-26px_rgba(10,43,40,0.65)] ring-1 ring-[color:var(--accent-soft)]'
               : 'border-[color:var(--border)] bg-[var(--surface-muted)] hover:border-[color:var(--accent)] hover:bg-[var(--surface)]'
@@ -218,7 +218,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
                 <div
                   {...attributes}
                   {...listeners}
-                  className="cursor-grab rounded-full border border-[color:var(--border)] p-1 text-[var(--text-muted)] transition hover:text-[var(--text)] active:cursor-grabbing"
+                  className="cursor-grab rounded-lg border border-[color:var(--border)] p-1 text-[var(--text-muted)] transition hover:text-[var(--text)] active:cursor-grabbing"
                   onClick={(event) => event.stopPropagation()}
                 >
                   <GripVertical size={14} />
@@ -226,24 +226,24 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
               )}
               <p className="truncate text-sm font-semibold text-[var(--text)]">{node.name}</p>
               {isDefault && (
-                <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                <span className="rounded-lg bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
                   기본
                 </span>
               )}
               {!isManaged && (
-                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                <span className="rounded-lg bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
                   자동 감지
                 </span>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--text-muted)]">
-              <span className="rounded-full bg-[var(--surface)] px-2 py-1">
+              <span className="rounded-lg bg-[var(--surface)] px-2 py-1">
                 전체 {node.count}개 글
               </span>
-              <span className="rounded-full bg-[var(--surface)] px-2 py-1">
+              <span className="rounded-lg bg-[var(--surface)] px-2 py-1">
                 직속 {node.directCount}
               </span>
-              <span className="rounded-full bg-[var(--surface)] px-2 py-1">
+              <span className="rounded-lg bg-[var(--surface)] px-2 py-1">
                 하위 {node.children.length}
               </span>
             </div>
@@ -293,7 +293,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
       </div>
 
       {isEditing && (
-        <div className="mb-3 ml-8 rounded-2xl border border-dashed border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-inner">
+        <div className="mb-3 ml-8 rounded-lg border border-dashed border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-inner">
           <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
             <div className="space-y-1">
               <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
@@ -356,7 +356,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
         {isAddingChild && (
           <div className="mb-2 flex items-center gap-2" style={{ paddingLeft: (depth + 1) * 16 }}>
             <span className="block h-6 w-6 flex-shrink-0" />
-            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-dashed border-[color:var(--accent)] bg-[var(--surface)] p-3">
+            <div className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[color:var(--accent)] bg-[var(--surface)] p-3">
               <span className="text-[var(--accent)]">
                 <Plus size={14} />
               </span>
@@ -371,7 +371,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
               <button
                 type="button"
                 onClick={() => void submitAddChild()}
-                className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--accent-strong)]"
+                className="rounded-lg bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--accent-strong)]"
               >
                 추가
               </button>
@@ -611,8 +611,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   };
 
   return (
-    <div className="rounded-[2rem] border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
-      <div className="overflow-hidden rounded-[1.75rem] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(6,55,48,0.08),rgba(255,255,255,0)_55%),linear-gradient(180deg,var(--surface),var(--surface))] p-6">
+    <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+      <div className="overflow-hidden rounded-xl border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(6,55,48,0.08),rgba(255,255,255,0)_55%),linear-gradient(180deg,var(--surface),var(--surface))] p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.32em] text-[var(--text-muted)]">
@@ -633,35 +633,35 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             type="button"
             onClick={onReload}
             disabled={categoriesLoading}
-            className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             새로고침
           </button>
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-4">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               <FolderTree size={14} />
               관리 카테고리
             </div>
             <p className="mt-3 text-3xl font-semibold text-[var(--text)]">{summary.managedCount}</p>
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-4">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               <Layers3 size={14} />
               최상위 묶음
             </div>
             <p className="mt-3 text-3xl font-semibold text-[var(--text)]">{summary.rootCount}</p>
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-4">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               <Files size={14} />
               미분류 글
             </div>
             <p className="mt-3 text-3xl font-semibold text-[var(--text)]">{summary.uncategorizedCount}</p>
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-4">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               <Sparkles size={14} />
               자동 감지
@@ -678,7 +678,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_360px]">
         <div className="space-y-4">
-          <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
+          <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
             <div className="relative">
               <Search
                 size={16}
@@ -688,7 +688,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="카테고리 이름이나 경로 검색"
-                className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] py-3 pl-11 pr-4 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface)] py-3 pl-11 pr-4 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
               />
             </div>
             <p className="mt-3 text-xs text-[var(--text-muted)]">
@@ -697,7 +697,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             </p>
           </div>
 
-          <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
+          <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
@@ -711,7 +711,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddingRoot(true)}
-                  className="rounded-full bg-[var(--text)] px-4 py-2 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90"
+                  className="rounded-lg bg-[var(--text)] px-4 py-2 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90"
                 >
                   새 카테고리
                 </button>
@@ -726,7 +726,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                       key={node.id}
                       type="button"
                       onClick={() => setActiveCategoryId(node.id)}
-                      className={`flex w-full items-start justify-between gap-4 rounded-2xl border px-4 py-3 text-left transition ${
+                      className={`flex w-full items-start justify-between gap-4 rounded-lg border px-4 py-3 text-left transition ${
                         activeCategoryId === node.id
                           ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                           : 'border-[color:var(--border)] bg-[var(--surface-muted)] hover:border-[color:var(--accent)] hover:bg-[var(--surface)]'
@@ -738,13 +738,13 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                           깊이 {depth + 1} · {getCategoryPathLabel(node, categoryTree.nodesById)}
                         </p>
                       </div>
-                      <div className="shrink-0 rounded-full bg-[var(--surface)] px-2.5 py-1 text-[10px] font-semibold text-[var(--text-muted)]">
+                      <div className="shrink-0 rounded-lg bg-[var(--surface)] px-2.5 py-1 text-[10px] font-semibold text-[var(--text-muted)]">
                         {node.count}개
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+                  <div className="rounded-lg border border-dashed border-[color:var(--border)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
                     검색된 카테고리가 없습니다.
                   </div>
                 )}
@@ -768,7 +768,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             )}
 
             {isAddingRoot ? (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-[color:var(--accent)] bg-[var(--surface-muted)] p-3">
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-dashed border-[color:var(--accent)] bg-[var(--surface-muted)] p-3">
                 <FolderPlus size={16} className="text-[var(--accent)]" />
                 <input
                   value={rootDraft}
@@ -781,7 +781,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                 <button
                   type="button"
                   onClick={() => void submitAddRoot()}
-                  className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--accent-strong)]"
+                  className="rounded-lg bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--accent-strong)]"
                 >
                   추가
                 </button>
@@ -791,7 +791,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                     setIsAddingRoot(false);
                     setRootDraft('');
                   }}
-                  className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[11px] font-semibold text-[var(--text-muted)]"
+                  className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-[11px] font-semibold text-[var(--text-muted)]"
                 >
                   취소
                 </button>
@@ -800,7 +800,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddingRoot(true)}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-3 text-sm text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-[color:var(--border)] px-4 py-3 text-sm text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
               >
                 <FolderPlus size={16} />
                 새 최상위 카테고리 추가
@@ -810,7 +810,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-28 self-start">
-          <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5">
+          <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5">
             {activeCategory ? (
               <>
                 <div className="space-y-3">
@@ -828,16 +828,16 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
                   <div className="flex flex-wrap gap-2">
                     {normalizeCategoryKey(activeCategory.name) === normalizeCategoryKey(defaultCategory) && (
-                      <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--accent-strong)]">
+                      <span className="rounded-lg bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--accent-strong)]">
                         기본 카테고리
                       </span>
                     )}
                     {managedCategoryIds.has(activeCategory.id) ? (
-                      <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold text-[var(--text)]">
+                      <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold text-[var(--text)]">
                         관리 대상
                       </span>
                     ) : (
-                      <span className="rounded-full bg-red-100 px-3 py-1 text-[11px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                      <span className="rounded-lg bg-red-100 px-3 py-1 text-[11px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
                         자동 감지
                       </span>
                     )}
@@ -845,7 +845,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-3">
-                  <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-center">
+                  <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-center">
                     <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
                       전체
                     </div>
@@ -853,7 +853,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                       {activeCategory.count}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-center">
+                  <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-center">
                     <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
                       직속
                     </div>
@@ -861,7 +861,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                       {activeCategory.directCount}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-center">
+                  <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 text-center">
                     <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
                       하위
                     </div>
@@ -880,7 +880,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                       value={detailName}
                       onChange={(event) => setDetailName(event.target.value)}
                       disabled={!canEditActiveCategory || categorySaving}
-                      className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   </div>
                   <div className="space-y-1">
@@ -891,7 +891,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                       value={detailParentId}
                       onChange={(event) => setDetailParentId(event.target.value)}
                       disabled={!canEditActiveCategory || categorySaving}
-                      className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option value="">최상위</option>
                       {availableParentOptions.map(option => (
@@ -908,7 +908,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                         type="button"
                         onClick={() => void saveActiveCategory()}
                         disabled={!detailHasChanges || categorySaving}
-                        className="flex-1 rounded-2xl bg-[var(--text)] px-4 py-2.5 text-sm font-semibold text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex-1 rounded-lg bg-[var(--text)] px-4 py-2.5 text-sm font-semibold text-[var(--bg)] transition disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         변경 저장
                       </button>
@@ -916,13 +916,13 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                         type="button"
                         onClick={() => onDeleteCategory(activeCategory)}
                         disabled={categorySaving}
-                        className="rounded-2xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:opacity-40"
+                        className="rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:opacity-40"
                       >
                         삭제
                       </button>
                     </div>
                   ) : (
-                    <p className="rounded-2xl border border-dashed border-[color:var(--border)] px-3 py-3 text-xs leading-5 text-[var(--text-muted)]">
+                    <p className="rounded-lg border border-dashed border-[color:var(--border)] px-3 py-3 text-xs leading-5 text-[var(--text-muted)]">
                       {normalizeCategoryKey(activeCategory.name) === normalizeCategoryKey(defaultCategory)
                         ? '기본 카테고리는 이름과 위치를 수정할 수 없습니다.'
                         : '자동 감지 카테고리는 글 데이터에서 생성된 항목입니다. 이름 변경은 관련 글을 정리한 뒤 반영하는 편이 안전합니다.'}
@@ -930,7 +930,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                   )}
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
+                <div className="mt-5 rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                       하위 카테고리
@@ -966,7 +966,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                           key={child.id}
                           type="button"
                           onClick={() => setActiveCategoryId(child.id)}
-                          className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                          className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
                         >
                           {child.name} · {child.count}
                         </button>
@@ -980,7 +980,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                 </div>
               </>
             ) : (
-              <div className="rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-12 text-center text-sm text-[var(--text-muted)]">
+              <div className="rounded-lg border border-dashed border-[color:var(--border)] px-4 py-12 text-center text-sm text-[var(--text-muted)]">
                 카테고리를 선택하면 상세 정보가 여기에 표시됩니다.
               </div>
             )}

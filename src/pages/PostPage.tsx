@@ -83,7 +83,7 @@ const PostPage: React.FC = () => {
             <button
               type="button"
               onClick={() => fetchPosts()}
-              className="mt-4 rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)]"
+              className="mt-4 rounded-lg border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)]"
             >
               다시 시도
             </button>
@@ -188,13 +188,13 @@ const PostPage: React.FC = () => {
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
+                  <span className="inline-flex items-center rounded-lg border border-[color:var(--accent)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
                     {post.category ?? '미분류'}
                   </span>
                   {post.tags.map(tag => (
                     <span
                       key={tag}
-                      className="inline-flex items-center rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-xs text-[var(--text-muted)]"
+                      className="inline-flex items-center rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-xs text-[var(--text-muted)]"
                     >
                       #{tag}
                     </span>

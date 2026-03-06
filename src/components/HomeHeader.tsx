@@ -12,6 +12,17 @@ interface HomeHeaderProps {
 
 export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, seriesCount }: HomeHeaderProps) => {
     const { theme, toggleTheme } = useTheme();
+    const showContactLinks = (
+        (profile.display.showSocialLinks && (
+            profile.social.github
+            || profile.social.linkedin
+            || profile.social.twitter
+            || profile.social.instagram
+            || profile.social.threads
+            || profile.social.telegram
+        ))
+        || (profile.display.showEmail && profile.email)
+    );
 
     return (
         <header className="border-b border-[color:var(--border)]">
@@ -22,7 +33,7 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                     </span>
                     <button
                         onClick={toggleTheme}
-                        className="rounded-full p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+                        className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
                         aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                     >
                         {theme === 'dark' ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
@@ -46,15 +57,15 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                         <div className="flex flex-wrap gap-3">
                             <a
                                 href="#writing"
-                                className="group inline-flex items-center gap-2 rounded-full bg-[var(--text)] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--bg)] transition-all hover:bg-[var(--accent)] hover:scale-105 active:scale-95"
+                                className="group inline-flex items-center gap-2 rounded-lg bg-[var(--text)] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--bg)] transition-all hover:bg-[var(--accent)] hover:scale-105 active:scale-95"
                             >
                                 최신 글 읽기
                                 <span className="transition-transform group-hover:translate-x-1">→</span>
                             </a>
-                            {profile.email && (
+                            {profile.display.showEmail && profile.email && (
                                 <a
                                     href={`mailto:${profile.email}`}
-                                    className="group inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-transparent px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] transition-all hover:border-[var(--text)] hover:text-[var(--text)] active:scale-95"
+                                    className="group inline-flex items-center gap-2 rounded-lg border border-[color:var(--border)] bg-transparent px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] transition-all hover:border-[var(--text)] hover:text-[var(--text)] active:scale-95"
                                 >
                                     메일 보내기
                                 </a>
@@ -84,13 +95,13 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                     </div>
 
                     <div>
-                        <div className="space-y-6 rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+                        <div className="space-y-6 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
                             <div className="flex items-center gap-4">
-                                {profile.profileImage && (
+                                {profile.display.showProfileImage && profile.profileImage && (
                                     <img
                                         src={profile.profileImage}
                                         alt={`${profile.name} portrait`}
-                                        className="h-16 w-16 rounded-2xl object-cover"
+                                        className="h-16 w-16 rounded-lg object-cover"
                                         loading="lazy"
                                     />
                                 )}
@@ -103,109 +114,116 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                 </div>
                             </div>
 
-                            {/* Social Links */}
-                            <div className="flex gap-3">
-                                {profile.social.github && (
-                                    <a
-                                        href={profile.social.github}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="GitHub"
-                                    >
-                                        <Github size={18} />
-                                    </a>
-                                )}
-                                {profile.social.linkedin && (
-                                    <a
-                                        href={profile.social.linkedin}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="LinkedIn"
-                                    >
-                                        <Linkedin size={18} />
-                                    </a>
-                                )}
-                                {profile.social.twitter && (
-                                    <a
-                                        href={profile.social.twitter}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="Twitter"
-                                    >
-                                        <Twitter size={18} />
-                                    </a>
-                                )}
-                                {profile.social.instagram && (
-                                    <a
-                                        href={profile.social.instagram}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="Instagram"
-                                    >
-                                        <Instagram size={18} />
-                                    </a>
-                                )}
-                                {profile.social.threads && (
-                                    <a
-                                        href={profile.social.threads}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="Threads"
-                                    >
-                                        <AtSign size={18} />
-                                    </a>
-                                )}
-                                {profile.social.telegram && (
-                                    <a
-                                        href={profile.social.telegram}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="Telegram"
-                                    >
-                                        <Send size={18} />
-                                    </a>
-                                )}
-                                {profile.email && (
-                                    <a
-                                        href={`mailto:${profile.email}`}
-                                        className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                                        aria-label="Email"
-                                    >
-                                        <Mail size={18} />
-                                    </a>
-                                )}
-                            </div>
-
-                            <div>
-                                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                                    지금
-                                </p>
-                                <p className="mt-2 text-sm text-[var(--text-muted)]">{profile.now}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                                    주력 스택
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {profile.stack.map(item => (
-                                        <span
-                                            key={item}
-                                            className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
+                            {showContactLinks && (
+                                <div className="flex gap-3">
+                                    {profile.display.showSocialLinks && profile.social.github && (
+                                        <a
+                                            href={profile.social.github}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="GitHub"
                                         >
-                                            {item}
-                                        </span>
-                                    ))}
+                                            <Github size={18} />
+                                        </a>
+                                    )}
+                                    {profile.display.showSocialLinks && profile.social.linkedin && (
+                                        <a
+                                            href={profile.social.linkedin}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="LinkedIn"
+                                        >
+                                            <Linkedin size={18} />
+                                        </a>
+                                    )}
+                                    {profile.display.showSocialLinks && profile.social.twitter && (
+                                        <a
+                                            href={profile.social.twitter}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="Twitter"
+                                        >
+                                            <Twitter size={18} />
+                                        </a>
+                                    )}
+                                    {profile.display.showSocialLinks && profile.social.instagram && (
+                                        <a
+                                            href={profile.social.instagram}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="Instagram"
+                                        >
+                                            <Instagram size={18} />
+                                        </a>
+                                    )}
+                                    {profile.display.showSocialLinks && profile.social.threads && (
+                                        <a
+                                            href={profile.social.threads}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="Threads"
+                                        >
+                                            <AtSign size={18} />
+                                        </a>
+                                    )}
+                                    {profile.display.showSocialLinks && profile.social.telegram && (
+                                        <a
+                                            href={profile.social.telegram}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="Telegram"
+                                        >
+                                            <Send size={18} />
+                                        </a>
+                                    )}
+                                    {profile.display.showEmail && profile.email && (
+                                        <a
+                                            href={`mailto:${profile.email}`}
+                                            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                                            aria-label="Email"
+                                        >
+                                            <Mail size={18} />
+                                        </a>
+                                    )}
                                 </div>
-                            </div>
-                            <div className="text-xs text-[var(--text-muted)]">
-                                {profile.location} 기반
-                            </div>
+                            )}
+
+                            {profile.display.showNow && profile.now && (
+                                <div>
+                                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                                        지금
+                                    </p>
+                                    <p className="mt-2 text-sm text-[var(--text-muted)]">{profile.now}</p>
+                                </div>
+                            )}
+                            {profile.display.showStack && profile.stack.length > 0 && (
+                                <div>
+                                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                                        주력 스택
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {profile.stack.map(item => (
+                                            <span
+                                                key={item}
+                                                className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
+                                            >
+                                                {item}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {profile.display.showLocation && profile.location && (
+                                <div className="text-xs text-[var(--text-muted)]">
+                                    {profile.location} 기반
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

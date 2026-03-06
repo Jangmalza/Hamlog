@@ -5,6 +5,20 @@ import { fetchProfile } from '../api/profileApi';
 import { usePostStore } from '../store/postStore';
 import type { Category } from '../types/category';
 
+const normalizeHomeProfile = (profile: typeof siteMeta) => ({
+    ...siteMeta,
+    ...profile,
+    social: {
+        ...siteMeta.social,
+        ...(profile.social ?? {})
+    },
+    stack: profile.stack ?? [],
+    display: {
+        ...siteMeta.display,
+        ...(profile.display ?? {})
+    }
+});
+
 export function useHomeData() {
     const [profile, setProfile] = useState(siteMeta);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -30,7 +44,7 @@ export function useHomeData() {
             try {
                 const nextProfile = await fetchProfile();
                 if (isActive) {
-                    setProfile(nextProfile);
+                    setProfile(normalizeHomeProfile(nextProfile));
                 }
             } catch (error) {
                 console.error('Failed to load profile', error);

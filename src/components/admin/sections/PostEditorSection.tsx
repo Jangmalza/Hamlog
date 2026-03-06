@@ -170,11 +170,11 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     <div className="mx-auto max-w-[1600px]">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-6">
-          <div className="rounded-[2rem] border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+          <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                  <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     {activeId ? '편집 중인 글' : '새 글 초안'}
                   </span>
                   <span className="text-[11px] text-[var(--text-muted)]">
@@ -207,7 +207,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 onDelete={onDelete}
               />
 
-              <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+              <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
                 <EditorToolbar
                   editor={editor}
                   onLink={onLink}
@@ -236,7 +236,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               <div
                 className={
                   previewMode
-                    ? 'block min-h-[720px] rounded-[1.75rem] border border-[color:var(--border)] bg-[var(--surface-muted)] p-6'
+                    ? 'block min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-6'
                     : 'hidden'
                 }
               >
@@ -252,7 +252,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
               <div
                 className={
                   !previewMode
-                    ? 'block min-h-[720px] rounded-[1.75rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-muted))] p-4'
+                    ? 'block min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-muted))] p-4'
                     : 'hidden'
                 }
               >
@@ -266,7 +266,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 >
                   <EditorContent
                     editor={editor}
-                    className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-[1.25rem] [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_24px_60px_-36px_rgba(11,35,32,0.55)]"
+                    className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-lg [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_24px_60px_-36px_rgba(11,35,32,0.55)]"
                   />
                   <TableBubbleMenu editor={editor} />
                   <ColumnBubbleMenu editor={editor} />

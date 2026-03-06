@@ -203,7 +203,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
             <button
               type="button"
               onClick={() => toggleExpanded(node.id)}
-              className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+              className="flex h-5 w-5 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
               aria-label={`${node.name} 토글`}
             >
               <ChevronRight size={12} className={isExpanded ? 'rotate-90 transition-transform' : 'transition-transform'} />
@@ -215,14 +215,14 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
           <button
             type="button"
             onClick={() => handleSelect(node.name)}
-            className={`flex min-w-0 flex-1 items-center justify-between rounded-2xl border px-3 py-2 text-left text-sm transition ${
+            className={`flex min-w-0 flex-1 items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition ${
               isSelected
                 ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                 : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
             }`}
           >
             <span className="truncate">{node.name}</span>
-            <span className="ml-3 rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+            <span className="ml-3 rounded-md bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
               {node.count}
             </span>
           </button>
@@ -254,7 +254,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
         <div
           className={
             panelClassName
-            ?? 'absolute left-0 top-full z-50 mt-2 w-full min-w-[280px] rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl'
+            ?? 'absolute left-0 top-full z-50 mt-2 w-full min-w-[280px] rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl'
           }
         >
           <div className="space-y-4">
@@ -275,11 +275,11 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] py-2.5 pl-9 pr-3 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] py-2.5 pl-9 pr-3 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
               />
             </label>
 
-            <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+            <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="text-[11px] font-semibold text-[var(--text)]">현재 선택</p>
@@ -293,7 +293,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSelect('all')}
-                    className="rounded-full border border-[color:var(--border)] px-3 py-1 text-[11px] font-medium text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                    className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-[11px] font-medium text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]"
                   >
                     전체 보기
                   </button>
@@ -301,7 +301,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
               </div>
 
               {mode === 'filter' && value !== 'all' && onIncludeDescendantsChange && (
-                <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text)]">
+                <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text)]">
                   <span>하위 카테고리 포함</span>
                   <input
                     type="checkbox"
@@ -324,7 +324,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                       key={node.id}
                       type="button"
                       onClick={() => handleSelect(node.name)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      className={`rounded-lg border px-3 py-1.5 text-xs transition ${
                         normalizeCategoryKey(value) === normalizeCategoryKey(node.name)
                           ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                           : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
@@ -349,7 +349,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                       key={category}
                       type="button"
                       onClick={() => handleSelect(category)}
-                      className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                      className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
                     >
                       {category}
                     </button>
@@ -366,7 +366,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                       key={node.id}
                       type="button"
                       onClick={() => handleSelect(node.name)}
-                      className="flex w-full items-start justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-3 text-left transition hover:border-[color:var(--accent)] hover:bg-[var(--surface)]"
+                      className="flex w-full items-start justify-between gap-3 rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-3 text-left transition hover:border-[color:var(--accent)] hover:bg-[var(--surface)]"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-[var(--text)]">
@@ -376,13 +376,13 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                           {highlightMatch(path, query)}
                         </p>
                       </div>
-                      <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+                      <span className="rounded-md bg-[var(--surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
                         {node.count}
                       </span>
                     </button>
                   ))
                 ) : (
-                  <p className="rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-6 text-center text-xs text-[var(--text-muted)]">
+                  <p className="rounded-lg border border-dashed border-[color:var(--border)] px-4 py-6 text-center text-xs text-[var(--text-muted)]">
                     검색 결과가 없습니다.
                   </p>
                 )
@@ -392,14 +392,14 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSelect(DEFAULT_CATEGORY)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2.5 text-left text-sm transition ${
+                      className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm transition ${
                         normalizeCategoryKey(value || DEFAULT_CATEGORY) === normalizeCategoryKey(DEFAULT_CATEGORY)
                           ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                           : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
                       }`}
                     >
                       <span>{DEFAULT_CATEGORY}</span>
-                      <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+                      <span className="rounded-md bg-[var(--surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
                         {categoryTree.nodesByKey.get(normalizeCategoryKey(DEFAULT_CATEGORY))?.count ?? 0}
                       </span>
                     </button>

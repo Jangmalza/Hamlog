@@ -1,5 +1,14 @@
 import type { JSONContent } from '@tiptap/core';
 
+export interface ProfileDisplaySettings {
+    showProfileImage: boolean;
+    showLocation: boolean;
+    showEmail: boolean;
+    showSocialLinks: boolean;
+    showNow: boolean;
+    showStack: boolean;
+}
+
 export interface SiteMeta {
     title: string;
     name: string;
@@ -21,6 +30,7 @@ export interface SiteMeta {
     };
     stack: string[];
     now: string;
+    display: ProfileDisplaySettings;
 }
 
 export interface TopicHighlight {

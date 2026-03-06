@@ -28,10 +28,26 @@ export const defaultProfile = {
     description: 'Description',
     location: 'Location',
     profileImage: '',
+    favicon: '/avatar.jpg',
     email: '',
-    social: {},
+    social: {
+        github: '',
+        linkedin: '',
+        twitter: '',
+        instagram: '',
+        threads: '',
+        telegram: ''
+    },
     stack: [],
-    now: ''
+    now: '',
+    display: {
+        showProfileImage: true,
+        showLocation: true,
+        showEmail: true,
+        showSocialLinks: true,
+        showNow: true,
+        showStack: true
+    }
 };
 
 export function normalizeTags(tags) {
@@ -257,7 +273,7 @@ export function normalizeSocial(value, fallback) {
     if (value === undefined || value === null) return { ...fallback };
     const social = value && typeof value === 'object' ? value : {};
     const next = {};
-    ['github', 'linkedin', 'twitter', 'instagram'].forEach((key) => {
+    ['github', 'linkedin', 'twitter', 'instagram', 'threads', 'telegram'].forEach((key) => {
         const raw = social[key];
         if (raw === undefined || raw === null) return;
         const trimmed = String(raw).trim();
@@ -266,6 +282,20 @@ export function normalizeSocial(value, fallback) {
         }
     });
     return next;
+}
+
+export function normalizeProfileDisplay(value, fallback = defaultProfile.display) {
+    const source = value && typeof value === 'object' ? value : {};
+    const normalizeToggle = (toggle, fallbackValue) =>
+        typeof toggle === 'boolean' ? toggle : fallbackValue;
+    return {
+        showProfileImage: normalizeToggle(source.showProfileImage, fallback.showProfileImage),
+        showLocation: normalizeToggle(source.showLocation, fallback.showLocation),
+        showEmail: normalizeToggle(source.showEmail, fallback.showEmail),
+        showSocialLinks: normalizeToggle(source.showSocialLinks, fallback.showSocialLinks),
+        showNow: normalizeToggle(source.showNow, fallback.showNow),
+        showStack: normalizeToggle(source.showStack, fallback.showStack)
+    };
 }
 
 export function normalizeProfile(raw) {
@@ -282,10 +312,12 @@ export function normalizeProfile(raw) {
         description: normalizeRequiredString(source.description, defaultProfile.description),
         location: normalizeOptionalString(source.location, defaultProfile.location),
         profileImage: normalizeOptionalString(source.profileImage, defaultProfile.profileImage),
+        favicon: normalizeOptionalString(source.favicon, defaultProfile.favicon),
         email: normalizeOptionalString(source.email, defaultProfile.email),
         social: normalizeSocial(source.social, defaultProfile.social),
         stack,
-        now: normalizeOptionalString(source.now, defaultProfile.now)
+        now: normalizeOptionalString(source.now, defaultProfile.now),
+        display: normalizeProfileDisplay(source.display, defaultProfile.display)
     };
 }
 
@@ -301,6 +333,7 @@ export function mergeProfile(current, input) {
         'description',
         'location',
         'profileImage',
+        'favicon',
         'email',
         'now'
     ].forEach((field) => {
@@ -322,7 +355,7 @@ export function mergeProfile(current, input) {
     if (Object.prototype.hasOwnProperty.call(input, 'social')) {
         const socialInput = input.social && typeof input.social === 'object' ? input.social : {};
         const nextSocial = { ...current.social };
-        ['github', 'linkedin', 'twitter', 'instagram'].forEach((key) => {
+        ['github', 'linkedin', 'twitter', 'instagram', 'threads', 'telegram'].forEach((key) => {
             if (Object.prototype.hasOwnProperty.call(socialInput, key)) {
                 const raw = socialInput[key];
                 const trimmed = raw !== undefined && raw !== null ? String(raw).trim() : '';
@@ -334,6 +367,10 @@ export function mergeProfile(current, input) {
             }
         });
         next.social = nextSocial;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(input, 'display')) {
+        next.display = normalizeProfileDisplay(input.display, current.display ?? defaultProfile.display);
     }
 
     return next;

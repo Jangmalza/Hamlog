@@ -5,6 +5,9 @@ interface HomeFooterProps {
 }
 
 export const HomeFooter = ({ profile }: HomeFooterProps) => {
+    const showSocialLinks = profile.display.showSocialLinks;
+    const showEmail = profile.display.showEmail;
+
     return (
         <footer id="about" className="border-t border-[color:var(--border)]">
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
@@ -18,27 +21,27 @@ export const HomeFooter = ({ profile }: HomeFooterProps) => {
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                    {profile.social.github && (
+                    {showSocialLinks && profile.social.github && (
                         <a href={profile.social.github} target="_blank" rel="noreferrer">
                             GitHub
                         </a>
                     )}
-                    {profile.social.linkedin && (
+                    {showSocialLinks && profile.social.linkedin && (
                         <a href={profile.social.linkedin} target="_blank" rel="noreferrer">
                             LinkedIn
                         </a>
                     )}
-                    {profile.social.twitter && (
+                    {showSocialLinks && profile.social.twitter && (
                         <a href={profile.social.twitter} target="_blank" rel="noreferrer">
                             Twitter
                         </a>
                     )}
-                    {profile.social.instagram && (
+                    {showSocialLinks && profile.social.instagram && (
                         <a href={profile.social.instagram} target="_blank" rel="noreferrer">
                             Instagram
                         </a>
                     )}
-                    {profile.email && <a href={`mailto:${profile.email}`}>메일</a>}
+                    {showEmail && profile.email && <a href={`mailto:${profile.email}`}>메일</a>}
                 </div>
             </div>
         </footer>

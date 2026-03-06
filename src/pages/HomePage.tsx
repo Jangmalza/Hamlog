@@ -75,12 +75,12 @@ const HomePage = () => {
 
                     {error && posts.length === 0 && (
                         <section className="mx-auto max-w-6xl px-4 py-12">
-                            <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 text-center shadow-[var(--shadow)]">
+                            <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 text-center shadow-[var(--shadow)]">
                                 <p className="text-sm text-[var(--text-muted)]">{error}</p>
                                 <button
                                     type="button"
                                     onClick={() => fetchPosts()}
-                                    className="mt-4 rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)]"
+                                    className="mt-4 rounded-lg border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text)]"
                                 >
                                     다시 시도
                                 </button>

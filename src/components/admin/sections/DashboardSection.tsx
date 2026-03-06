@@ -17,14 +17,14 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
 }) => (
   <div className="space-y-6">
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
           전체 글
         </p>
         <p className="mt-3 font-display text-2xl font-semibold">{totalPosts}</p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">전체 기준</p>
       </div>
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
           발행
         </p>
@@ -35,7 +35,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
           현재 공개 {stats.visibleCount}
         </p>
       </div>
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
           예약
         </p>
@@ -44,7 +44,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
         </p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">예약 대기 포함</p>
       </div>
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
           초안
         </p>
@@ -56,7 +56,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
     </div>
 
     <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">최근 발행</h2>
           <span className="text-xs text-[var(--text-muted)]">
@@ -70,7 +70,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectPost(post)}
-                  className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition hover:border-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition hover:border-[color:var(--accent)]"
                 >
                   <p className="text-sm font-semibold text-[var(--text)]">
                     {post.title}
@@ -89,7 +89,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
         )}
       </div>
 
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">예약 대기</h2>
           <span className="text-xs text-[var(--text-muted)]">
@@ -103,7 +103,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectPost(post)}
-                  className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition hover:border-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition hover:border-[color:var(--accent)]"
                 >
                   <p className="text-sm font-semibold text-[var(--text)]">
                     {post.title}
@@ -124,7 +124,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
     </div>
 
     <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">카테고리 분포</h2>
           <span className="text-xs text-[var(--text-muted)]">
@@ -136,7 +136,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
             {stats.topCategories.map(category => (
               <div
                 key={category.name}
-                className="flex items-center justify-between rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
+                className="flex items-center justify-between rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)]"
               >
                 <span>{category.name}</span>
                 <span className="text-xs text-[var(--text-muted)]">
@@ -152,7 +152,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
         )}
       </div>
 
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
         <h2 className="font-display text-lg font-semibold">콘텐츠 구조</h2>
         <div className="mt-4 space-y-3 text-sm text-[var(--text-muted)]">
           <div className="flex items-center justify-between">

@@ -143,7 +143,7 @@ const AdminPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
+              className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
               {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}

@@ -53,7 +53,7 @@ const describeRevisionEvent = (event: PostRevision['event']) => {
 };
 
 const StatCard = ({ label, value }: { label: string; value: ReactNode }) => (
-  <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+  <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
       {label}
     </p>
@@ -93,7 +93,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
             <StatCard label="대표 이미지" value={draft.cover ? '설정됨' : '없음'} />
           </div>
           {draft.cover && (
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)]">
+            <div className="overflow-hidden rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)]">
               <img
                 src={draft.cover}
                 alt="대표 이미지 미리보기"
@@ -124,7 +124,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
               value={draft.seoTitle}
               onChange={(event) => onUpdateDraft({ seoTitle: event.target.value })}
               placeholder="검색 결과 제목"
-              className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+              className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
             />
           </div>
           <div className="space-y-1">
@@ -136,7 +136,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
               onChange={(event) => onUpdateDraft({ seoDescription: event.target.value })}
               rows={3}
               placeholder="검색 설명"
-              className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+              className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
             />
           </div>
           <div className="space-y-1">
@@ -147,7 +147,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
               value={draft.seoOgImage}
               onChange={(event) => onUpdateDraft({ seoOgImage: event.target.value })}
               placeholder="https://..."
-              className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+              className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
             />
           </div>
           <div className="space-y-1">
@@ -158,7 +158,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
               value={draft.seoCanonicalUrl}
               onChange={(event) => onUpdateDraft({ seoCanonicalUrl: event.target.value })}
               placeholder="https://example.com/posts/slug"
-              className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+              className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
             />
           </div>
           <div className="space-y-1">
@@ -169,7 +169,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
               value={draft.seoKeywords}
               onChange={(event) => onUpdateDraft({ seoKeywords: event.target.value })}
               placeholder="react, vite, cms"
-              className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+              className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
             />
           </div>
         </div>
@@ -188,7 +188,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
           {draft.tags.map(tag => (
             <span
               key={tag}
-              className="flex items-center gap-1 rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
+              className="flex items-center gap-1 rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
             >
               #{tag}
               <button
@@ -207,7 +207,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
             onKeyDown={onTagKeyDown}
             onBlur={onTagBlur}
             placeholder="태그 입력 후 Enter"
-            className="min-w-[160px] flex-1 rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+            className="min-w-[160px] flex-1 rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
           />
         </div>
       </PostInspectorSection>
@@ -217,7 +217,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
         description="최근 저장본을 확인하고 원하는 시점으로 복구합니다."
         action={
           activeId ? (
-            <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold text-[var(--text-muted)]">
+            <span className="rounded-lg bg-[var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold text-[var(--text-muted)]">
               {revisions.length}개
             </span>
           ) : undefined
@@ -234,10 +234,10 @@ const PostInspector: React.FC<PostInspectorProps> = ({
             {revisions.slice(0, 5).map(revision => (
               <div
                 key={revision.id}
-                className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-3"
+                className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                  <span className="rounded-md bg-[var(--surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
                     {describeRevisionEvent(revision.event)}
                   </span>
                   <span className="text-[11px] text-[var(--text-muted)]">
@@ -250,7 +250,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
                   type="button"
                   onClick={() => onRestoreRevision(revision.id)}
                   disabled={Boolean(restoringRevisionId)}
-                  className="mt-3 rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:opacity-50"
+                  className="mt-3 rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:opacity-50"
                 >
                   {restoringRevisionId === revision.id ? '복구 중...' : '이 리비전 복구'}
                 </button>
@@ -268,7 +268,7 @@ const PostInspector: React.FC<PostInspectorProps> = ({
           <TableOfContents
             tocItems={tocItems}
             onLinkClick={onTocLinkClick}
-            className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4"
+            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-4"
           />
         </PostInspectorSection>
       )}

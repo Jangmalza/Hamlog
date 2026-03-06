@@ -88,8 +88,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   ];
 
   return (
-    <aside className={`flex h-full flex-col gap-5 overflow-y-auto rounded-[2rem] border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] lg:sticky lg:top-24 lg:h-[calc(100vh-110px)] ${show ? '' : 'hidden lg:flex'}`}>
-      <div className="rounded-[1.75rem] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(7,60,53,0.08),rgba(255,255,255,0)_55%),linear-gradient(180deg,var(--surface),var(--surface-muted))] p-5">
+    <aside className={`flex h-full flex-col gap-5 overflow-y-auto rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] lg:sticky lg:top-24 lg:h-[calc(100vh-110px)] ${show ? '' : 'hidden lg:flex'}`}>
+      <div className="rounded-xl border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(7,60,53,0.08),rgba(255,255,255,0)_55%),linear-gradient(180deg,var(--surface),var(--surface-muted))] p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">
@@ -106,36 +106,36 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             type="button"
             onClick={onNew}
             disabled={saving}
-            className="rounded-full bg-[var(--text)] px-4 py-2 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90 disabled:opacity-50"
+            className="rounded-lg bg-[var(--text)] px-4 py-2 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90 disabled:opacity-50"
           >
             새 글 쓰기
           </button>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3">
             <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">초안</div>
             <div className="mt-2 text-lg font-semibold text-[var(--text)]">{statusCount.draft}</div>
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3">
             <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">예약</div>
             <div className="mt-2 text-lg font-semibold text-[var(--text)]">{statusCount.scheduled}</div>
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3">
+          <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3">
             <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">발행</div>
             <div className="mt-2 text-lg font-semibold text-[var(--accent)]">{statusCount.published}</div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4 rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
+      <div className="space-y-4 rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
         <div className="relative">
           <input
             type="text"
             placeholder="제목 또는 슬러그 검색"
             value={searchQuery}
             onChange={e => onSearchChange(e.target.value)}
-            className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--accent)]"
+            className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--accent)]"
           />
         </div>
 
@@ -145,7 +145,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               key={option.key}
               type="button"
               onClick={() => onFilterStatusChange(option.key)}
-              className={`rounded-2xl border px-3 py-2 text-left transition ${
+              className={`rounded-lg border px-3 py-2 text-left transition ${
                 filterStatus === option.key
                   ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                   : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
@@ -166,8 +166,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           includeDescendants={filterCategoryIncludeDescendants}
           onIncludeDescendantsChange={onFilterCategoryIncludeDescendantsChange}
           recentStorageKey="hamlog:admin:sidebar-categories"
-          triggerClassName="flex w-full items-center justify-between rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text)] transition hover:border-[color:var(--accent)]"
-          panelClassName="relative z-20 w-full rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl"
+          triggerClassName="flex w-full items-center justify-between rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text)] transition hover:border-[color:var(--accent)]"
+          panelClassName="relative z-20 w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl"
         />
 
         {quickCategoryNodes.length > 0 && (
@@ -177,7 +177,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 key={node.id}
                 type="button"
                 onClick={() => onFilterCategoryChange(node.name)}
-                className={`rounded-full border px-3 py-1.5 text-[11px] transition ${
+                className={`rounded-lg border px-3 py-1.5 text-[11px] transition ${
                   normalizeCategoryKey(filterCategory) === normalizeCategoryKey(node.name)
                     ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                     : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
@@ -195,7 +195,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               <button
                 type="button"
                 onClick={() => onFilterStatusChange('all')}
-                className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
               >
                 상태 해제
               </button>
@@ -204,7 +204,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               <button
                 type="button"
                 onClick={() => onFilterCategoryChange('all')}
-                className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+                className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
               >
                 카테고리 해제
               </button>
@@ -225,7 +225,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <button
           type="button"
           onClick={onReload}
-          className="rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+          className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
         >
           새로고침
         </button>
@@ -236,7 +236,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+        <div className="rounded-lg bg-red-50 p-4 text-center text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
           {error}
           <button
             onClick={onReload}
@@ -256,7 +256,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               <button
                 key={post.id}
                 onClick={() => onSelect(post)}
-                className={`group relative flex flex-col gap-3 rounded-3xl border p-4 text-left transition-all ${
+                className={`group relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all ${
                   isSelected
                     ? 'border-[var(--accent)] bg-[var(--surface)] shadow-[0_18px_40px_-28px_rgba(8,46,41,0.55)] ring-1 ring-[var(--accent-soft)]'
                     : 'border-[color:var(--border)] bg-[var(--surface)] hover:border-[var(--accent-soft)] hover:shadow-[0_18px_40px_-30px_rgba(8,46,41,0.45)]'
@@ -266,12 +266,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       {post.featured && (
-                        <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                        <span className="rounded-lg bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
                           추천
                         </span>
                       )}
                       {post.category && (
-                        <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-muted)]">
+                        <span className="rounded-lg bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-muted)]">
                           {post.category}
                         </span>
                       )}
@@ -288,7 +288,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${statusMeta.className}`}
+                    className={`shrink-0 rounded-lg px-2 py-0.5 text-[10px] uppercase tracking-wider ${statusMeta.className}`}
                   >
                     {statusMeta.label}
                   </span>
@@ -314,13 +314,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   {post.tags.slice(0, 3).map(tag => (
                     <span
                       key={tag}
-                      className="rounded-full bg-[var(--surface-muted)] px-2 py-1 text-[10px] text-[var(--text-muted)]"
+                      className="rounded-lg bg-[var(--surface-muted)] px-2 py-1 text-[10px] text-[var(--text-muted)]"
                     >
                       #{tag}
                     </span>
                   ))}
                   {post.tags.length > 3 && (
-                    <span className="rounded-full bg-[var(--surface-muted)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
+                    <span className="rounded-lg bg-[var(--surface-muted)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
                       +{post.tags.length - 3}
                     </span>
                   )}
@@ -330,7 +330,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           })}
 
           {paginatedPosts.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+            <div className="rounded-lg border border-dashed border-[color:var(--border)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
               표시할 글이 없습니다.
             </div>
           )}
@@ -342,7 +342,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
-            className="rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)] disabled:opacity-30"
+            className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)] disabled:opacity-30"
           >
             이전
           </button>
@@ -352,7 +352,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
-            className="rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)] disabled:opacity-30"
+            className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)] disabled:opacity-30"
           >
             다음
           </button>

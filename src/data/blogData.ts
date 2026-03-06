@@ -20,7 +20,15 @@ export const siteMeta: SiteMeta = {
     instagram: ''
   },
   stack: [],
-  now: ''
+  now: '',
+  display: {
+    showProfileImage: true,
+    showLocation: true,
+    showEmail: true,
+    showSocialLinks: true,
+    showNow: true,
+    showStack: true
+  }
 };
 
 export const topicHighlights: TopicHighlight[] = [];

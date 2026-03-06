@@ -7,15 +7,22 @@ import {
 } from '../utils/normalizers.js';
 
 export async function readProfile() {
+    let raw = '';
     try {
-        const raw = await readFile(profileFilePath, 'utf8');
-        const parsed = JSON.parse(raw);
-        return normalizeProfile(parsed);
+        raw = await readFile(profileFilePath, 'utf8');
     } catch (error) {
         if (error && error.code === 'ENOENT') {
             return await writeProfile(defaultProfile);
         }
         throw error;
+    }
+
+    try {
+        const parsed = JSON.parse(raw);
+        return normalizeProfile(parsed);
+    } catch (error) {
+        console.error('Failed to parse profile file. Recreating default profile.', error);
+        return await writeProfile(defaultProfile);
     }
 }
 

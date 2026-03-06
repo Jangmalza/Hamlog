@@ -6,7 +6,7 @@ import { access, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/pro
 import request from 'supertest';
 
 import app from '../app.js';
-import { dataDir, postsDir, postsFilePath, uploadDir } from '../config/paths.js';
+import { dataDir, postsDir, postsFilePath, profileFilePath, uploadDir } from '../config/paths.js';
 import { readCategories, writeCategories } from '../models/categoryModel.js';
 import { readComments, writeComments } from '../models/commentModel.js';
 import { ensurePostsFile, readPosts, writePosts } from '../models/postModel.js';
@@ -53,12 +53,17 @@ const copyIfExists = async (sourcePath, destinationPath) => {
     }
 };
 
-const resetTestState = async () => {
-    await rm(dataDir, { recursive: true, force: true });
-    await rm(uploadDir, { recursive: true, force: true });
+const clearDirectoryContents = async (directoryPath) => {
+    await mkdir(directoryPath, { recursive: true });
+    const entries = await import('fs/promises').then(fs => fs.readdir(directoryPath));
+    await Promise.all(
+        entries.map(entry => rm(path.join(directoryPath, entry), { recursive: true, force: true }))
+    );
+};
 
-    await mkdir(dataDir, { recursive: true });
-    await mkdir(uploadDir, { recursive: true });
+const resetTestState = async () => {
+    await clearDirectoryContents(dataDir);
+    await clearDirectoryContents(uploadDir);
 
     await writePosts([]);
     await writeCategories([]);
@@ -89,8 +94,8 @@ beforeEach(async () => {
 });
 
 after(async () => {
-    await rm(dataDir, { recursive: true, force: true });
-    await rm(uploadDir, { recursive: true, force: true });
+    await clearDirectoryContents(dataDir);
+    await clearDirectoryContents(uploadDir);
 
     await copyIfExists(path.join(backupRoot, 'data'), dataDir);
     await copyIfExists(path.join(backupRoot, 'uploads'), uploadDir);
@@ -337,7 +342,11 @@ test('profile update and uploads require authentication and persist', async () =
             title: 'HamLog Ops',
             name: 'Hamwoo',
             role: 'Engineer',
-            description: 'Operational profile ready for deployment checks.'
+            description: 'Operational profile ready for deployment checks.',
+            display: {
+                showStack: false,
+                showLocation: false
+            }
         });
 
     assert.equal(updateProfileResponse.status, 200);
@@ -345,6 +354,8 @@ test('profile update and uploads require authentication and persist', async () =
     const savedProfile = await readProfile();
     assert.equal(savedProfile.title, 'HamLog Ops');
     assert.equal(savedProfile.description, 'Operational profile ready for deployment checks.');
+    assert.equal(savedProfile.display.showStack, false);
+    assert.equal(savedProfile.display.showLocation, false);
 
     const uploadResponse = await request(app)
         .post('/api/uploads')
@@ -355,6 +366,20 @@ test('profile update and uploads require authentication and persist', async () =
     assert.match(uploadResponse.body.url, /^\/uploads\/upload-.*\.webp$/);
 
     await access(path.join(uploadDir, uploadResponse.body.filename));
+});
+
+test('profile route recreates a default profile when the profile file is corrupted', async () => {
+    await writeFile(profileFilePath, '{ invalid json');
+
+    const response = await request(app).get('/api/profile');
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.profile.title, defaultProfile.title);
+    assert.equal(response.body.profile.favicon, defaultProfile.favicon);
+
+    const savedProfile = await readProfile();
+    assert.equal(savedProfile.title, defaultProfile.title);
+    assert.equal(savedProfile.favicon, defaultProfile.favicon);
 });
 
 test('comments respect password verification on deletion', async () => {
