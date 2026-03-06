@@ -344,6 +344,28 @@ export function normalizeContentHtml(contentHtml) {
     return String(contentHtml).trim();
 }
 
+export function normalizeContentJson(contentJson) {
+    if (!contentJson || typeof contentJson !== 'object' || Array.isArray(contentJson)) {
+        return undefined;
+    }
+
+    try {
+        const normalized = JSON.parse(JSON.stringify(contentJson));
+        return Object.keys(normalized).length > 0 ? normalized : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+export function hasContentJsonContent(contentJson) {
+    return Boolean(
+        contentJson
+        && typeof contentJson === 'object'
+        && Array.isArray(contentJson.content)
+        && contentJson.content.length > 0
+    );
+}
+
 export function parseDataUrl(dataUrl) {
     if (!dataUrl) return null;
     const match = /^data:([^;]+);base64,(.+)$/.exec(String(dataUrl).trim());

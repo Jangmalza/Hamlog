@@ -10,6 +10,8 @@ import { sectionsToHtml } from '../utils/postContent';
 const formatSeoKeywords = (keywords?: string[]) =>
     keywords && keywords.length > 0 ? keywords.join(', ') : '';
 
+const cloneContentJson = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
+
 export const toDraft = (post?: Post): PostDraft => {
     if (!post) {
         return {
@@ -17,6 +19,7 @@ export const toDraft = (post?: Post): PostDraft => {
             slug: '',
             summary: '',
             category: DEFAULT_CATEGORY,
+            contentJson: undefined,
             contentHtml: '',
             publishedAt: new Date().toISOString().slice(0, 10),
             readingTime: '3분 읽기',
@@ -45,6 +48,7 @@ export const toDraft = (post?: Post): PostDraft => {
         slug: post.slug,
         summary: post.summary,
         category: normalizeDraftCategory(post.category ?? '', DEFAULT_CATEGORY),
+        contentJson: post.contentJson ? cloneContentJson(post.contentJson) : undefined,
         contentHtml,
         publishedAt: post.publishedAt.slice(0, 10),
         readingTime: post.readingTime,

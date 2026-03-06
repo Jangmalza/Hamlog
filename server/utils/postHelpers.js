@@ -5,7 +5,9 @@ import {
     normalizeSeo,
     normalizeTags,
     normalizeSections,
-    normalizeContentHtml
+    normalizeContentHtml,
+    normalizeContentJson,
+    hasContentJsonContent
 } from './normalizers.js';
 
 /**
@@ -17,7 +19,7 @@ import {
 export function normalizePostData(body, existing = {}) {
     // Destructure inputs, falling back to existing values if update, or undefined if create
     const {
-        slug, title, summary, contentHtml, category, status,
+        slug, title, summary, contentJson, contentHtml, category, status,
         scheduledAt, seo, publishedAt, readingTime, tags,
         series, featured, cover, sections
     } = body;
@@ -40,13 +42,22 @@ export function normalizePostData(body, existing = {}) {
         ? normalizeContentHtml(contentHtml)
         : normalizeContentHtml(existing.contentHtml);
 
+    const normalizedContentJson = contentJson !== undefined
+        ? normalizeContentJson(contentJson)
+        : normalizeContentJson(existing.contentJson);
+
     // 3. Status
     const normalizedStatus = status !== undefined
         ? normalizePostStatus(status)
         : normalizePostStatus(existing.status);
 
     // Validation: Content required unless draft
-    if (normalizedStatus !== 'draft' && normalizedSections.length === 0 && !normalizedContentHtml) {
+    if (
+        normalizedStatus !== 'draft'
+        && normalizedSections.length === 0
+        && !normalizedContentHtml
+        && !hasContentJsonContent(normalizedContentJson)
+    ) {
         return { error: '본문 내용이 필요합니다.', data: null };
     }
 
@@ -86,6 +97,7 @@ export function normalizePostData(body, existing = {}) {
             title: normalizedTitle,
             summary: normalizedSummary,
             category: normalizedCategory,
+            contentJson: normalizedContentJson,
             contentHtml: normalizedContentHtml || undefined,
             status: normalizedStatus,
             scheduledAt: normalizedScheduledAt || undefined,

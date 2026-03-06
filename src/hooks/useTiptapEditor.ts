@@ -1,3 +1,4 @@
+import type { JSONContent } from '@tiptap/core';
 import { useEditor } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import type { PostDraft } from '../types/admin';
@@ -6,6 +7,7 @@ import type { Slice } from '@tiptap/pm/model';
 import { getEditorExtensions } from '../editor/editorConfig';
 
 interface UseTiptapEditorProps {
+    contentJson?: JSONContent;
     contentHtml: string;
     setDraft: React.Dispatch<React.SetStateAction<PostDraft>>;
     handleSelectionUpdate: (editor: Editor) => void;
@@ -14,6 +16,7 @@ interface UseTiptapEditorProps {
 }
 
 export const useTiptapEditor = ({
+    contentJson,
     contentHtml,
     setDraft,
     handleSelectionUpdate,
@@ -22,9 +25,20 @@ export const useTiptapEditor = ({
 }: UseTiptapEditorProps) => {
     const editor = useEditor({
         extensions: getEditorExtensions(),
-        content: contentHtml || '',
+        content: contentJson ?? contentHtml ?? '',
+        onCreate: ({ editor }) => {
+            setDraft(prev => ({
+                ...prev,
+                contentHtml: editor.getHTML(),
+                contentJson: editor.getJSON()
+            }));
+        },
         onUpdate: ({ editor }) => {
-            setDraft(prev => ({ ...prev, contentHtml: editor.getHTML() }));
+            setDraft(prev => ({
+                ...prev,
+                contentHtml: editor.getHTML(),
+                contentJson: editor.getJSON()
+            }));
         },
         onSelectionUpdate: ({ editor }) => {
             handleSelectionUpdate(editor);

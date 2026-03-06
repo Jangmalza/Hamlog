@@ -39,5 +39,9 @@ RUN mkdir -p server/data server/uploads
 # Expose port
 EXPOSE 4000
 
+# Runtime health check for orchestrators and deployment verification
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:4000/api/health').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"
+
 # Start server
 CMD ["pm2-runtime", "server/index.js"]

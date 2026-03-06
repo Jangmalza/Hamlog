@@ -1,3 +1,5 @@
+import type { JSONContent } from '@tiptap/core';
+
 export interface SiteMeta {
     title: string;
     name: string;
@@ -51,6 +53,7 @@ export interface Post {
     title: string;
     summary: string;
     category?: string;
+    contentJson?: JSONContent;
     contentHtml?: string;
     publishedAt: string;
     readingTime: string;

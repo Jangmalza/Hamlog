@@ -1,6 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
+import type { JSONContent } from '@tiptap/core';
 import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
@@ -14,6 +15,9 @@ import { usePostPersistence } from '../../hooks/usePostPersistence';
 import { promptForText } from '../../utils/editorDialog';
 
 const MAX_UPLOAD_MB = 8;
+
+const serializeContentJson = (contentJson?: JSONContent) =>
+    contentJson ? JSON.stringify(contentJson) : '';
 
 interface PostEditorProps {
     post: Post | null;
@@ -108,12 +112,18 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     });
 
     const editor = useTiptapEditor({
+        contentJson: draft.contentJson,
         contentHtml: draft.contentHtml || '',
         setDraft,
         handleSelectionUpdate,
         handlePaste,
         handleDrop
     });
+
+    const draftContentJsonKey = useMemo(
+        () => serializeContentJson(draft.contentJson),
+        [draft.contentJson]
+    );
 
     useEffect(() => {
         editorRef.current = editor;
@@ -122,11 +132,19 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     // Sync editor content when draft changes
     useEffect(() => {
         if (!editor) return;
+        if (draftContentJsonKey) {
+            const editorContentKey = serializeContentJson(editor.getJSON());
+            if (editorContentKey !== draftContentJsonKey && draft.contentJson) {
+                editor.commands.setContent(draft.contentJson, false);
+            }
+            return;
+        }
+
         const safeHtml = draft.contentHtml?.trim() ? draft.contentHtml : '';
         if (editor.getHTML() !== safeHtml) {
             editor.commands.setContent(safeHtml, false);
         }
-    }, [editor, activeId, draft.contentHtml]); // activeId ensures swap, draft.contentHtml ensures sync
+    }, [editor, activeId, draft.contentHtml, draft.contentJson, draftContentJsonKey]);
 
     const contentStats = useMemo(() => {
         const plainText = stripHtml(draft.contentHtml || '');

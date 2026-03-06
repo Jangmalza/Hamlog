@@ -4,6 +4,7 @@ import { postsFilePath, dataDir, postsDir } from '../config/paths.js';
 import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
     normalizeCategory,
+    normalizeContentJson,
     normalizePostStatus,
     normalizeScheduledAt,
     normalizeSeo
@@ -14,6 +15,7 @@ function normalizePost(post) {
     return {
         ...post,
         category: normalizeCategory(post.category),
+        contentJson: normalizeContentJson(post.contentJson),
         status: normalizePostStatus(post.status),
         scheduledAt: normalizeScheduledAt(post.scheduledAt) || undefined,
         seo: normalizeSeo(post.seo)

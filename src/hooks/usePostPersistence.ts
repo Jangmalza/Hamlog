@@ -8,6 +8,13 @@ import { normalizePostStatus } from '../utils/postStatus';
 import { toIsoDateTime } from '../utils/adminDate';
 import { normalizeDraftCategory, DEFAULT_CATEGORY } from '../utils/category';
 
+const hasDocumentContent = (contentJson: PostDraft['contentJson']) =>
+    Boolean(
+        contentJson
+        && Array.isArray(contentJson.content)
+        && contentJson.content.length > 0
+    );
+
 interface UsePostPersistenceProps {
     draft: PostDraft;
     activeId: string | null;
@@ -38,6 +45,7 @@ export const usePostPersistence = ({
         const slug = slugify(draft.slug.trim() || title);
         const contentHtml = draft.contentHtml?.trim() || '';
         const contentText = stripHtml(contentHtml);
+        const hasContentJson = hasDocumentContent(draft.contentJson);
         const status = normalizePostStatus(statusOverride ?? draft.status);
         const scheduledAtIso =
             status === 'scheduled' && draft.scheduledAt ? toIsoDateTime(draft.scheduledAt) : '';
@@ -52,7 +60,7 @@ export const usePostPersistence = ({
             return;
         }
 
-        if (status !== 'draft' && !contentText) {
+        if (status !== 'draft' && !contentText && !hasContentJson) {
             setNotice('본문 내용을 입력하세요.');
             return;
         }
@@ -94,6 +102,7 @@ export const usePostPersistence = ({
             title,
             summary: draft.summary.trim() || '요약이 없습니다.',
             category: normalizeDraftCategory(draft.category, DEFAULT_CATEGORY),
+            contentJson: draft.contentJson,
             contentHtml: contentHtml || undefined,
             publishedAt,
             readingTime: draft.readingTime.trim() || '3분 읽기',

@@ -1,3 +1,4 @@
+import type { JSONContent } from '@tiptap/core';
 import type { Post, PostStatus } from '../data/blogData';
 
 export type AdminSection = 'dashboard' | 'posts' | 'categories' | 'profile';
@@ -7,6 +8,7 @@ export interface PostDraft {
   slug: string;
   summary: string;
   category: string;
+  contentJson?: JSONContent;
   contentHtml: string;
   publishedAt: string;
   readingTime: string;
