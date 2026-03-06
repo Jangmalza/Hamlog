@@ -1,19 +1,17 @@
 import React from 'react';
 import { EditorContent } from '@tiptap/react';
-import { ChevronDown } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import PostContent from '../../PostContent';
 import type { PostRevision, PostStatus } from '../../../data/blogData';
 import type { PostDraft } from '../../../types/admin';
-
 import type { CategoryTreeResult } from '../../../utils/categoryTree';
 import { EditorToolbar } from '../../editor/EditorToolbar';
-import { PostMetadata } from '../PostMetadata';
 import { EditorActionContext } from '../../../contexts/EditorActionContext';
 import { TableBubbleMenu } from '../../editor/extensions/TableBubbleMenu';
 import { ColumnBubbleMenu } from '../../editor/extensions/ColumnBubbleMenu';
-import { TableOfContents } from '../../TableOfContents';
 import type { TocItem } from '../../TableOfContents';
+import PostCommandBar from '../post/PostCommandBar';
+import PostInspector from '../post/PostInspector';
 
 export interface EditorHandlers {
   onTitleChange: (value: string) => void;
@@ -84,7 +82,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
   uiState,
   data
 }) => {
-  const { draft, categoryTree, contentStats, currentCoverUrl, editor } = data;
+  const { draft, categoryTree, revisions, contentStats, currentCoverUrl, editor } = data;
   const {
     notice,
     saving,
@@ -112,7 +110,14 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     onLink
   } = editorHandlers;
   const { onInputChange, onKeyDown, onBlur, onRemove } = tagHandlers;
-  const { onToolbarUpload, onInsertImageUrl, onImageUpload, fileInputRef, onCoverUpload, onSetCoverFromContent } = mediaHandlers;
+  const {
+    onToolbarUpload,
+    onInsertImageUrl,
+    onImageUpload,
+    fileInputRef,
+    onCoverUpload,
+    onSetCoverFromContent
+  } = mediaHandlers;
 
   const autosaveLabel = (() => {
     if (!autosaveUpdatedAt) return '';
@@ -126,31 +131,6 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     });
   })();
 
-  const formatRevisionLabel = (savedAt: string) => {
-    const timestamp = new Date(savedAt);
-    if (Number.isNaN(timestamp.getTime())) return '';
-    return timestamp.toLocaleString('ko-KR', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const describeRevisionEvent = (event: PostRevision['event']) => {
-    switch (event) {
-      case 'created':
-        return '생성';
-      case 'restored':
-        return '복구';
-      case 'baseline':
-        return '이전 상태';
-      default:
-        return '저장';
-    }
-  };
-
-  // Live TOC Logic
   const [tocItems, setTocItems] = React.useState<TocItem[]>([]);
 
   React.useEffect(() => {
@@ -160,9 +140,8 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
       const items: TocItem[] = [];
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === 'heading') {
-          const id = `heading-${pos}`; // Temporary ID for editor
           items.push({
-            id,
+            id: `heading-${pos}`,
             text: node.textContent,
             level: node.attrs.level
           });
@@ -179,267 +158,143 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     };
   }, [editor]);
 
+  const handleTocLinkClick = (id: string) => {
+    const pos = Number.parseInt(id.replace('heading-', ''), 10);
+    if (Number.isNaN(pos) || !editor) return;
+    editor.commands.focus(pos);
+    const element = editor.view.nodeDOM(pos) as HTMLElement | null;
+    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
-
-        {/* Top Actions & Status */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1 space-y-4">
-            {/* Title */}
-            <input
-              value={draft.title}
-              onChange={(event) => onTitleChange(event.target.value)}
-              placeholder="제목을 입력하세요"
-              className="w-full bg-transparent text-3xl font-bold text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none"
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-col items-end gap-1 text-[10px] text-[var(--text-muted)]">
-              {notice && (
-                <button
-                  type="button"
-                  onClick={() => onNoticeClick?.()}
-                  className={`text-[var(--accent-strong)] ${onNoticeClick ? 'cursor-pointer hover:underline underline' : ''}`}
-                >
-                  {notice}
-                </button>
-              )}
-              {hasRestorableDraft && (
-                <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-                  <span>임시 저장본 {autosaveLabel ? `(${autosaveLabel})` : ''}</span>
-                  <button
-                    type="button"
-                    onClick={() => onRestoreAutosave?.()}
-                    className="rounded-full border border-[color:var(--border)] px-2 py-0.5 text-[var(--text)] hover:border-[color:var(--accent)]"
-                  >
-                    복구
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDiscardAutosave?.()}
-                    className="rounded-full border border-[color:var(--border)] px-2 py-0.5 text-[var(--text-muted)] hover:border-red-300 hover:text-red-500"
-                  >
-                    삭제
-                  </button>
+    <div className="mx-auto max-w-[1600px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-6">
+          <div className="rounded-[2rem] border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                    {activeId ? '편집 중인 글' : '새 글 초안'}
+                  </span>
+                  <span className="text-[11px] text-[var(--text-muted)]">
+                    `Ctrl/Cmd + S` 저장, `Ctrl/Cmd + Enter` 발행, `Alt + Shift + P` 미리보기
+                  </span>
                 </div>
-              )}
-            </div>
-            {/* Status Badge Select - Compact */}
-            <div className="relative">
-              <select
-                value={draft.status}
-                onChange={(event) => onStatusChange(event.target.value as PostStatus)}
-                className={`appearance-none cursor-pointer rounded-full border pl-4 pr-9 py-2 text-xs font-semibold transition-colors focus:outline-none ${draft.status === 'published'
-                  ? 'border-transparent bg-[var(--accent)] text-white'
-                  : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]'
-                  }`}
-              >
-                <option value="draft">초안</option>
-                <option value="scheduled">예약</option>
-                <option value="published">발행</option>
-              </select>
-              <div className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${draft.status === 'published' ? 'text-white/80' : 'text-[var(--text-muted)]'
-                }`}>
-                <ChevronDown size={14} strokeWidth={2.5} />
+                <input
+                  value={draft.title}
+                  onChange={(event) => onTitleChange(event.target.value)}
+                  placeholder="제목을 입력하세요"
+                  className="w-full bg-transparent text-4xl font-bold leading-tight text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none"
+                />
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={() => onSave()}
-              disabled={saving}
-              className="rounded-full bg-[var(--text)] px-5 py-2 text-xs font-semibold text-[var(--bg)] disabled:opacity-50"
-            >
-              {saving ? '저장...' : activeId ? '수정' : '저장'}
-            </button>
-            {activeId && (
-              <button
-                type="button"
-                onClick={onDelete}
-                className="h-8 w-8 rounded-full border border-[color:var(--border)] text-red-500 hover:bg-red-50 flex items-center justify-center p-0"
-                title="삭제"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-              </button>
-            )}
-          </div>
-        </div>
+              <PostCommandBar
+                activeId={activeId}
+                status={draft.status}
+                saving={saving}
+                previewMode={previewMode}
+                notice={notice}
+                onNoticeClick={onNoticeClick}
+                hasRestorableDraft={hasRestorableDraft}
+                autosaveLabel={autosaveLabel}
+                onRestoreAutosave={onRestoreAutosave}
+                onDiscardAutosave={onDiscardAutosave}
+                onStatusChange={onStatusChange}
+                onTogglePreview={() => setPreviewMode(!previewMode)}
+                onSave={() => onSave('수동 저장되었습니다.')}
+                onPublish={() => onSave('발행되었습니다.', 'published')}
+                onDelete={onDelete}
+              />
 
-        {/* Meta Fields Grid - Compact */}
-        <PostMetadata
-          draft={draft}
-          updateDraft={updateDraft}
-          categoryTree={categoryTree}
-          onCoverUpload={onCoverUpload}
-        />
-
-        {activeId && (
-          <div className="mt-6 rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold text-[var(--text)]">리비전 히스토리</p>
-                <p className="text-[11px] text-[var(--text-muted)]">
-                  최근 저장본을 확인하고 현재 글로 되돌릴 수 있습니다.
-                </p>
+              <div className="rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+                <EditorToolbar
+                  editor={editor}
+                  onLink={onLink}
+                  onToolbarImageUpload={onToolbarUpload}
+                  onInsertImageUrl={onInsertImageUrl}
+                  uploadingImage={uploadingImage}
+                />
               </div>
-              <p className="text-[11px] text-[var(--text-muted)]">{data.revisions.length}개 저장됨</p>
-            </div>
 
-            <div className="mt-4 space-y-3">
-              {revisionsLoading ? (
-                <p className="text-xs text-[var(--text-muted)]">리비전을 불러오는 중입니다.</p>
-              ) : data.revisions.length === 0 ? (
-                <p className="text-xs text-[var(--text-muted)]">아직 저장된 리비전이 없습니다.</p>
-              ) : (
-                data.revisions.slice(0, 6).map((revision) => (
-                  <div
-                    key={revision.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-semibold text-[var(--accent-strong)]">
-                          {describeRevisionEvent(revision.event)}
-                        </span>
-                        <span className="text-[11px] text-[var(--text-muted)]">
-                          {formatRevisionLabel(revision.savedAt)}
-                        </span>
-                        <span className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
-                          {revision.status}
-                        </span>
-                      </div>
-                      <p className="truncate text-sm font-medium text-[var(--text)]">{revision.title}</p>
-                      <p className="truncate text-[11px] text-[var(--text-muted)]">/{revision.slug}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onRestoreRevision(revision.id)}
-                      disabled={Boolean(restoringRevisionId)}
-                      className="rounded-full border border-[color:var(--border)] px-4 py-2 text-xs font-semibold text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {restoringRevisionId === revision.id ? '복구 중...' : '이 리비전 복구'}
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+              {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
 
-        {/* Editor Toolbar - Sticky */}
-        <EditorToolbar
-          editor={editor}
-          previewMode={previewMode}
-          setPreviewMode={setPreviewMode}
-          onLink={onLink}
-          onToolbarImageUpload={onToolbarUpload}
-          onInsertImageUrl={onInsertImageUrl}
-          uploadingImage={uploadingImage}
-          onSave={() => onSave('수동 저장되었습니다.')}
-          onPublish={() => onSave('발행되었습니다.', 'published')}
-        />
-
-        {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-              onImageUpload(file);
-            }
-            event.target.value = '';
-          }}
-        />
-
-        <div className={previewMode ? 'block min-h-[640px] p-2' : 'hidden'}>
-          {draft.contentHtml.trim() ? (
-            <PostContent contentHtml={draft.contentHtml} />
-          ) : (
-            <p className="text-sm text-[var(--text-muted)]">
-              미리볼 내용이 없습니다. 본문을 입력해 주세요.
-            </p>
-          )}
-        </div>
-
-        <div className={!previewMode ? 'block min-h-[640px] border-none shadow-none outline-none ring-0' : 'hidden'}>
-          {/* Seamless Editor without border */}
-          <EditorActionContext.Provider value={{
-            onSetCover: (src) => onSetCoverFromContent?.(src),
-            currentCoverUrl,
-            onToolbarUpload,
-            uploadLocalImage: mediaHandlers.uploadLocalImage
-          }}>
-            <EditorContent editor={editor} className="border-none shadow-none outline-none ring-0" />
-            <TableBubbleMenu editor={editor} />
-            <ColumnBubbleMenu editor={editor} />
-          </EditorActionContext.Provider>
-        </div>
-
-        {/* Footer: Tags */}
-        <div className="mt-8 -mx-6 -mb-6 rounded-b-3xl border-t border-[color:var(--border)] bg-[var(--surface-muted)] p-6">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium text-[var(--text-muted)]">
-              태그
-            </p>
-            <p className="text-[10px] text-[var(--text-muted)]">
-              {contentStats.chars}자 · {contentStats.words}단어 · {contentStats.readingMinutes}분
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {draft.tags.map(tag => (
-              <span
-                key={tag}
-                className="flex items-center gap-1 rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
-              >
-                #{tag}
-                <button
-                  type="button"
-                  onClick={() => onRemove(tag)}
-                  className="text-[10px] text-[var(--text-muted)] hover:text-red-500"
-                  aria-label="태그 삭제"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            <input
-              value={tagInput}
-              onChange={(event) => onInputChange(event.target.value)}
-              onKeyDown={onKeyDown}
-              onBlur={onBlur}
-              placeholder="태그 입력 후 Enter"
-              className="min-w-[160px] flex-1 rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-xs text-[var(--text)] focus:border-[color:var(--accent)] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Editor TOC Sidebar (Desktop only) */}
-        <div className="fixed right-8 top-32 hidden 2xl:block w-64">
-          {tocItems.length > 0 && (
-            <TableOfContents
-              tocItems={tocItems}
-              onLinkClick={(id) => {
-                const pos = parseInt(id.replace('heading-', ''));
-                if (!isNaN(pos) && editor) {
-                  editor.commands.focus(pos);
-                  // Also scroll manually if focus doesn't scroll enough
-                  const element = editor.view.nodeDOM(pos) as HTMLElement;
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    onImageUpload(file);
                   }
+                  event.target.value = '';
+                }}
+              />
+
+              <div
+                className={
+                  previewMode
+                    ? 'block min-h-[720px] rounded-[1.75rem] border border-[color:var(--border)] bg-[var(--surface-muted)] p-6'
+                    : 'hidden'
                 }
-              }}
-              className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-sm"
-            />
-          )}
+              >
+                {draft.contentHtml.trim() ? (
+                  <PostContent contentHtml={draft.contentHtml} />
+                ) : (
+                  <p className="text-sm text-[var(--text-muted)]">
+                    미리볼 내용이 없습니다. 본문을 입력해 주세요.
+                  </p>
+                )}
+              </div>
+
+              <div
+                className={
+                  !previewMode
+                    ? 'block min-h-[720px] rounded-[1.75rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-muted))] p-4'
+                    : 'hidden'
+                }
+              >
+                <EditorActionContext.Provider
+                  value={{
+                    onSetCover: (src) => onSetCoverFromContent?.(src),
+                    currentCoverUrl,
+                    onToolbarUpload,
+                    uploadLocalImage: mediaHandlers.uploadLocalImage
+                  }}
+                >
+                  <EditorContent
+                    editor={editor}
+                    className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-[1.25rem] [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_24px_60px_-36px_rgba(11,35,32,0.55)]"
+                  />
+                  <TableBubbleMenu editor={editor} />
+                  <ColumnBubbleMenu editor={editor} />
+                </EditorActionContext.Provider>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <PostInspector
+          activeId={activeId}
+          draft={draft}
+          categoryTree={categoryTree}
+          revisions={revisions}
+          revisionsLoading={revisionsLoading}
+          restoringRevisionId={restoringRevisionId}
+          contentStats={contentStats}
+          tagInput={tagInput}
+          onTagInputChange={onInputChange}
+          onTagKeyDown={onKeyDown}
+          onTagBlur={onBlur}
+          onRemoveTag={onRemove}
+          onUpdateDraft={updateDraft}
+          onCoverUpload={onCoverUpload}
+          onRestoreRevision={onRestoreRevision}
+          tocItems={tocItems}
+          onTocLinkClick={handleTocLinkClick}
+        />
       </div>
     </div>
   );

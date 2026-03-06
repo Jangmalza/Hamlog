@@ -1,12 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import LoadingSpinner from '../LoadingSpinner';
 import type { Post, PostStatus } from '../../data/blogData';
 
 import { formatDate } from '../../utils/formatDate';
 import { formatScheduleLabel } from '../../utils/adminDate';
 import { getPostStatusLabel, normalizePostStatus } from '../../utils/postStatus';
-import { TableOfContents } from './TableOfContents';
-import type { Editor } from '@tiptap/react';
 import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { normalizeCategoryKey } from '../../utils/category';
 import CategoryPicker from './category/CategoryPicker';
@@ -34,7 +32,6 @@ interface AdminSidebarProps {
   totalCount: number;
   statusCount: Record<PostStatus, number>;
   categoryTree: CategoryTreeResult;
-  editor: Editor | null;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -61,10 +58,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onReload,
   totalCount,
   statusCount,
-  categoryTree,
-  editor
+  categoryTree
 }) => {
-  const [tab, setTab] = useState<'posts' | 'toc'>('posts');
   const quickCategoryNodes = useMemo(
     () =>
       [...categoryTree.roots]
@@ -85,264 +80,283 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     page * ITEMS_PER_PAGE
   );
 
+  const statusFilters: Array<{ key: PostStatus | 'all'; label: string; count: number }> = [
+    { key: 'all', label: '전체', count: totalCount },
+    { key: 'draft', label: '초안', count: statusCount.draft },
+    { key: 'scheduled', label: '예약', count: statusCount.scheduled },
+    { key: 'published', label: '발행', count: statusCount.published }
+  ];
+
   return (
-    <aside className={`flex h-full flex-col gap-6 overflow-y-auto border-b border-[color:var(--border)] bg-[var(--surface)] p-6 lg:h-[calc(100vh-80px)] lg:border-b-0 lg:border-r ${show ? '' : 'hidden lg:flex'}`}>
-      <div className="flex items-center gap-2 rounded-lg bg-[var(--surface-muted)] p-1">
+    <aside className={`flex h-full flex-col gap-5 overflow-y-auto rounded-[2rem] border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] lg:sticky lg:top-24 lg:h-[calc(100vh-110px)] ${show ? '' : 'hidden lg:flex'}`}>
+      <div className="rounded-[1.75rem] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(7,60,53,0.08),rgba(255,255,255,0)_55%),linear-gradient(180deg,var(--surface),var(--surface-muted))] p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">
+              콘텐츠 인박스
+            </p>
+            <h2 className="font-display text-2xl font-semibold text-[var(--text)]">
+              {totalCount}개의 결과
+            </h2>
+            <p className="text-sm leading-6 text-[var(--text-muted)]">
+              초안, 예약, 발행 글을 한 화면에서 탐색하고 바로 편집할 수 있습니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onNew}
+            disabled={saving}
+            className="rounded-full bg-[var(--text)] px-4 py-2 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90 disabled:opacity-50"
+          >
+            새 글 쓰기
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">초안</div>
+            <div className="mt-2 text-lg font-semibold text-[var(--text)]">{statusCount.draft}</div>
+          </div>
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">예약</div>
+            <div className="mt-2 text-lg font-semibold text-[var(--text)]">{statusCount.scheduled}</div>
+          </div>
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] p-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">발행</div>
+            <div className="mt-2 text-lg font-semibold text-[var(--accent)]">{statusCount.published}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 rounded-3xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="제목 또는 슬러그 검색"
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            className="w-full rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--accent)]"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {statusFilters.map(option => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => onFilterStatusChange(option.key)}
+              className={`rounded-2xl border px-3 py-2 text-left transition ${
+                filterStatus === option.key
+                  ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                  : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+              }`}
+            >
+              <div className="text-[11px] font-semibold">{option.label}</div>
+              <div className="mt-1 text-lg font-semibold">{option.count}</div>
+            </button>
+          ))}
+        </div>
+
+        <CategoryPicker
+          categoryTree={categoryTree}
+          value={filterCategory}
+          onChange={onFilterCategoryChange}
+          defaultOptionLabel="모든 카테고리"
+          mode="filter"
+          includeDescendants={filterCategoryIncludeDescendants}
+          onIncludeDescendantsChange={onFilterCategoryIncludeDescendantsChange}
+          recentStorageKey="hamlog:admin:sidebar-categories"
+          triggerClassName="flex w-full items-center justify-between rounded-2xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text)] transition hover:border-[color:var(--accent)]"
+          panelClassName="relative z-20 w-full rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl"
+        />
+
+        {quickCategoryNodes.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {quickCategoryNodes.map(node => (
+              <button
+                key={node.id}
+                type="button"
+                onClick={() => onFilterCategoryChange(node.name)}
+                className={`rounded-full border px-3 py-1.5 text-[11px] transition ${
+                  normalizeCategoryKey(filterCategory) === normalizeCategoryKey(node.name)
+                    ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                    : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
+                }`}
+              >
+                {node.name} · {node.count}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {(filterStatus !== 'all' || filterCategory !== 'all') && (
+          <div className="flex flex-wrap gap-2">
+            {filterStatus !== 'all' && (
+              <button
+                type="button"
+                onClick={() => onFilterStatusChange('all')}
+                className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+              >
+                상태 해제
+              </button>
+            )}
+            {filterCategory !== 'all' && (
+              <button
+                type="button"
+                onClick={() => onFilterCategoryChange('all')}
+                className="rounded-full border border-[color:var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
+              >
+                카테고리 해제
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            글 목록
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            페이지 {page} / {Math.max(totalPages, 1)}
+          </p>
+        </div>
         <button
-          onClick={() => setTab('posts')}
-          className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${tab === 'posts'
-            ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm'
-            : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-            }`}
+          type="button"
+          onClick={onReload}
+          className="rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
         >
-          글 목록
-        </button>
-        <button
-          onClick={() => setTab('toc')}
-          disabled={!editor}
-          className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${tab === 'toc'
-            ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm'
-            : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-            } ${!editor ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          목차
+          새로고침
         </button>
       </div>
 
-      {tab === 'toc' && editor ? (
-        <div className="animate-fade-in">
-          <TableOfContents editor={editor} />
+      {loading ? (
+        <div className="flex py-8 justify-center">
+          <LoadingSpinner />
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+          <button
+            onClick={onReload}
+            className="mt-2 block w-full rounded-lg bg-white py-2 text-xs font-bold shadow-sm transition-transform hover:scale-[1.02] dark:bg-red-900 dark:text-red-100"
+          >
+            다시 시도
+          </button>
         </div>
       ) : (
-        <>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="검색..."
-              value={searchQuery}
-              onChange={e => onSearchChange(e.target.value)}
-              className="w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-            />
-          </div>
+        <div className="flex flex-col gap-3">
+          {paginatedPosts.map(post => {
+            const isSelected = activeId === post.id;
+            const normalizedStatus = normalizePostStatus(post.status);
+            const statusMeta = getPostStatusLabel(normalizedStatus);
 
-          <div className="space-y-3">
-            <select
-              value={filterStatus}
-              onChange={e => onFilterStatusChange(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2.5 text-xs outline-none focus:border-[var(--accent)]"
-            >
-              <option value="all">모든 상태</option>
-              <option value="draft">임시 저장</option>
-              <option value="published">공개됨</option>
-              <option value="scheduled">예약됨</option>
-            </select>
-            <CategoryPicker
-              categoryTree={categoryTree}
-              value={filterCategory}
-              onChange={onFilterCategoryChange}
-              defaultOptionLabel="모든 카테고리"
-              mode="filter"
-              includeDescendants={filterCategoryIncludeDescendants}
-              onIncludeDescendantsChange={onFilterCategoryIncludeDescendantsChange}
-              recentStorageKey="hamlog:admin:sidebar-categories"
-              triggerClassName="flex w-full items-center justify-between rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text)] transition hover:border-[color:var(--accent)]"
-              panelClassName="relative z-20 w-full rounded-3xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-2xl"
-            />
-            {quickCategoryNodes.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {quickCategoryNodes.map(node => (
-                  <button
-                    key={node.id}
-                    type="button"
-                    onClick={() => onFilterCategoryChange(node.name)}
-                    className={`rounded-full border px-3 py-1.5 text-[11px] transition ${
-                      normalizeCategoryKey(filterCategory) === normalizeCategoryKey(node.name)
-                        ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-                        : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
-                    }`}
-                  >
-                    {node.name} · {node.count}
-                  </button>
-                ))}
-              </div>
-            )}
-            {(filterStatus !== 'all' || filterCategory !== 'all') && (
-              <div className="flex flex-wrap gap-2">
-                {filterStatus !== 'all' && (
-                  <button
-                    type="button"
-                    onClick={() => onFilterStatusChange('all')}
-                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
-                  >
-                    상태: {filterStatus} 해제
-                  </button>
-                )}
-                {filterCategory !== 'all' && (
-                  <button
-                    type="button"
-                    onClick={() => onFilterCategoryChange('all')}
-                    className="rounded-full border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)]"
-                  >
-                    카테고리: {filterCategory} 해제
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
-              <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                <span>전체 글</span>
-                <span className="font-mono font-bold text-[var(--text)]">{totalCount}</span>
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[color:var(--border)] pt-3 text-center">
-                <div>
-                  <div className="text-[10px] text-[var(--text-muted)]">공개</div>
-                  <div className="font-mono text-xs font-bold text-[var(--accent)]">
-                    {statusCount.published}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[var(--text-muted)]">예약</div>
-                  <div className="font-mono text-xs font-bold text-[var(--text)]">
-                    {statusCount.scheduled}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[var(--text-muted)]">임시</div>
-                  <div className="font-mono text-xs font-bold text-[var(--text-muted)]">
-                    {statusCount.draft}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-          </div>
-
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
-              글 목록
-            </h2>
-            <button
-              type="button"
-              onClick={onNew}
-              disabled={saving}
-              className="rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-[var(--accent-strong)] hover:shadow-lg disabled:opacity-50"
-            >
-              새 글 쓰기
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="flex py-8 justify-center">
-              <LoadingSpinner />
-            </div>
-          ) : error ? (
-            <div className="rounded-xl bg-red-50 p-4 text-center text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              {error}
+            return (
               <button
-                onClick={onReload}
-                className="mt-2 block w-full rounded-lg bg-white py-2 text-xs font-bold shadow-sm transition-transform hover:scale-[1.02] dark:bg-red-900 dark:text-red-100"
+                key={post.id}
+                onClick={() => onSelect(post)}
+                className={`group relative flex flex-col gap-3 rounded-3xl border p-4 text-left transition-all ${
+                  isSelected
+                    ? 'border-[var(--accent)] bg-[var(--surface)] shadow-[0_18px_40px_-28px_rgba(8,46,41,0.55)] ring-1 ring-[var(--accent-soft)]'
+                    : 'border-[color:var(--border)] bg-[var(--surface)] hover:border-[var(--accent-soft)] hover:shadow-[0_18px_40px_-30px_rgba(8,46,41,0.45)]'
+                }`}
               >
-                다시 시도
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {paginatedPosts.map(post => {
-                const isSelected = activeId === post.id;
-                return (
-                  <button
-                    key={post.id}
-                    onClick={() => onSelect(post)}
-                    className={`group relative flex flex-col gap-2 rounded-2xl border p-4 text-left transition-all hover:shadow-md ${isSelected
-                      ? 'border-[var(--accent)] bg-[var(--surface)] ring-1 ring-[var(--accent)]'
-                      : 'border-[color:var(--border)] bg-[var(--surface)] hover:border-[var(--accent-soft)]'
-                      }`}
-                  >
-                    <div className="flex w-full items-start justify-between gap-2">
-                      <h3
-                        className={`font-display text-sm font-bold leading-snug ${isSelected ? 'text-[var(--accent)]' : 'text-[var(--text)]'
-                          }`}
-                      >
-                        {post.title || '제목 없음'}
-                      </h3>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${getPostStatusLabel(
-                          normalizePostStatus(post.status)
-                        ).className}`}
-                      >
-                        {getPostStatusLabel(normalizePostStatus(post.status)).label}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-                      <span>
-                        {post.status === 'scheduled' && post.scheduledAt
-                          ? formatScheduleLabel(post.scheduledAt)
-                          : formatDate(post.publishedAt)}
-                      </span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {post.featured && (
+                        <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                          추천
+                        </span>
+                      )}
                       {post.category && (
-                        <>
-                          <span>•</span>
-                          <span className="font-medium text-[var(--accent)]">
-                            {post.category}
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-1">
-                      {post.tags.slice(0, 3).map(tag => (
-                        <span
-                          key={tag}
-                          className="rounded-md bg-[var(--surface-muted)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                      {post.tags.length > 3 && (
-                        <span className="rounded-md bg-[var(--surface-muted)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]">
-                          +{post.tags.length - 3}
+                        <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-muted)]">
+                          {post.category}
                         </span>
                       )}
                     </div>
-                  </button>
-                );
-              })}
-
-              {paginatedPosts.length === 0 && (
-                <div className="py-8 text-center text-sm text-[var(--text-muted)]">
-                  표시할 글이 없습니다.
+                    <h3
+                      className={`font-display text-base font-bold leading-snug ${
+                        isSelected ? 'text-[var(--accent)]' : 'text-[var(--text)]'
+                      }`}
+                    >
+                      {post.title || '제목 없음'}
+                    </h3>
+                    <p className="text-xs leading-5 text-[var(--text-muted)]">
+                      {post.summary || '요약이 없습니다.'}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${statusMeta.className}`}
+                  >
+                    {statusMeta.label}
+                  </span>
                 </div>
-              )}
-            </div>
-          )}
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page === 1}
-                className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] disabled:opacity-30"
-              >
-                &lt;
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                  <span>
+                    {normalizedStatus === 'scheduled' && post.scheduledAt
+                      ? formatScheduleLabel(post.scheduledAt)
+                      : formatDate(post.publishedAt)}
+                  </span>
+                  <span>•</span>
+                  <span>{post.readingTime}</span>
+                  {post.series && (
+                    <>
+                      <span>•</span>
+                      <span>{post.series}</span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {post.tags.slice(0, 3).map(tag => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-[var(--surface-muted)] px-2 py-1 text-[10px] text-[var(--text-muted)]"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                  {post.tags.length > 3 && (
+                    <span className="rounded-full bg-[var(--surface-muted)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
+                      +{post.tags.length - 3}
+                    </span>
+                  )}
+                </div>
               </button>
-              <span className="text-xs font-medium text-[var(--text-muted)]">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page === totalPages}
-                className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] disabled:opacity-30"
-              >
-                &gt;
-              </button>
+            );
+          })}
+
+          {paginatedPosts.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+              표시할 글이 없습니다.
             </div>
           )}
-        </>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)] disabled:opacity-30"
+          >
+            이전
+          </button>
+          <span className="text-xs font-medium text-[var(--text-muted)]">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalPages}
+            className="rounded-full border border-[color:var(--border)] px-3 py-1.5 text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--text)] disabled:opacity-30"
+          >
+            다음
+          </button>
+        </div>
       )}
     </aside>
   );

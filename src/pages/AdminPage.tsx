@@ -138,7 +138,7 @@ const AdminPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
       <header className="sticky top-0 z-10 border-b border-[color:var(--border)] bg-[var(--surface-overlay)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-[1700px] items-center justify-between px-4 py-4">
           <h1 className="font-display text-xl font-bold text-[var(--accent)]">HamLog Admin</h1>
           <div className="flex items-center gap-4">
             <button
@@ -158,7 +158,7 @@ const AdminPage: React.FC = () => {
         </div>
       </header>
       <main
-        className={`mx-auto grid max-w-7xl gap-8 px-4 py-10 ${showPostSidebar ? 'lg:grid-cols-[320px_1fr]' : 'lg:grid-cols-1'}`}
+        className={`mx-auto grid max-w-[1700px] gap-6 px-4 py-8 ${showPostSidebar ? 'xl:grid-cols-[360px_minmax(0,1fr)]' : 'lg:grid-cols-1'}`}
       >
         <div className="col-span-full">
           <AdminNav
@@ -202,7 +202,6 @@ const AdminPage: React.FC = () => {
           totalCount={filteredPosts.length}
           statusCount={dashboardStats.statusCount}
           categoryTree={categoryTree}
-          editor={null} // Editor instance not needed here
         />
 
         <section className="space-y-6">

@@ -5,7 +5,7 @@ import {
     AlignLeft, AlignCenter, AlignRight, AlignJustify,
     List, ListOrdered, Quote, Code2, Minus,
     Link as LinkIcon, Image as ImageIcon, Table as TableIcon,
-    Undo, Redo, Save, Eye, Edit2, ChevronDown, Check,
+    Undo, Redo, ChevronDown, Check,
     Palette, Ban
 } from 'lucide-react';
 import {
@@ -123,26 +123,18 @@ const ToolbarDropdown: React.FC<ToolbarDropdownProps> = ({
 
 interface EditorToolbarProps {
     editor: Editor | null;
-    previewMode: boolean;
-    setPreviewMode: (value: boolean) => void;
     onLink: () => void;
     onToolbarImageUpload: () => void;
     onInsertImageUrl: () => void;
     uploadingImage: boolean;
-    onSave: () => void;
-    onPublish: () => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     editor,
-    previewMode,
-    setPreviewMode,
     onLink,
     onToolbarImageUpload,
     onInsertImageUrl,
-    uploadingImage,
-    onSave,
-    onPublish
+    uploadingImage
 }) => {
     const [toolbarMenu, setToolbarMenu] = useState<'color' | 'highlight' | 'table' | null>(null);
 
@@ -174,8 +166,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     const Divider = () => <div className="mx-1 h-5 w-px bg-[var(--border)]" />;
 
     return (
-        <div className="sticky top-0 z-10 mt-6 -mx-6 border-y border-[color:var(--border)] bg-[var(--surface)] px-4 py-2">
-            <div className="flex flex-wrap items-center gap-1">
+        <div className="sticky top-4 z-10">
+            <div className="flex flex-wrap items-center gap-1 rounded-[1.25rem] bg-[var(--surface)]/90 px-1 py-1 backdrop-blur">
 
                 {/* --- History --- */}
                 <div className="flex items-center gap-0.5">
@@ -344,45 +336,6 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     <ToolbarButton label="이미지 URL" onClick={onInsertImageUrl} disabled={!editor} icon={<LinkIcon size={14} />} ><span className="text-[10px] ml-0.5">URL</span></ToolbarButton>
                 </div>
 
-                {/* --- Right Side Actions --- */}
-                <div className="ml-auto flex items-center gap-2">
-                    <button
-                        onClick={onSave}
-                        className="flex items-center gap-1.5 rounded-full bg-[var(--text)] px-4 py-1.5 text-xs font-semibold text-[var(--bg)] shadow-sm hover:shadow-md transition-all disabled:opacity-50"
-                        title="저장 (Ctrl+S), 초안 저장 (Ctrl+Shift+S)"
-                    >
-                        <Save size={14} />
-                        저장
-                    </button>
-                    <button
-                        onClick={onPublish}
-                        className="rounded-full border border-[color:var(--accent)] bg-[var(--accent-soft)] px-4 py-1.5 text-xs font-semibold text-[var(--accent-strong)] transition-colors hover:bg-[var(--accent)] hover:text-white"
-                        title="발행 (Ctrl+Enter)"
-                    >
-                        발행
-                    </button>
-
-                    <div className="h-5 w-px bg-[var(--border)]" />
-
-                    <div className="flex rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] p-0.5">
-                        <button
-                            onClick={() => setPreviewMode(false)}
-                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all ${!previewMode ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                                }`}
-                        >
-                            <Edit2 size={12} />
-                            편집
-                        </button>
-                        <button
-                            onClick={() => setPreviewMode(true)}
-                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all ${previewMode ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                                }`}
-                        >
-                            <Eye size={12} />
-                            미리보기
-                        </button>
-                    </div>
-                </div>
             </div>
 
             {/* Code Block Language Select (Contextual) */}
