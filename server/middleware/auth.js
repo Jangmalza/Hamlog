@@ -16,3 +16,18 @@ export function authenticateToken(req, res, next) {
         next();
     });
 }
+
+export function attachOptionalUser(req, res, next) {
+    const token = req.cookies?.token;
+
+    if (!token) {
+        return next();
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (!err) {
+            req.user = user;
+        }
+        next();
+    });
+}

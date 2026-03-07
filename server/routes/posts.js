@@ -8,11 +8,11 @@ import {
   restorePostRevision
 } from '../controllers/postController.js';
 
-import { authenticateToken } from '../middleware/auth.js';
+import { attachOptionalUser, authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', getPosts);
+router.get('/', attachOptionalUser, getPosts);
 router.post('/', authenticateToken, createPost);
 router.get('/:id/revisions', authenticateToken, getPostRevisions);
 router.post('/:id/revisions/:revisionId/restore', authenticateToken, restorePostRevision);

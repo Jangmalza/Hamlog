@@ -1,4 +1,5 @@
 import { readPosts } from '../models/postModel.js';
+import { filterPublicPosts } from '../utils/postVisibility.js';
 
 export const searchPosts = async (req, res) => {
     try {
@@ -9,11 +10,9 @@ export const searchPosts = async (req, res) => {
 
         const query = q.toLowerCase();
         const posts = await readPosts();
+        const publicPosts = filterPublicPosts(posts);
 
-        // Filter published posts and search in all relevant fields
-        const results = posts.filter(post => {
-            if (post.status !== 'published') return false;
-
+        const results = publicPosts.filter(post => {
             const inTitle = post.title?.toLowerCase().includes(query);
             const inSummary = post.summary?.toLowerCase().includes(query);
             const inSlug = post.slug?.toLowerCase().includes(query);

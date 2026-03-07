@@ -435,3 +435,174 @@ test('comments respect password verification on deletion', async () => {
     const remainingComments = await readComments();
     assert.equal(remainingComments.length, 0);
 });
+
+test('public post endpoints hide drafts and future scheduled posts from unauthenticated users', async () => {
+    const now = Date.now();
+    const pastScheduledAt = new Date(now - 60_000).toISOString();
+    const futureScheduledAt = new Date(now + 60 * 60 * 1000).toISOString();
+
+    await writePosts([
+        {
+            id: 'post-public',
+            slug: 'public-post',
+            title: 'Public Post',
+            summary: 'Visible to everyone',
+            category: 'Testing',
+            contentHtml: '<p>public body</p>',
+            publishedAt: '2026-03-06',
+            readingTime: '1분 읽기',
+            tags: ['visible'],
+            status: 'published',
+            sections: []
+        },
+        {
+            id: 'post-scheduled-visible',
+            slug: 'scheduled-visible-post',
+            title: 'Scheduled Visible Post',
+            summary: 'Already visible scheduled content',
+            category: 'Testing',
+            contentHtml: '<p>scheduled visible body</p>',
+            publishedAt: pastScheduledAt.slice(0, 10),
+            readingTime: '1분 읽기',
+            tags: ['scheduled'],
+            status: 'scheduled',
+            scheduledAt: pastScheduledAt,
+            sections: []
+        },
+        {
+            id: 'post-scheduled-hidden',
+            slug: 'scheduled-hidden-post',
+            title: 'Scheduled Hidden Post',
+            summary: 'Should stay hidden',
+            category: 'Testing',
+            contentHtml: '<p>scheduled hidden body</p>',
+            publishedAt: futureScheduledAt.slice(0, 10),
+            readingTime: '1분 읽기',
+            tags: ['hidden'],
+            status: 'scheduled',
+            scheduledAt: futureScheduledAt,
+            sections: []
+        },
+        {
+            id: 'post-draft',
+            slug: 'draft-post',
+            title: 'Draft Post',
+            summary: 'Should never be public',
+            category: 'Testing',
+            contentHtml: '<p>draft body</p>',
+            publishedAt: '2026-03-06',
+            readingTime: '1분 읽기',
+            tags: ['draft'],
+            status: 'draft',
+            sections: []
+        }
+    ]);
+
+    const publicPostsResponse = await request(app).get('/api/posts');
+    assert.equal(publicPostsResponse.status, 200);
+    assert.deepEqual(
+        publicPostsResponse.body.posts.map(post => post.slug).sort(),
+        ['public-post', 'scheduled-visible-post']
+    );
+
+    const cookies = await loginAsAdmin();
+    const adminPostsResponse = await request(app)
+        .get('/api/posts')
+        .set('Cookie', cookies);
+
+    assert.equal(adminPostsResponse.status, 200);
+    assert.deepEqual(
+        adminPostsResponse.body.posts.map(post => post.slug).sort(),
+        ['draft-post', 'public-post', 'scheduled-hidden-post', 'scheduled-visible-post']
+    );
+});
+
+test('seo routes ignore non-public posts, escape meta values, and include visible scheduled posts in feeds', async () => {
+    const now = Date.now();
+    const pastScheduledAt = new Date(now - 60_000).toISOString();
+    const futureScheduledAt = new Date(now + 60 * 60 * 1000).toISOString();
+
+    await writePosts([
+        {
+            id: 'post-visible',
+            slug: 'meta-visible-post',
+            title: 'A "quoted" <title>',
+            summary: 'desc with "quotes" & <tags>',
+            category: 'Testing',
+            contentHtml: '<p>Visible body</p>',
+            publishedAt: '2026-03-06',
+            readingTime: '1분 읽기',
+            tags: ['meta'],
+            status: 'published',
+            sections: []
+        },
+        {
+            id: 'post-scheduled-visible',
+            slug: 'meta-scheduled-visible',
+            title: 'Meta Scheduled Visible',
+            summary: 'scheduled summary',
+            category: 'Testing',
+            contentHtml: '<p>visible scheduled body</p>',
+            publishedAt: pastScheduledAt.slice(0, 10),
+            readingTime: '1분 읽기',
+            tags: ['meta'],
+            status: 'scheduled',
+            scheduledAt: pastScheduledAt,
+            sections: []
+        },
+        {
+            id: 'post-draft',
+            slug: 'meta-draft-post',
+            title: 'Draft Meta Title',
+            summary: 'draft meta summary',
+            category: 'Testing',
+            contentHtml: '<p>draft body</p>',
+            publishedAt: '2026-03-06',
+            readingTime: '1분 읽기',
+            tags: ['draft'],
+            status: 'draft',
+            sections: []
+        },
+        {
+            id: 'post-future',
+            slug: 'meta-future-post',
+            title: 'Future Meta Title',
+            summary: 'future meta summary',
+            category: 'Testing',
+            contentHtml: '<p>future body</p>',
+            publishedAt: futureScheduledAt.slice(0, 10),
+            readingTime: '1분 읽기',
+            tags: ['future'],
+            status: 'scheduled',
+            scheduledAt: futureScheduledAt,
+            sections: []
+        }
+    ]);
+
+    const visibleMetaResponse = await request(app).get('/posts/meta-visible-post');
+    assert.equal(visibleMetaResponse.status, 200);
+    assert.match(visibleMetaResponse.text, /<title>A &quot;quoted&quot; &lt;title&gt;<\/title>/);
+    assert.match(visibleMetaResponse.text, /<meta name="description" content="desc with &quot;quotes&quot; &amp; &lt;tags&gt;" \/>/);
+
+    const draftMetaResponse = await request(app).get('/posts/meta-draft-post');
+    assert.equal(draftMetaResponse.status, 200);
+    assert.doesNotMatch(draftMetaResponse.text, /Draft Meta Title/);
+
+    const rssResponse = await request(app).get('/rss.xml');
+    assert.equal(rssResponse.status, 200);
+    assert.match(rssResponse.text, /meta-visible-post/);
+    assert.match(rssResponse.text, /meta-scheduled-visible/);
+    assert.doesNotMatch(rssResponse.text, /meta-future-post/);
+    assert.doesNotMatch(rssResponse.text, /meta-draft-post/);
+
+    const sitemapResponse = await request(app).get('/sitemap.xml');
+    assert.equal(sitemapResponse.status, 200);
+    assert.match(sitemapResponse.text, /meta-visible-post/);
+    assert.match(sitemapResponse.text, /meta-scheduled-visible/);
+    assert.doesNotMatch(sitemapResponse.text, /meta-future-post/);
+    assert.doesNotMatch(sitemapResponse.text, /meta-draft-post/);
+
+    const searchResponse = await request(app).get('/api/search?q=scheduled');
+    assert.equal(searchResponse.status, 200);
+    assert.deepEqual(searchResponse.body.map(post => post.slug), ['meta-scheduled-visible']);
+});

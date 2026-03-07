@@ -9,7 +9,7 @@ import {
 
 export const getPosts = async (req, res) => {
     try {
-        const result = await getAllPostsService();
+        const result = await getAllPostsService(Boolean(req.user));
         res.json({ posts: result.data, total: result.data.length });
     } catch (error) {
         console.error('Failed to fetch posts', error);

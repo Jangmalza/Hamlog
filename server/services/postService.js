@@ -7,6 +7,7 @@ import {
 } from '../models/revisionModel.js';
 import { createCategory } from './categoryService.js';
 import { normalizePostData } from '../utils/postHelpers.js';
+import { filterPublicPosts } from '../utils/postVisibility.js';
 
 const serializeComparablePost = (post) => JSON.stringify(post ?? null);
 
@@ -24,9 +25,9 @@ const toRevisionSummary = (revision) => ({
     status: revision.snapshot?.status ?? revision.status ?? 'draft'
 });
 
-export async function getAllPostsService() {
+export async function getAllPostsService(includeAll = false) {
     const posts = await readPosts();
-    return { success: true, data: posts };
+    return { success: true, data: includeAll ? posts : filterPublicPosts(posts) };
 }
 
 export async function createPostService(rawData) {

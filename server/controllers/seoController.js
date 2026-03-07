@@ -3,16 +3,30 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { readPosts } from '../models/postModel.js';
 import { readProfile } from '../models/profileModel.js';
+import { filterPublicPosts, findPublicPostBySlug } from '../utils/postVisibility.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BASE_URL = 'https://tech.hamwoo.co.kr';
 
+const escapeHtml = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const toAbsoluteUrl = (value = '') => {
+  if (!value) return `${BASE_URL}/avatar.jpg`;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${BASE_URL}${value.startsWith('/') ? '' : '/'}${value}`;
+};
+
 export const injectPostMeta = async (req, res) => {
   try {
     const { slug } = req.params;
     const posts = await readPosts();
-    const post = posts.find(p => p.slug === slug);
+    const post = findPublicPostBySlug(posts, slug);
 
     const indexPath = path.join(__dirname, '../../dist/index.html');
     let html = await readFile(indexPath, 'utf8');
@@ -20,26 +34,27 @@ export const injectPostMeta = async (req, res) => {
     if (post) {
       const title = post.seo?.title || post.title;
       const description = post.seo?.description || post.summary;
-      let image = post.seo?.ogImage || post.cover || '/avatar.jpg';
-      if (image.startsWith('/')) {
-        image = `${BASE_URL}${image}`;
-      }
+      const image = toAbsoluteUrl(post.seo?.ogImage || post.cover || '/avatar.jpg');
       const fullUrl = `${BASE_URL}/posts/${post.slug}`;
+      const escapedTitle = escapeHtml(title);
+      const escapedDescription = escapeHtml(description);
+      const escapedImage = escapeHtml(image);
+      const escapedFullUrl = escapeHtml(fullUrl);
 
       // Update basic meta
-      html = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
-      html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
+      html = html.replace(/<title>.*?<\/title>/, `<title>${escapedTitle}</title>`);
+      html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${escapedDescription}" />`);
 
       // Update OG meta
-      html = html.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`);
-      html = html.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
-      html = html.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${fullUrl}" />`);
-      html = html.replace(/<meta property="og:image" content=".*?" \/>/, `<meta property="og:image" content="${image}" />`);
+      html = html.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${escapedTitle}" />`);
+      html = html.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${escapedDescription}" />`);
+      html = html.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${escapedFullUrl}" />`);
+      html = html.replace(/<meta property="og:image" content=".*?" \/>/, `<meta property="og:image" content="${escapedImage}" />`);
 
       // Update Twitter meta
-      html = html.replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${title}" />`);
-      html = html.replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="${description}" />`);
-      html = html.replace(/<meta name="twitter:image" content=".*?" \/>/, `<meta name="twitter:image" content="${image}" />`);
+      html = html.replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${escapedTitle}" />`);
+      html = html.replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="${escapedDescription}" />`);
+      html = html.replace(/<meta name="twitter:image" content=".*?" \/>/, `<meta name="twitter:image" content="${escapedImage}" />`);
     }
 
     res.send(html);
@@ -54,8 +69,7 @@ export const getRss = async (req, res) => {
   try {
     const posts = await readPosts();
     const profile = await readProfile();
-    const publishedPosts = posts
-      .filter(p => p.status === 'published')
+    const publishedPosts = filterPublicPosts(posts)
       .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     const items = publishedPosts.map(post => `
@@ -91,7 +105,7 @@ export const getRss = async (req, res) => {
 export const getSitemap = async (req, res) => {
   try {
     const posts = await readPosts();
-    const publishedPosts = posts.filter(p => p.status === 'published');
+    const publishedPosts = filterPublicPosts(posts);
 
     const urls = publishedPosts.map(post => `
   <url>
