@@ -1,0 +1,78 @@
+import { useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
+
+interface ToolbarDropdownOption {
+  value: string;
+  label: string;
+}
+
+interface ToolbarDropdownProps {
+  label: string;
+  value: string;
+  options: ToolbarDropdownOption[];
+  onSelect: (value: string) => void;
+  width?: string;
+  disabled?: boolean;
+}
+
+export function ToolbarDropdown({
+  label,
+  value,
+  options,
+  onSelect,
+  width = 'w-32',
+  disabled
+}: ToolbarDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const currentLabel = options.find(option => option.value === value)?.label || label;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(prev => !prev)}
+        disabled={disabled}
+        className={`flex items-center justify-between gap-2 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-2 py-1.5 text-xs font-medium text-[var(--text)] transition-colors hover:bg-[var(--surface-muted)] disabled:opacity-50 ${width}`}
+      >
+        <span className="truncate">{currentLabel}</span>
+        <ChevronDown size={14} className="opacity-50" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-60 min-w-[140px] w-full overflow-y-auto rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-1 shadow-lg ring-1 ring-black/5">
+          {options.map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onSelect(option.value);
+                setIsOpen(false);
+              }}
+              className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-[var(--surface-muted)] ${
+                value === option.value
+                  ? 'bg-[var(--accent-soft)] font-semibold text-[var(--accent-strong)]'
+                  : 'text-[var(--text)]'
+              }`}
+            >
+              {option.label}
+              {value === option.value && <Check size={12} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
