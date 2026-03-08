@@ -10,6 +10,13 @@ interface SeoProps {
     favicon?: string;
 }
 
+const toAbsoluteUrl = (value?: string) => {
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value)) return value;
+    if (typeof window === 'undefined') return value;
+    return `${window.location.origin}${value.startsWith('/') ? '' : '/'}${value}`;
+};
+
 export const useSeo = ({
     title,
     description,
@@ -24,10 +31,10 @@ export const useSeo = ({
 
         const seoTitle = title ?? '';
         const seoDescription = description ?? '';
-        const seoImage = image ?? '';
+        const seoImage = toAbsoluteUrl(image);
         const seoKeywords = keywords?.join(', ') ?? '';
-        const canonicalUrl = url ?? window.location.href;
-        const seoFavicon = favicon ?? '/avatar.jpg';
+        const canonicalUrl = toAbsoluteUrl(url) || window.location.href;
+        const seoFavicon = toAbsoluteUrl(favicon ?? '/avatar.jpg');
 
         if (seoTitle) {
             document.title = seoTitle;

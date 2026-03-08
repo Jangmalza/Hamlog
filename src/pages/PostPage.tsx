@@ -56,7 +56,7 @@ const PostPage: React.FC = () => {
     description: post?.seo?.description ?? post?.summary,
     image: post?.seo?.ogImage ?? post?.cover,
     keywords: post?.seo?.keywords,
-    url: post?.seo?.canonicalUrl,
+    url: post ? post.seo?.canonicalUrl ?? `https://tech.hamwoo.co.kr/posts/${post.slug}` : undefined,
     type: 'article',
   });
 

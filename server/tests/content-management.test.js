@@ -583,6 +583,22 @@ test('seo routes ignore non-public posts, escape meta values, and include visibl
     assert.equal(visibleMetaResponse.status, 200);
     assert.match(visibleMetaResponse.text, /<title>A &quot;quoted&quot; &lt;title&gt;<\/title>/);
     assert.match(visibleMetaResponse.text, /<meta name="description" content="desc with &quot;quotes&quot; &amp; &lt;tags&gt;" \/>/);
+    assert.match(
+        visibleMetaResponse.text,
+        /<link rel="canonical" href="https:\/\/tech\.hamwoo\.co\.kr\/posts\/meta-visible-post" \/>/
+    );
+    assert.match(
+        visibleMetaResponse.text,
+        /<meta property="og:type" content="article" \/>/
+    );
+    assert.match(
+        visibleMetaResponse.text,
+        /"@type":"BlogPosting"/
+    );
+    assert.match(
+        visibleMetaResponse.text,
+        /"mainEntityOfPage":"https:\/\/tech\.hamwoo\.co\.kr\/posts\/meta-visible-post"/
+    );
 
     const draftMetaResponse = await request(app).get('/posts/meta-draft-post');
     assert.equal(draftMetaResponse.status, 200);
