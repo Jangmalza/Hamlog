@@ -1,303 +1,103 @@
 import { randomUUID } from 'node:crypto';
 import { readCategories, writeCategories } from '../models/categoryModel.js';
-import { readPosts, writePosts } from '../models/postModel.js';
 import {
-    normalizeCategoryName,
-    normalizeCategoryKey,
-    normalizeCategoryId,
-    DEFAULT_CATEGORY,
-    getNextCategoryOrder
-} from '../utils/normalizers/categoryNormalizers.js';
+  detachChildCategories,
+  findCategoryByIdentifier,
+  isDefaultCategoryName,
+  resolveCategoryUpdate,
+  validateCategoryCreate,
+  validateCategoryReorder
+} from './category/categoryHelpers.js';
+import {
+  moveCategoryPostsToDefault,
+  replaceCategoryInPosts
+} from './category/categoryPostSync.js';
 
-/**
- * Add a category if it doesn't exist.
- * Used mainly for initialization or simple addition.
- */
-/**
- * Create a new category.
- * Returns { categories, created: boolean, reason: string, category: object }.
- */
 export async function createCategory(name, parentId) {
-    const normalized = normalizeCategoryName(name);
-    if (!normalized) {
-        return { created: false, reason: 'name_required' };
-    }
+  const categories = await readCategories();
+  const validation = validateCategoryCreate(categories, name, parentId);
 
-    if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-        return { created: false, reason: 'duplicate' }; // Default exists
-    }
+  if (!validation.valid) {
+    return { created: false, reason: validation.reason };
+  }
 
-    const categories = await readCategories();
-    const exists = categories.some(
-        category => normalizeCategoryKey(category.name) === normalizeCategoryKey(normalized)
-    );
-    if (exists) {
-        return { created: false, reason: 'duplicate' };
-    }
+  const newCategory = {
+    id: randomUUID(),
+    name: validation.normalizedName,
+    parentId: validation.normalizedParentId,
+    order: validation.order
+  };
 
-    const normalizedParentId = normalizeCategoryId(parentId);
-    if (normalizedParentId) {
-        const parent = categories.find(category => category.id === normalizedParentId);
-        if (!parent) {
-            return { created: false, reason: 'parent_not_found' };
-        }
-        if (normalizeCategoryKey(parent.name) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-            return { created: false, reason: 'parent_default' };
-        }
-    }
+  const nextCategories = [...categories, newCategory];
+  await writeCategories(nextCategories);
 
-    const order = getNextCategoryOrder(categories, normalizedParentId || null);
-    const newCategory = {
-        id: randomUUID(),
-        name: normalized,
-        parentId: normalizedParentId || null,
-        order
-    };
-
-    const nextCategories = [...categories, newCategory];
-    await writeCategories(nextCategories);
-
-    return { categories: nextCategories, created: true, category: newCategory };
+  return { categories: nextCategories, created: true, category: newCategory };
 }
 
-/**
- * Reorder categories.
- * Validates logical consistency of the order map.
- */
 export async function reorderCategories(parentId, orderedIds) {
-    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
-        return { updated: false, reason: 'invalid_list' };
+  const categories = await readCategories();
+  const validation = validateCategoryReorder(categories, parentId, orderedIds);
+
+  if (!validation.valid) {
+    return { updated: false, reason: validation.reason };
+  }
+
+  const nextCategories = categories.map(category => {
+    if (!validation.nextOrderMap.has(category.id)) {
+      return category;
     }
+    return { ...category, order: validation.nextOrderMap.get(category.id) };
+  });
 
-    const normalizedParentId = normalizeCategoryId(parentId);
-    const targetParentId = normalizedParentId || null;
-    const cleanedIds = orderedIds.map(item => normalizeCategoryId(item));
-
-    if (cleanedIds.some(id => !id)) {
-        return { updated: false, reason: 'invalid_id' };
-    }
-
-    const categories = await readCategories();
-    if (targetParentId && !categories.some(category => category.id === targetParentId)) {
-        return { updated: false, reason: 'parent_not_found' };
-    }
-
-    const siblings = categories.filter(
-        category => (category.parentId ?? null) === targetParentId
-    );
-
-    if (siblings.length === 0) return { updated: false, reason: 'no_siblings' };
-    if (cleanedIds.length !== siblings.length) return { updated: false, reason: 'list_mismatch' };
-
-    const siblingIds = new Set(siblings.map(item => item.id));
-    const nextOrderMap = new Map();
-
-    for (let index = 0; index < cleanedIds.length; index += 1) {
-        const id = cleanedIds[index];
-        if (!siblingIds.has(id)) return { updated: false, reason: 'invalid_list_content' };
-        if (nextOrderMap.has(id)) return { updated: false, reason: 'duplicate_in_list' };
-        nextOrderMap.set(id, index);
-    }
-
-    const nextCategories = categories.map(category => {
-        if (!nextOrderMap.has(category.id)) return category;
-        return { ...category, order: nextOrderMap.get(category.id) };
-    });
-
-    const saved = await writeCategories(nextCategories);
-    return { updated: true, categories: saved };
+  const saved = await writeCategories(nextCategories);
+  return { updated: true, categories: saved };
 }
 
-/**
- * Add a category if it doesn't exist (Legacy/Init mostly).
- * Wraps createCategory for compatibility if needed, or just remains independent.
- * Note: db.js initialization logic might need this? 
- * Actually, db.js calls ensureCategoriesFile in Model, which doesn't use this.
- * We'll keep it as a simple wrapper or just export createCategory.
- * But to be safe, let's just REPLACE it with createCategory as planned, 
- * since nothing else seems to import addCategoryIfMissing based on grep.
- */
-
-/**
- * Remove a category by its ID (preferred) or Name (legacy support).
- * Also handles re-parenting children and re-assigning posts to default.
- */
 export async function removeCategory(categoryIdentifier) {
-    // Determine if identifier is ID or Name. 
-    // Logic from original model mixed both, strictly speaking we should use ID.
-    // For compatibility with original logic which took "category" (often name):
+  const categories = await readCategories();
+  const target = findCategoryByIdentifier(categories, categoryIdentifier);
 
-    // Original logic: normalized = normalizeCategoryName(category) -> checks if matches ID OR Name
-    const categories = await readCategories();
+  if (!target || isDefaultCategoryName(target.name)) {
+    return { categories, reassignedCount: 0, removed: false, reparentedCount: 0 };
+  }
 
-    // Try to find by ID first
-    let target = categories.find(item => item.id === categoryIdentifier);
+  const filteredCategories = categories.filter(category => category.id !== target.id);
+  const { nextCategories, reparentedCount } = detachChildCategories(
+    filteredCategories,
+    target.id
+  );
+  const savedCategories = await writeCategories(nextCategories);
+  const reassignedCount = await moveCategoryPostsToDefault(target.name);
 
-    // If not found, try by name (legacy behavior support)
-    if (!target) {
-        const normalizedName = normalizeCategoryName(categoryIdentifier);
-        if (normalizedName) {
-            const key = normalizeCategoryKey(normalizedName);
-            target = categories.find(item => normalizeCategoryKey(item.name) === key);
-        }
-    }
-
-    if (!target) {
-        return { categories, reassignedCount: 0, removed: false, reparentedCount: 0 };
-    }
-
-    const defaultKey = normalizeCategoryKey(DEFAULT_CATEGORY);
-    if (normalizeCategoryKey(target.name) === defaultKey) {
-        // Cannot delete default category
-        return { categories, reassignedCount: 0, removed: false, reparentedCount: 0 };
-    }
-
-    const nextCategories = categories.filter(item => item.id !== target.id);
-
-    // Re-parent children
-    let reparentedCount = 0;
-    const reparentedCategories = nextCategories.map((item) => {
-        if (item.parentId === target.id) {
-            reparentedCount += 1;
-            return { ...item, parentId: null, order: null };
-        }
-        return item;
-    });
-
-    const savedCategories = await writeCategories(reparentedCategories);
-
-    // Update Posts
-    const posts = await readPosts();
-    let reassignedCount = 0;
-    const updatedPosts = posts.map((post) => {
-        if (normalizeCategoryKey(post.category) === normalizeCategoryKey(target.name)) {
-            reassignedCount += 1;
-            return { ...post, category: DEFAULT_CATEGORY };
-        }
-        return post;
-    });
-
-    if (reassignedCount > 0) {
-        await writePosts(updatedPosts);
-    }
-
-    return { categories: savedCategories, reassignedCount, removed: true, reparentedCount };
+  return { categories: savedCategories, reassignedCount, removed: true, reparentedCount };
 }
 
-/**
- * Update a category's name or parent.
- * Handles validation, duplication check, cycle detection, and post updates.
- */
 export async function updateCategory(id, updates) {
-    const categories = await readCategories();
-    const targetIndex = categories.findIndex(item => item.id === id);
-    if (targetIndex < 0) {
-        return { categories, updated: false, reason: 'not_found' };
-    }
+  const categories = await readCategories();
+  const resolution = resolveCategoryUpdate(categories, id, updates);
 
-    const target = categories[targetIndex];
-    const nextCategories = [...categories];
-    let nextName = target.name;
-    let nameChanged = false;
+  if (!resolution.valid) {
+    return { categories, updated: false, reason: resolution.reason };
+  }
 
-    // 1. Handle Name Change
-    if (Object.prototype.hasOwnProperty.call(updates, 'name')) {
-        const normalized = normalizeCategoryName(updates.name);
-        if (!normalized) {
-            return { categories, updated: false, reason: 'name_required' };
-        }
-        if (normalizeCategoryKey(normalized) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-            return { categories, updated: false, reason: 'default' };
-        }
+  const nextCategories = [...categories];
+  nextCategories[resolution.targetIndex] = {
+    ...resolution.target,
+    name: resolution.nextName,
+    parentId: resolution.nextParentId,
+    order: resolution.nextOrder
+  };
 
-        const duplicate = categories.some(
-            item =>
-                item.id !== id &&
-                normalizeCategoryKey(item.name) === normalizeCategoryKey(normalized)
-        );
-        if (duplicate) {
-            return { categories, updated: false, reason: 'duplicate' };
-        }
+  const savedCategories = await writeCategories(nextCategories);
+  const reassignedCount = resolution.nameChanged
+    ? await replaceCategoryInPosts(resolution.target.name, resolution.nextName)
+    : 0;
 
-        nameChanged = normalizeCategoryKey(normalized) !== normalizeCategoryKey(target.name);
-        nextName = normalized;
-    }
-
-    // 2. Handle Parent Change (Cycle Detection)
-    let nextParentId = target.parentId ?? null;
-    let parentChanged = false;
-
-    if (Object.prototype.hasOwnProperty.call(updates, 'parentId')) {
-        const normalizedParentId = normalizeCategoryId(updates.parentId);
-
-        if (!normalizedParentId) {
-            nextParentId = null;
-        } else {
-            if (normalizedParentId === id) {
-                return { categories, updated: false, reason: 'self_parent' };
-            }
-
-            const parent = categories.find(item => item.id === normalizedParentId);
-            if (!parent) {
-                return { categories, updated: false, reason: 'parent_not_found' };
-            }
-            if (normalizeCategoryKey(parent.name) === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-                return { categories, updated: false, reason: 'parent_default' };
-            }
-
-            // Cycle detection
-            let cursor = normalizedParentId;
-            while (cursor) {
-                if (cursor === id) {
-                    return { categories, updated: false, reason: 'cycle' };
-                }
-                const current = categories.find(item => item.id === cursor);
-                cursor = current?.parentId ? String(current.parentId) : '';
-            }
-            nextParentId = normalizedParentId;
-        }
-        parentChanged = nextParentId !== (target.parentId ?? null);
-    }
-
-    // 3. Handle Order
-    let nextOrder = Number.isFinite(target.order) ? target.order : 0;
-    if (parentChanged) {
-        const siblings = categories.filter(item => item.id !== id);
-        nextOrder = getNextCategoryOrder(siblings, nextParentId);
-    }
-
-    // Apply updates
-    nextCategories[targetIndex] = {
-        ...target,
-        name: nextName,
-        parentId: nextParentId,
-        order: nextOrder
-    };
-
-    const savedCategories = await writeCategories(nextCategories);
-
-    // 4. Update Posts if name changed
-    let reassignedCount = 0;
-    if (nameChanged) {
-        const posts = await readPosts();
-        const updatedPosts = posts.map((post) => {
-            if (normalizeCategoryKey(post.category) === normalizeCategoryKey(target.name)) {
-                reassignedCount += 1;
-                return { ...post, category: nextName };
-            }
-            return post;
-        });
-
-        if (reassignedCount > 0) {
-            await writePosts(updatedPosts);
-        }
-    }
-
-    return {
-        categories: savedCategories,
-        updated: true,
-        reassignedCount,
-        previousName: target.name,
-        nextName
-    };
+  return {
+    categories: savedCategories,
+    updated: true,
+    reassignedCount,
+    previousName: resolution.target.name,
+    nextName: resolution.nextName
+  };
 }

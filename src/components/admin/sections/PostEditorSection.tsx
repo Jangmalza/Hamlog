@@ -1,16 +1,12 @@
 import React from 'react';
-import { EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
-import PostContent from '../../PostContent';
 import type { PostRevision, PostStatus } from '../../../data/blogData';
 import type { PostDraft } from '../../../types/admin';
 import type { CategoryTreeResult } from '../../../utils/categoryTree';
-import { EditorToolbar } from '../../editor/EditorToolbar';
-import { EditorActionContext } from '../../../contexts/EditorActionContext';
-import { TableBubbleMenu } from '../../editor/extensions/TableBubbleMenu';
-import { ColumnBubbleMenu } from '../../editor/extensions/ColumnBubbleMenu';
-import type { TocItem } from '../../TableOfContents';
+import { useEditorToc } from '../../../hooks/useEditorToc';
 import PostCommandBar from '../post/PostCommandBar';
+import PostEditorCanvas from '../post/PostEditorCanvas';
+import PostEditorHeader from '../post/PostEditorHeader';
 import PostInspector from '../post/PostInspector';
 
 export interface EditorHandlers {
@@ -116,8 +112,10 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     onImageUpload,
     fileInputRef,
     onCoverUpload,
-    onSetCoverFromContent
+    onSetCoverFromContent,
+    uploadLocalImage
   } = mediaHandlers;
+  const { tocItems, handleTocLinkClick } = useEditorToc(editor);
 
   const autosaveLabel = (() => {
     if (!autosaveUpdatedAt) return '';
@@ -131,63 +129,17 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     });
   })();
 
-  const [tocItems, setTocItems] = React.useState<TocItem[]>([]);
-
-  React.useEffect(() => {
-    if (!editor) return;
-
-    const updateToc = () => {
-      const items: TocItem[] = [];
-      editor.state.doc.descendants((node, pos) => {
-        if (node.type.name === 'heading') {
-          items.push({
-            id: `heading-${pos}`,
-            text: node.textContent,
-            level: node.attrs.level
-          });
-        }
-      });
-      setTocItems(items);
-    };
-
-    updateToc();
-    editor.on('update', updateToc);
-
-    return () => {
-      editor.off('update', updateToc);
-    };
-  }, [editor]);
-
-  const handleTocLinkClick = (id: string) => {
-    const pos = Number.parseInt(id.replace('heading-', ''), 10);
-    if (Number.isNaN(pos) || !editor) return;
-    editor.commands.focus(pos);
-    const element = editor.view.nodeDOM(pos) as HTMLElement | null;
-    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
   return (
     <div className="mx-auto max-w-[1600px]">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-6">
           <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
             <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-                    {activeId ? '편집 중인 글' : '새 글 초안'}
-                  </span>
-                  <span className="text-[11px] text-[var(--text-muted)]">
-                    `Ctrl/Cmd + S` 저장, `Ctrl/Cmd + Enter` 발행, `Alt + Shift + P` 미리보기
-                  </span>
-                </div>
-                <input
-                  value={draft.title}
-                  onChange={(event) => onTitleChange(event.target.value)}
-                  placeholder="제목을 입력하세요"
-                  className="w-full bg-transparent text-4xl font-bold leading-tight text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none"
-                />
-              </div>
+              <PostEditorHeader
+                activeId={activeId}
+                title={draft.title}
+                onTitleChange={onTitleChange}
+              />
 
               <PostCommandBar
                 activeId={activeId}
@@ -207,71 +159,21 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 onDelete={onDelete}
               />
 
-              <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
-                <EditorToolbar
-                  editor={editor}
-                  onLink={onLink}
-                  onToolbarImageUpload={onToolbarUpload}
-                  onInsertImageUrl={onInsertImageUrl}
-                  uploadingImage={uploadingImage}
-                />
-              </div>
-
-              {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    onImageUpload(file);
-                  }
-                  event.target.value = '';
-                }}
+              <PostEditorCanvas
+                editor={editor}
+                previewMode={previewMode}
+                contentHtml={draft.contentHtml}
+                currentCoverUrl={currentCoverUrl}
+                onLink={onLink}
+                onToolbarUpload={onToolbarUpload}
+                onInsertImageUrl={onInsertImageUrl}
+                uploadingImage={uploadingImage}
+                uploadError={uploadError}
+                fileInputRef={fileInputRef}
+                onImageUpload={onImageUpload}
+                onSetCoverFromContent={onSetCoverFromContent}
+                uploadLocalImage={uploadLocalImage}
               />
-
-              <div
-                className={
-                  previewMode
-                    ? 'block min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-6'
-                    : 'hidden'
-                }
-              >
-                {draft.contentHtml.trim() ? (
-                  <PostContent contentHtml={draft.contentHtml} />
-                ) : (
-                  <p className="text-sm text-[var(--text-muted)]">
-                    미리볼 내용이 없습니다. 본문을 입력해 주세요.
-                  </p>
-                )}
-              </div>
-
-              <div
-                className={
-                  !previewMode
-                    ? 'block min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-muted))] p-4'
-                    : 'hidden'
-                }
-              >
-                <EditorActionContext.Provider
-                  value={{
-                    onSetCover: (src) => onSetCoverFromContent?.(src),
-                    currentCoverUrl,
-                    onToolbarUpload,
-                    uploadLocalImage: mediaHandlers.uploadLocalImage
-                  }}
-                >
-                  <EditorContent
-                    editor={editor}
-                    className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-lg [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_24px_60px_-36px_rgba(11,35,32,0.55)]"
-                  />
-                  <TableBubbleMenu editor={editor} />
-                  <ColumnBubbleMenu editor={editor} />
-                </EditorActionContext.Provider>
-              </div>
             </div>
           </div>
         </div>
