@@ -16,15 +16,14 @@ import TextAlign from '@tiptap/extension-text-align';
 import Typography from '@tiptap/extension-typography';
 import { createLowlight, common } from 'lowlight';
 
-// Relative imports adjusted for src/editor/editorConfig.ts
-// Assuming this file is in src/editor/
-import { SlashCommand, getSuggestionItems, renderItems } from './extensions/slashCommand';
+import { SlashCommand, renderItems } from './extensions/slashCommand';
 import { FontSize } from './extensions/fontSize';
 import { MathExtension } from '../components/editor/extensions/MathExtension';
 import { ImageGallery } from '../components/editor/extensions/ImageGallery';
 import { LinkCard } from './extensions/LinkCard';
 import { CustomImage } from './extensions/CustomImage';
 import { Columns, Column } from './extensions/Column';
+import { getSuggestionItems } from './slashCommands/registry';
 
 const lowlight = createLowlight(common);
 

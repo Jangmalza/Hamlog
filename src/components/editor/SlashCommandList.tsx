@@ -2,24 +2,9 @@ import {
     forwardRef,
     useEffect,
     useImperativeHandle,
-    type ReactNode,
     useState,
 } from 'react';
-import type { Editor, Range } from '@tiptap/core';
-
-export interface SlashCommandContext {
-    editor: Editor;
-    range: Range;
-}
-
-export interface SlashCommandItem {
-    title: string;
-    description?: string;
-    searchTerms?: string[];
-    icon?: ReactNode;
-    element?: ReactNode;
-    command: (context: SlashCommandContext) => void | Promise<void>;
-}
+import type { SlashCommandItem } from '../../editor/slashCommands/types';
 
 export interface SlashCommandListProps {
     items: SlashCommandItem[];
