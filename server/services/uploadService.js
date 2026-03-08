@@ -3,7 +3,7 @@ import path from 'path';
 import { randomUUID } from 'crypto';
 import sharp from 'sharp';
 import { uploadDir } from '../config/paths.js';
-import { parseDataUrl, allowedImageTypes } from '../utils/normalizers.js';
+import { parseDataUrl, allowedImageTypes } from '../utils/normalizers/uploadNormalizers.js';
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 

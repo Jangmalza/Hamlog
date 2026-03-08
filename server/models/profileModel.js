@@ -4,7 +4,7 @@ import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
     normalizeProfile,
     defaultProfile
-} from '../utils/normalizers.js';
+} from '../utils/normalizers/profileNormalizers.js';
 
 export async function readProfile() {
     let raw = '';

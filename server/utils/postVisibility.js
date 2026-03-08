@@ -1,4 +1,4 @@
-import { normalizePostStatus, normalizeScheduledAt } from './normalizers.js';
+import { normalizePostStatus, normalizeScheduledAt } from './normalizers/postNormalizers.js';
 
 export function getScheduledTimestamp(value) {
     const normalized = normalizeScheduledAt(value);

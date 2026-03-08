@@ -1,7 +1,7 @@
 import { readFile, mkdir } from 'fs/promises';
 import { categoriesFilePath, dataDir } from '../config/paths.js';
 import { writeJsonAtomic } from '../utils/fsUtils.js';
-import { normalizeCategoryList } from '../utils/normalizers.js';
+import { normalizeCategoryList } from '../utils/normalizers/categoryNormalizers.js';
 
 export async function readCategories() {
     const raw = await readFile(categoriesFilePath, 'utf8');
@@ -40,5 +40,4 @@ export async function ensureCategoriesFile() {
 
 // ... other category manipulation functions (addCategoryIfMissing, etc) can be moved here or controller.
 // Logic like `addCategoryIfMissing` involves reading/writing, so Model/Service layer is appropriate.
-
 

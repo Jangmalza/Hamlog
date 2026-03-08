@@ -7,7 +7,7 @@ import {
     normalizeCategoryId,
     DEFAULT_CATEGORY,
     getNextCategoryOrder
-} from '../utils/normalizers.js';
+} from '../utils/normalizers/categoryNormalizers.js';
 
 /**
  * Add a category if it doesn't exist.

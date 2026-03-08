@@ -3,13 +3,15 @@ import path from 'path';
 import { postsFilePath, dataDir, postsDir } from '../config/paths.js';
 import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
-    normalizeCategory,
     normalizeContentJson,
     hasContentJsonContent,
     normalizePostStatus,
     normalizeScheduledAt,
     normalizeSeo
-} from '../utils/normalizers.js';
+} from '../utils/normalizers/postNormalizers.js';
+import {
+    normalizeCategory
+} from '../utils/normalizers/categoryNormalizers.js';
 import { parseHtmlToContentJson } from '../utils/contentRenderer.js';
 
 function normalizePost(post) {

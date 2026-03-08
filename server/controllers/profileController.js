@@ -1,5 +1,5 @@
 import { readProfile, writeProfile } from '../models/profileModel.js';
-import { mergeProfile } from '../utils/normalizers.js';
+import { mergeProfile } from '../utils/normalizers/profileNormalizers.js';
 
 export const getProfile = async (req, res) => {
     try {

@@ -1,5 +1,4 @@
 import {
-    normalizeCategory,
     normalizePostStatus,
     normalizeScheduledAt,
     normalizeSeo,
@@ -8,7 +7,8 @@ import {
     normalizeContentHtml,
     normalizeContentJson,
     hasContentJsonContent
-} from './normalizers.js';
+} from './normalizers/postNormalizers.js';
+import { normalizeCategory } from './normalizers/categoryNormalizers.js';
 import { parseHtmlToContentJson, renderContentJsonToHtml } from './contentRenderer.js';
 
 /**

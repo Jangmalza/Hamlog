@@ -12,7 +12,7 @@ import { readComments, writeComments } from '../models/commentModel.js';
 import { ensurePostsFile, readPosts, writePosts } from '../models/postModel.js';
 import { readProfile, writeProfile } from '../models/profileModel.js';
 import { readPostRevisions } from '../models/revisionModel.js';
-import { defaultProfile } from '../utils/normalizers.js';
+import { defaultProfile } from '../utils/normalizers/profileNormalizers.js';
 
 const adminPassword = process.env.ADMIN_PASSWORD ?? 'test-password';
 const tinyPngDataUrl =
