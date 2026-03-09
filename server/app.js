@@ -21,6 +21,7 @@ import { authRouter } from './routes/auth.js';
 import { previewRouter } from './routes/preview.js';
 import { searchPosts } from './controllers/searchController.js';
 import { injectPostMeta } from './controllers/seoController.js';
+import { resolveSpaIndexPath } from './utils/spaIndex.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,8 +58,12 @@ app.get(['/posts/:slug', '/p/:slug'], injectPostMeta);
 app.use('/', seoRouter);
 
 // Fallback for SPA
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
+app.get('*', async (req, res, next) => {
+    try {
+        res.sendFile(await resolveSpaIndexPath());
+    } catch (error) {
+        next(error);
+    }
 });
 
 export default app;

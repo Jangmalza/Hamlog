@@ -1,12 +1,8 @@
-import { readFile } from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { readPosts } from '../models/postModel.js';
 import { readProfile } from '../models/profileModel.js';
 import { filterPublicPosts, findPublicPostBySlug } from '../utils/postVisibility.js';
+import { readSpaIndexHtml, resolveSpaIndexPath } from '../utils/spaIndex.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const BASE_URL = 'https://tech.hamwoo.co.kr';
 const SITE_NAME = 'Hamlog';
 const AUTHOR_NAME = 'Hamwoo';
@@ -81,8 +77,7 @@ export const injectPostMeta = async (req, res) => {
     const posts = await readPosts();
     const post = findPublicPostBySlug(posts, slug);
 
-    const indexPath = path.join(__dirname, '../../dist/index.html');
-    let html = await readFile(indexPath, 'utf8');
+    let html = await readSpaIndexHtml();
 
     if (post) {
       const title = post.seo?.title || post.title;
@@ -175,7 +170,12 @@ export const injectPostMeta = async (req, res) => {
   } catch (error) {
     console.error('Meta injection error:', error);
     // Fallback to regular file if injection fails
-    res.sendFile(path.join(__dirname, '../../dist/index.html'));
+    try {
+      res.sendFile(await resolveSpaIndexPath());
+    } catch (fallbackError) {
+      console.error('SPA fallback error:', fallbackError);
+      res.status(500).send('Failed to load application shell.');
+    }
   }
 };
 
