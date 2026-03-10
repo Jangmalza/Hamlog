@@ -22,6 +22,15 @@ const escapeXml = (value = '') => String(value)
   .replace(/'/g, '&apos;');
 
 const wrapCdata = (value = '') => `<![CDATA[${String(value).replace(/]]>/g, ']]]]><![CDATA[>')}]]>`;
+const resolvePostKeywords = (post) => {
+  if (Array.isArray(post?.seo?.keywords) && post.seo.keywords.length > 0) {
+    return post.seo.keywords;
+  }
+  if (Array.isArray(post?.tags) && post.tags.length > 0) {
+    return post.tags;
+  }
+  return [];
+};
 
 const resolveBaseUrl = (profile) => {
   const candidate = String(profile?.siteUrl || DEFAULT_SITE_URL).trim().replace(/\/+$/, '');
@@ -39,6 +48,8 @@ const replaceHeadTag = (html, pattern, replacement) => (
     ? html.replace(pattern, replacement)
     : html.replace('</head>', `  ${replacement}\n</head>`)
 );
+
+const removeHeadTag = (html, pattern) => html.replace(pattern, '');
 
 const getArticleDate = (value = '') => {
   const timestamp = new Date(value);
@@ -78,8 +89,9 @@ const buildArticleSchema = (post, canonicalUrl, image, baseUrl) => {
     schema.articleSection = post.category;
   }
 
-  if (post.tags?.length) {
-    schema.keywords = post.tags.join(', ');
+  const keywords = resolvePostKeywords(post);
+  if (keywords.length > 0) {
+    schema.keywords = keywords.join(', ');
   }
 
   return JSON.stringify(schema).replace(/</g, '\\u003c');
@@ -105,6 +117,7 @@ export const injectPostMeta = async (req, res) => {
       const escapedImage = escapeHtml(image);
       const escapedFullUrl = escapeHtml(fullUrl);
       const escapedCanonicalUrl = escapeHtml(canonicalUrl);
+      const escapedKeywords = escapeHtml(resolvePostKeywords(post).join(', '));
       const articleSchema = buildArticleSchema(post, canonicalUrl, image, baseUrl);
 
       // Update basic meta
@@ -113,6 +126,11 @@ export const injectPostMeta = async (req, res) => {
         html,
         /<meta name="description" content=".*?" \/>/,
         `<meta name="description" content="${escapedDescription}" />`
+      );
+      html = replaceHeadTag(
+        html,
+        /<meta name="keywords" content=".*?" \/>/,
+        `<meta name="keywords" content="${escapedKeywords}" />`
       );
 
       // Update OG meta
@@ -158,6 +176,8 @@ export const injectPostMeta = async (req, res) => {
         /<meta name="twitter:image" content=".*?" \/>/,
         `<meta name="twitter:image" content="${escapedImage}" />`
       );
+      html = removeHeadTag(html, /<meta name="twitter:site" content=".*?" \/>\s*/);
+      html = removeHeadTag(html, /<meta name="twitter:creator" content=".*?" \/>\s*/);
 
       html = replaceHeadTag(
         html,
@@ -207,7 +227,7 @@ export const getRss = async (req, res) => {
       <title>${wrapCdata(post.title)}</title>
       <link>${escapeXml(`${baseUrl}/posts/${post.slug}`)}</link>
       <guid>${escapeXml(`${baseUrl}/posts/${post.slug}`)}</guid>
-      <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
+      <pubDate>${new Date(post.updatedAt || post.publishedAt).toUTCString()}</pubDate>
       <description>${wrapCdata(post.summary)}</description>
       <content:encoded>${wrapCdata(post.contentHtml || '')}</content:encoded>
       ${post.category ? `<category>${escapeXml(post.category)}</category>` : ''}
@@ -241,7 +261,7 @@ export const getSitemap = async (req, res) => {
     const urls = publishedPosts.map(post => `
   <url>
     <loc>${escapeXml(`${baseUrl}/posts/${post.slug}`)}</loc>
-    <lastmod>${post.publishedAt}</lastmod>
+    <lastmod>${(post.updatedAt || post.publishedAt).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`).join('');

@@ -56,7 +56,7 @@ const PostPage: React.FC = () => {
     title: post?.seo?.title ?? post?.title,
     description: post?.seo?.description ?? post?.summary,
     image: post?.seo?.ogImage ?? post?.cover,
-    keywords: post?.seo?.keywords,
+    keywords: post ? (post.seo?.keywords?.length ? post.seo.keywords : post.tags) : undefined,
     url: post
       ? post.seo?.canonicalUrl
         ?? `${typeof window !== 'undefined' ? window.location.origin : siteMeta.siteUrl}/posts/${post.slug}`

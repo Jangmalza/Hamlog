@@ -580,9 +580,13 @@ test('seo routes ignore non-public posts, escape meta values, and include visibl
             category: 'Testing',
             contentHtml: '<p>Visible body</p>',
             publishedAt: '2026-03-06',
+            updatedAt: '2026-03-08T04:05:06.000Z',
             readingTime: '1분 읽기',
             tags: ['meta'],
             status: 'published',
+            seo: {
+                keywords: ['openclaw', '기여']
+            },
             sections: []
         },
         {
@@ -642,6 +646,10 @@ test('seo routes ignore non-public posts, escape meta values, and include visibl
     );
     assert.match(
         visibleMetaResponse.text,
+        /<meta name="keywords" content="openclaw, 기여" \/>/
+    );
+    assert.match(
+        visibleMetaResponse.text,
         /"@type":"BlogPosting"/
     );
     assert.match(
@@ -660,10 +668,12 @@ test('seo routes ignore non-public posts, escape meta values, and include visibl
     assert.match(rssResponse.text, /meta-scheduled-visible/);
     assert.doesNotMatch(rssResponse.text, /meta-future-post/);
     assert.doesNotMatch(rssResponse.text, /meta-draft-post/);
+    assert.match(rssResponse.text, /Sat, 08 Mar 2026 04:05:06 GMT/);
 
     const sitemapResponse = await request(app).get('/sitemap.xml');
     assert.equal(sitemapResponse.status, 200);
     assert.match(sitemapResponse.text, /meta-visible-post/);
+    assert.match(sitemapResponse.text, /<lastmod>2026-03-08<\/lastmod>/);
     assert.match(sitemapResponse.text, /meta-scheduled-visible/);
     assert.doesNotMatch(sitemapResponse.text, /meta-future-post/);
     assert.doesNotMatch(sitemapResponse.text, /meta-draft-post/);

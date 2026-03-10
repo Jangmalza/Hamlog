@@ -31,7 +31,7 @@ export const useSchema = ({ post }: UseSchemaProps) => {
             "headline": post.seo?.title ?? post.title,
             "image": imageUrl ? [imageUrl] : [],
             "datePublished": post.publishedAt,
-            "dateModified": post.publishedAt,
+            "dateModified": post.updatedAt ?? post.publishedAt,
             "mainEntityOfPage": canonicalUrl,
             "url": canonicalUrl,
             "author": {
@@ -49,7 +49,7 @@ export const useSchema = ({ post }: UseSchemaProps) => {
             },
             "description": post.seo?.description ?? post.summary,
             "articleSection": post.category,
-            "keywords": post.tags.join(', ')
+            "keywords": (post.seo?.keywords?.length ? post.seo.keywords : post.tags).join(', ')
         };
 
         const script = document.createElement('script');

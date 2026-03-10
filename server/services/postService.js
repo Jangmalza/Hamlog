@@ -52,6 +52,7 @@ export async function createPostService(rawData) {
         // 4. Create New Post
         const newPost = {
             id: `post-${randomUUID()}`,
+            updatedAt: new Date().toISOString(),
             ...data
         };
 
@@ -112,6 +113,7 @@ export async function updatePostService(id, rawData) {
             ...existing,
             ...data
         };
+        updatedPost.updatedAt = new Date().toISOString();
 
         allPosts[index] = updatedPost;
         await writePosts(allPosts);
@@ -166,6 +168,7 @@ export async function restorePostRevisionService(id, revisionId) {
             ...data,
             id: existing.id
         };
+        restoredPost.updatedAt = new Date().toISOString();
 
         allPosts[index] = restoredPost;
         await writePosts(allPosts);
