@@ -17,6 +17,7 @@ import { buildCategoryTree } from '../utils/categoryTree';
 import { useSeo } from '../hooks/useSeo';
 import { useSchema } from '../hooks/useSchema';
 import { TableOfContents } from '../components/TableOfContents';
+import { siteMeta } from '../data/blogData';
 
 const PostPage: React.FC = () => {
   const { slug } = useParams();
@@ -56,7 +57,10 @@ const PostPage: React.FC = () => {
     description: post?.seo?.description ?? post?.summary,
     image: post?.seo?.ogImage ?? post?.cover,
     keywords: post?.seo?.keywords,
-    url: post ? post.seo?.canonicalUrl ?? `https://tech.hamwoo.co.kr/posts/${post.slug}` : undefined,
+    url: post
+      ? post.seo?.canonicalUrl
+        ?? `${typeof window !== 'undefined' ? window.location.origin : siteMeta.siteUrl}/posts/${post.slug}`
+      : undefined,
     type: 'article',
   });
 

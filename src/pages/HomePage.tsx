@@ -9,8 +9,6 @@ import { useSeo } from '../hooks/useSeo';
 import { useHomeData } from '../hooks/useHomeData';
 import { useHomePostFilter } from '../hooks/useHomePostFilter';
 
-import { siteMeta } from '../data/blogData';
-
 const HomePage = () => {
     // 1. Data Fetching Hook
     const {
@@ -42,7 +40,7 @@ const HomePage = () => {
     useSeo({
         title: profile.title,
         description: profile.description,
-        url: siteMeta.siteUrl,
+        url: profile.siteUrl,
         type: 'website',
         favicon: profile.favicon
     });
