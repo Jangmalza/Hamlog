@@ -29,6 +29,7 @@ const HomePage = () => {
         selectCategory,
         searchQuery,
         setSearchQuery,
+        sortedPosts,
         featuredPosts,
         filteredPosts,
         availableTags,
@@ -74,7 +75,7 @@ const HomePage = () => {
             <div className="min-h-screen text-[var(--text)]">
                 <HomeHeader
                     profile={profile}
-                    postCount={posts.length}
+                    postCount={sortedPosts.length}
                     tagCount={availableTags.length}
                     categoryCount={categoryTree.allNames.length}
                     seriesCount={seriesCount}
