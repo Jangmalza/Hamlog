@@ -8,6 +8,10 @@ interface AdminGuardProps {
   children: React.ReactNode;
 }
 
+const wait = (ms: number) => new Promise<void>((resolve) => {
+  window.setTimeout(resolve, ms);
+});
+
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isAuthed, setIsAuthed] = useState<boolean>(false);
@@ -18,16 +22,32 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
 
   const authReason = searchParams.get('auth');
 
+  const confirmSession = useCallback(async (retryDelays: number[] = [0]) => {
+    for (const delay of retryDelays) {
+      if (delay > 0) {
+        await wait(delay);
+      }
+
+      try {
+        await authApi.getMe();
+        setIsAuthed(true);
+        return true;
+      } catch {
+        // Retry a few times because some browsers apply Set-Cookie asynchronously.
+      }
+    }
+
+    setIsAuthed(false);
+    return false;
+  }, []);
+
   const checkAuth = useCallback(async () => {
     try {
-      await authApi.getMe();
-      setIsAuthed(true);
-    } catch {
-      setIsAuthed(false);
+      await confirmSession();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [confirmSession]);
 
   useEffect(() => {
     void checkAuth();
@@ -56,17 +76,18 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     }
 
     try {
-      await authApi.getMe();
-      setIsAuthed(true);
+      const isSessionConfirmed = await confirmSession([0, 150, 400, 900]);
+      if (!isSessionConfirmed) {
+        setError('로그인은 성공했지만 세션을 확인하지 못했습니다. 브라우저 쿠키 또는 서버 HTTPS 설정을 확인해주세요.');
+        return;
+      }
+
       setPassword('');
       if (searchParams.has('auth')) {
         const next = new URLSearchParams(searchParams);
         next.delete('auth');
         setSearchParams(next, { replace: true });
       }
-    } catch {
-      setIsAuthed(false);
-      setError('로그인은 성공했지만 세션을 확인하지 못했습니다. 브라우저 쿠키 또는 서버 HTTPS 설정을 확인해주세요.');
     } finally {
       setIsSubmitting(false);
     }
