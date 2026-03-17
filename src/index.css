@@ -24,10 +24,7 @@
   --font-body: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
   --font-display: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'Menlo', monospace;
-  --bg-overlay:
-    linear-gradient(rgba(29, 25, 22, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(29, 25, 22, 0.04) 1px, transparent 1px),
-    linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 42%);
+  --bg-overlay: none;
 }
 
 [data-theme='dark'] {
