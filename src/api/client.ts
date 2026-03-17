@@ -1,5 +1,15 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 const readErrorMessage = async (response: Response) => {
   const contentType = response.headers.get('content-type') ?? '';
   if (contentType.includes('application/json')) {
@@ -11,8 +21,12 @@ const readErrorMessage = async (response: Response) => {
 
 const handleError = async (response: Response) => {
   const message = await readErrorMessage(response);
-  throw new Error(message || `Request failed with status ${response.status}`);
+  throw new ApiError(response.status, message || `Request failed with status ${response.status}`);
 };
+
+export const isAuthenticationError = (error: unknown) => (
+  error instanceof ApiError && (error.status === 401 || error.status === 403)
+);
 
 export const requestJson = async <T>(
   path: string,

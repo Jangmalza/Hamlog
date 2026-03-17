@@ -97,6 +97,10 @@ jobs:
               -e PORT=4000 \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
               -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
+              -e CORS_ORIGINS="${{ secrets.CORS_ORIGINS }}" \
+              -e COOKIE_SAME_SITE="${{ secrets.COOKIE_SAME_SITE }}" \
+              -e COOKIE_SECURE="${{ secrets.COOKIE_SECURE }}" \
+              -e SITE_URL="${{ secrets.SITE_URL }}" \
               "$image"
           }
 

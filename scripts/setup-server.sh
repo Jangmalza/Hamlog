@@ -44,7 +44,21 @@ read -sp "Enter Admin Password for the Blog: " ADMIN_PWD
 echo ""
 read -sp "Enter JWT Secret (random string recommended): " JWT_SEC
 echo ""
+read -p "Enter allowed frontend origin(s) for cross-site admin access (optional, comma-separated): " CORS_ORIGINS
+read -p "Cookie SameSite policy [auto/lax/strict/none] (default: auto): " COOKIE_SAME_SITE_INPUT
+read -p "Force secure cookies? [auto/true/false] (default: auto): " COOKIE_SECURE_INPUT
 PORT=4000
+
+COOKIE_SAME_SITE=""
+COOKIE_SECURE=""
+
+if [[ "$COOKIE_SAME_SITE_INPUT" != "" && "$COOKIE_SAME_SITE_INPUT" != "auto" ]]; then
+  COOKIE_SAME_SITE="$COOKIE_SAME_SITE_INPUT"
+fi
+
+if [[ "$COOKIE_SECURE_INPUT" == "true" || "$COOKIE_SECURE_INPUT" == "false" ]]; then
+  COOKIE_SECURE="$COOKIE_SECURE_INPUT"
+fi
 
 # 5. Deploy
 echo "🚀 Pulling latest image..."
@@ -64,6 +78,9 @@ docker run -d \
   -e PORT=4000 \
   -e JWT_SECRET="$JWT_SEC" \
   -e ADMIN_PASSWORD="$ADMIN_PWD" \
+  -e CORS_ORIGINS="$CORS_ORIGINS" \
+  -e COOKIE_SAME_SITE="$COOKIE_SAME_SITE" \
+  -e COOKIE_SECURE="$COOKIE_SECURE" \
   $IMAGE_NAME
 
 echo "✅ Deployment Complete!"

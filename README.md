@@ -71,6 +71,13 @@ npm run test
 - `RATE_LIMIT_LOGIN_MAX` (optional, default: `10`)
 - `RATE_LIMIT_UPLOAD_MAX` (optional, default: `30`)
 - `RATE_LIMIT_PREVIEW_MAX` (optional, default: `120`)
+- `COOKIE_SAME_SITE` (optional: `lax`, `strict`, `none`)
+  - 미설정 시 `CORS_ORIGINS`가 있으면 `none`, 아니면 `lax`
+- `COOKIE_SECURE` (optional: `true`, `false`)
+  - 미설정 시 production 또는 `SameSite=None`일 때 `true`
+
+관리자 프론트엔드와 API가 서로 다른 Origin에 있다면 `CORS_ORIGINS`를 반드시 설정해야 하며,
+대부분의 경우 쿠키는 `SameSite=None; Secure`가 필요합니다. 현재 서버는 이 경우를 자동으로 맞추도록 되어 있습니다.
 
 ### Frontend (`vite`)
 - `VITE_API_BASE_URL` (optional)

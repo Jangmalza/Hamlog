@@ -11,3 +11,44 @@ test('POST /api/auth/login should reject invalid password', async () => {
     assert.equal(response.status, 401);
     assert.equal(response.body.message, '비밀번호가 올바르지 않습니다.');
 });
+
+test('POST /api/auth/login should issue cross-site compatible cookie when CORS origins are configured', async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousCorsOrigins = process.env.CORS_ORIGINS;
+    const previousCookieSameSite = process.env.COOKIE_SAME_SITE;
+    const previousCookieSecure = process.env.COOKIE_SECURE;
+
+    process.env.NODE_ENV = 'production';
+    process.env.CORS_ORIGINS = 'https://admin.example.com';
+    delete process.env.COOKIE_SAME_SITE;
+    delete process.env.COOKIE_SECURE;
+
+    try {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .set('Origin', 'https://admin.example.com')
+            .send({ password: process.env.ADMIN_PASSWORD ?? 'test-password' });
+
+        assert.equal(response.status, 200);
+
+        const setCookie = response.headers['set-cookie']?.[0] ?? '';
+        assert.match(setCookie, /SameSite=None/i);
+        assert.match(setCookie, /Secure/i);
+        assert.match(setCookie, /Path=\//i);
+    } finally {
+        process.env.NODE_ENV = previousNodeEnv;
+        process.env.CORS_ORIGINS = previousCorsOrigins;
+
+        if (previousCookieSameSite === undefined) {
+            delete process.env.COOKIE_SAME_SITE;
+        } else {
+            process.env.COOKIE_SAME_SITE = previousCookieSameSite;
+        }
+
+        if (previousCookieSecure === undefined) {
+            delete process.env.COOKIE_SECURE;
+        } else {
+            process.env.COOKIE_SECURE = previousCookieSecure;
+        }
+    }
+});
