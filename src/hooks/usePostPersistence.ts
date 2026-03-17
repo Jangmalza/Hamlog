@@ -7,6 +7,7 @@ import { stripHtml } from '../utils/postContent';
 import { normalizePostStatus } from '../utils/postStatus';
 import { toIsoDateTime } from '../utils/adminDate';
 import { normalizeDraftCategory, DEFAULT_CATEGORY } from '../utils/category';
+import { isAuthenticationError } from '../api/client';
 
 const hasMeaningfulContentNode = (node: unknown): boolean => {
     if (!node || typeof node !== 'object') return false;
@@ -174,6 +175,11 @@ export const usePostPersistence = ({
             onAfterSave();
 
         } catch (error) {
+            if (isAuthenticationError(error)) {
+                window.location.assign('/admin?auth=required');
+                return;
+            }
+
             if (error instanceof Error && error.message) {
                 setNotice(error.message);
             } else {
@@ -195,6 +201,11 @@ export const usePostPersistence = ({
             setNotice('글이 삭제되었습니다.');
             onDeleteSuccess();
         } catch (error) {
+            if (isAuthenticationError(error)) {
+                window.location.assign('/admin?auth=required');
+                return;
+            }
+
             if (error instanceof Error && error.message) {
                 setNotice(error.message);
             } else {

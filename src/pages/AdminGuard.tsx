@@ -1,17 +1,22 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import * as authApi from '../api/authApi';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { ApiError } from '../api/client';
 
 interface AdminGuardProps {
   children: React.ReactNode;
 }
 
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAuthed, setIsAuthed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+
+  const authReason = searchParams.get('auth');
 
   const checkAuth = useCallback(async () => {
     try {
@@ -28,6 +33,11 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     void checkAuth();
   }, [checkAuth]);
 
+  useEffect(() => {
+    if (isAuthed || authReason !== 'required') return;
+    setError('세션이 만료되었거나 인증 쿠키가 저장되지 않았습니다. 다시 로그인해주세요.');
+  }, [authReason, isAuthed]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -35,9 +45,28 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
 
     try {
       await authApi.login(password);
+    } catch (loginError) {
+      if (loginError instanceof ApiError && loginError.status === 401) {
+        setError('비밀번호가 올바르지 않습니다.');
+      } else {
+        setError('로그인 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      await authApi.getMe();
       setIsAuthed(true);
+      setPassword('');
+      if (searchParams.has('auth')) {
+        const next = new URLSearchParams(searchParams);
+        next.delete('auth');
+        setSearchParams(next, { replace: true });
+      }
     } catch {
-      setError('비밀번호가 올바르지 않습니다.');
+      setIsAuthed(false);
+      setError('로그인은 성공했지만 세션을 확인하지 못했습니다. 브라우저 쿠키 또는 서버 HTTPS 설정을 확인해주세요.');
     } finally {
       setIsSubmitting(false);
     }
