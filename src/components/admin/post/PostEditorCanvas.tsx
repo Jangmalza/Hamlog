@@ -39,7 +39,10 @@ export default function PostEditorCanvas({
 }: PostEditorCanvasProps) {
   return (
     <>
-      <div className={`angular-control rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 ${previewMode ? 'opacity-70' : ''}`}>
+      <div
+        className={`angular-control rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 ${previewMode ? 'pointer-events-none opacity-60' : ''}`}
+        aria-hidden={previewMode}
+      >
         <EditorToolbar
           editor={editor}
           onLink={onLink}
@@ -93,8 +96,8 @@ export default function PostEditorCanvas({
             editor={editor}
             className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-[3px] [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_0_0_1px_rgba(29,25,22,0.08),10px_10px_0_rgba(11,35,32,0.16)]"
           />
-          {!previewMode && <TableBubbleMenu editor={editor} />}
-          {!previewMode && <ColumnBubbleMenu editor={editor} />}
+          <TableBubbleMenu editor={editor} enabled={!previewMode} />
+          <ColumnBubbleMenu editor={editor} enabled={!previewMode} />
         </EditorActionContext.Provider>
       </div>
     </>

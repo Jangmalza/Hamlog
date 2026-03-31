@@ -7,6 +7,7 @@ import {
 
 interface ColumnBubbleMenuProps {
     editor: Editor | null;
+    enabled?: boolean;
 }
 
 const MenuButton = ({
@@ -40,7 +41,7 @@ const MenuButton = ({
     </button>
 );
 
-export const ColumnBubbleMenu: React.FC<ColumnBubbleMenuProps> = ({ editor }) => {
+export const ColumnBubbleMenu: React.FC<ColumnBubbleMenuProps> = ({ editor, enabled = true }) => {
     if (!editor) return null;
 
     // Check current layout to highlight active button
@@ -51,7 +52,7 @@ export const ColumnBubbleMenu: React.FC<ColumnBubbleMenuProps> = ({ editor }) =>
         <BubbleMenu
             editor={editor}
             tippyOptions={{ duration: 100, maxWidth: 400, placement: 'top' }}
-            shouldShow={({ editor }) => editor.isActive('columns')}
+            shouldShow={({ editor }) => enabled && editor.isActive('columns')}
             className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-200"
         >
             <div className="flex items-center gap-0.5">
