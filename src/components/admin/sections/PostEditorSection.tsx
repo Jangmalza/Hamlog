@@ -16,7 +16,7 @@ export interface EditorHandlers {
   onDelete: () => void;
   onRestoreRevision: (revisionId: string) => void;
   updateDraft: (patch: Partial<PostDraft>) => void;
-  setPreviewMode: (value: boolean) => void;
+  onTogglePreview: () => void;
   onLink: () => void;
 }
 
@@ -102,7 +102,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     onDelete,
     onRestoreRevision,
     updateDraft,
-    setPreviewMode,
+    onTogglePreview,
     onLink
   } = editorHandlers;
   const { onInputChange, onKeyDown, onBlur, onRemove } = tagHandlers;
@@ -153,7 +153,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
                 onRestoreAutosave={onRestoreAutosave}
                 onDiscardAutosave={onDiscardAutosave}
                 onStatusChange={onStatusChange}
-                onTogglePreview={() => setPreviewMode(!previewMode)}
+                onTogglePreview={onTogglePreview}
                 onSave={() => onSave('수동 저장되었습니다.')}
                 onPublish={() => onSave('발행되었습니다.', 'published')}
                 onDelete={onDelete}

@@ -39,7 +39,7 @@ export default function PostEditorCanvas({
 }: PostEditorCanvasProps) {
   return (
     <>
-      <div className="angular-control rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+      <div className={`angular-control rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-3 ${previewMode ? 'opacity-70' : ''}`}>
         <EditorToolbar
           editor={editor}
           onLink={onLink}
@@ -65,7 +65,7 @@ export default function PostEditorCanvas({
         }}
       />
 
-      {previewMode ? (
+      {previewMode && (
         <div className="angular-control min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-6">
           {contentHtml.trim() ? (
             <PostContent contentHtml={contentHtml} />
@@ -75,25 +75,28 @@ export default function PostEditorCanvas({
             </p>
           )}
         </div>
-      ) : (
-        <div className="angular-control min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-muted))] p-4">
-          <EditorActionContext.Provider
-            value={{
-              onSetCover: src => onSetCoverFromContent?.(src),
-              currentCoverUrl,
-              onToolbarUpload,
-              uploadLocalImage
-            }}
-          >
-            <EditorContent
-              editor={editor}
-              className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-[3px] [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_0_0_1px_rgba(29,25,22,0.08),10px_10px_0_rgba(11,35,32,0.16)]"
-            />
-            <TableBubbleMenu editor={editor} />
-            <ColumnBubbleMenu editor={editor} />
-          </EditorActionContext.Provider>
-        </div>
       )}
+
+      <div
+        className={`angular-control min-h-[720px] rounded-xl border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-muted))] p-4 ${previewMode ? 'hidden' : ''}`}
+        aria-hidden={previewMode}
+      >
+        <EditorActionContext.Provider
+          value={{
+            onSetCover: src => onSetCoverFromContent?.(src),
+            currentCoverUrl,
+            onToolbarUpload,
+            uploadLocalImage
+          }}
+        >
+          <EditorContent
+            editor={editor}
+            className="border-none shadow-none outline-none ring-0 [&_.ProseMirror]:min-h-[660px] [&_.ProseMirror]:rounded-[3px] [&_.ProseMirror]:bg-[var(--surface)] [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-6 [&_.ProseMirror]:shadow-[0_0_0_1px_rgba(29,25,22,0.08),10px_10px_0_rgba(11,35,32,0.16)]"
+          />
+          {!previewMode && <TableBubbleMenu editor={editor} />}
+          {!previewMode && <ColumnBubbleMenu editor={editor} />}
+        </EditorActionContext.Provider>
+      </div>
     </>
   );
 }
