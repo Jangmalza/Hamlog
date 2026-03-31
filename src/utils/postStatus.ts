@@ -28,7 +28,7 @@ export const getPostStatusLabel = (status: PostStatus) => {
     case 'scheduled':
       return {
         label: '예약',
-        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
+        className: 'bg-yellow-100 text-yellow-800'
       };
     case 'published':
     default:
@@ -38,4 +38,3 @@ export const getPostStatusLabel = (status: PostStatus) => {
       };
   }
 };
-

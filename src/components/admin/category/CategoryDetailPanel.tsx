@@ -106,7 +106,7 @@ const CategoryDetailPanel: React.FC<CategoryDetailPanelProps> = ({
                     관리 대상
                   </span>
                 ) : (
-                  <span className="rounded-lg bg-red-100 px-3 py-1 text-[11px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                  <span className="rounded-lg bg-red-100 px-3 py-1 text-[11px] font-semibold text-red-600">
                     자동 감지
                   </span>
                 )}

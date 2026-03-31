@@ -10,9 +10,8 @@ import { useCategoryManagement } from '../hooks/useCategoryManagement';
 import { usePostFilter } from '../hooks/usePostFilter';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { useProfile } from '../hooks/useProfile';
-import { useTheme } from '../hooks/useTheme';
 import { usePostStore } from '../store/postStore';
-import { Sun, Moon, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import type { Post, PostStatus } from '../data/blogData';
 import type { AdminSection } from '../types/admin';
 import { DEFAULT_CATEGORY } from '../utils/category';
@@ -40,7 +39,6 @@ const AdminPage: React.FC = () => {
   const hasLoaded = usePostStore(state => state.hasLoaded);
   const fetchPosts = usePostStore(state => state.fetchPosts);
 
-  const { theme, toggleTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
@@ -207,13 +205,6 @@ const AdminPage: React.FC = () => {
             >
               <LogOut size={16} />
               {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-            </button>
-            <button
-              onClick={toggleTheme}
-              className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
-              aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
             <Link
               to="/"

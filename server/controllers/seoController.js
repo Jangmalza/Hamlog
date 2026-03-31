@@ -50,6 +50,11 @@ const replaceHeadTag = (html, pattern, replacement) => (
 );
 
 const removeHeadTag = (html, pattern) => html.replace(pattern, '');
+const setRobotsDirective = (html, content) => replaceHeadTag(
+  html,
+  /<meta name="robots" content=".*?" \/>/,
+  `<meta name="robots" content="${escapeHtml(content)}" />`
+);
 
 const getArticleDate = (value = '') => {
   const timestamp = new Date(value);
@@ -106,100 +111,117 @@ export const injectPostMeta = async (req, res) => {
 
     let html = await readSpaIndexHtml();
 
-    if (post) {
-      const title = post.seo?.title || post.title;
-      const description = post.seo?.description || post.summary;
-      const image = toAbsoluteUrl(baseUrl, post.seo?.ogImage || post.cover || '/avatar.jpg');
-      const fullUrl = `${baseUrl}/posts/${post.slug}`;
-      const canonicalUrl = toAbsoluteUrl(baseUrl, post.seo?.canonicalUrl || fullUrl);
-      const escapedTitle = escapeHtml(title);
-      const escapedDescription = escapeHtml(description);
-      const escapedImage = escapeHtml(image);
-      const escapedFullUrl = escapeHtml(fullUrl);
-      const escapedCanonicalUrl = escapeHtml(canonicalUrl);
-      const escapedKeywords = escapeHtml(resolvePostKeywords(post).join(', '));
-      const articleSchema = buildArticleSchema(post, canonicalUrl, image, baseUrl);
+    if (!post) {
+      const requestedUrl = `${baseUrl}${req.originalUrl}`;
+      const notFoundTitle = `페이지를 찾을 수 없습니다 | ${SITE_NAME}`;
 
-      // Update basic meta
-      html = replaceHeadTag(html, /<title>.*?<\/title>/, `<title>${escapedTitle}</title>`);
-      html = replaceHeadTag(
-        html,
-        /<meta name="description" content=".*?" \/>/,
-        `<meta name="description" content="${escapedDescription}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta name="keywords" content=".*?" \/>/,
-        `<meta name="keywords" content="${escapedKeywords}" />`
-      );
-
-      // Update OG meta
-      html = replaceHeadTag(
-        html,
-        /<meta property="og:title" content=".*?" \/>/,
-        `<meta property="og:title" content="${escapedTitle}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta property="og:description" content=".*?" \/>/,
-        `<meta property="og:description" content="${escapedDescription}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta property="og:type" content=".*?" \/>/,
-        '<meta property="og:type" content="article" />'
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta property="og:url" content=".*?" \/>/,
-        `<meta property="og:url" content="${escapedFullUrl}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta property="og:image" content=".*?" \/>/,
-        `<meta property="og:image" content="${escapedImage}" />`
-      );
-
-      // Update Twitter meta
-      html = replaceHeadTag(
-        html,
-        /<meta name="twitter:title" content=".*?" \/>/,
-        `<meta name="twitter:title" content="${escapedTitle}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta name="twitter:description" content=".*?" \/>/,
-        `<meta name="twitter:description" content="${escapedDescription}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta name="twitter:image" content=".*?" \/>/,
-        `<meta name="twitter:image" content="${escapedImage}" />`
-      );
-      html = removeHeadTag(html, /<meta name="twitter:site" content=".*?" \/>\s*/);
-      html = removeHeadTag(html, /<meta name="twitter:creator" content=".*?" \/>\s*/);
-
+      html = replaceHeadTag(html, /<title>.*?<\/title>/, `<title>${escapeHtml(notFoundTitle)}</title>`);
+      html = setRobotsDirective(html, 'noindex, nofollow');
       html = replaceHeadTag(
         html,
         /<link rel="canonical" href=".*?" \/>/,
-        `<link rel="canonical" href="${escapedCanonicalUrl}" />`
+        `<link rel="canonical" href="${escapeHtml(requestedUrl)}" />`
       );
-      html = replaceHeadTag(
-        html,
-        /<meta property="article:published_time" content=".*?" \/>/,
-        `<meta property="article:published_time" content="${escapeHtml(getArticleDate(post.publishedAt) || '')}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<meta property="article:modified_time" content=".*?" \/>/,
-        `<meta property="article:modified_time" content="${escapeHtml(getArticleDate(post.updatedAt || post.publishedAt) || '')}" />`
-      );
-      html = replaceHeadTag(
-        html,
-        /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
-        `<script type="application/ld+json">${articleSchema}</script>`
-      );
+
+      return res
+        .status(404)
+        .set('X-Robots-Tag', 'noindex, nofollow')
+        .send(html);
     }
+
+    const title = post.seo?.title || post.title;
+    const description = post.seo?.description || post.summary;
+    const image = toAbsoluteUrl(baseUrl, post.seo?.ogImage || post.cover || '/avatar.jpg');
+    const fullUrl = `${baseUrl}/posts/${post.slug}`;
+    const canonicalUrl = toAbsoluteUrl(baseUrl, post.seo?.canonicalUrl || fullUrl);
+    const escapedTitle = escapeHtml(title);
+    const escapedDescription = escapeHtml(description);
+    const escapedImage = escapeHtml(image);
+    const escapedFullUrl = escapeHtml(fullUrl);
+    const escapedCanonicalUrl = escapeHtml(canonicalUrl);
+    const escapedKeywords = escapeHtml(resolvePostKeywords(post).join(', '));
+    const articleSchema = buildArticleSchema(post, canonicalUrl, image, baseUrl);
+
+    // Update basic meta
+    html = replaceHeadTag(html, /<title>.*?<\/title>/, `<title>${escapedTitle}</title>`);
+    html = replaceHeadTag(
+      html,
+      /<meta name="description" content=".*?" \/>/,
+      `<meta name="description" content="${escapedDescription}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta name="keywords" content=".*?" \/>/,
+      `<meta name="keywords" content="${escapedKeywords}" />`
+    );
+    html = setRobotsDirective(html, 'index, follow');
+
+    // Update OG meta
+    html = replaceHeadTag(
+      html,
+      /<meta property="og:title" content=".*?" \/>/,
+      `<meta property="og:title" content="${escapedTitle}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta property="og:description" content=".*?" \/>/,
+      `<meta property="og:description" content="${escapedDescription}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta property="og:type" content=".*?" \/>/,
+      '<meta property="og:type" content="article" />'
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta property="og:url" content=".*?" \/>/,
+      `<meta property="og:url" content="${escapedFullUrl}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta property="og:image" content=".*?" \/>/,
+      `<meta property="og:image" content="${escapedImage}" />`
+    );
+
+    // Update Twitter meta
+    html = replaceHeadTag(
+      html,
+      /<meta name="twitter:title" content=".*?" \/>/,
+      `<meta name="twitter:title" content="${escapedTitle}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta name="twitter:description" content=".*?" \/>/,
+      `<meta name="twitter:description" content="${escapedDescription}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta name="twitter:image" content=".*?" \/>/,
+      `<meta name="twitter:image" content="${escapedImage}" />`
+    );
+    html = removeHeadTag(html, /<meta name="twitter:site" content=".*?" \/>\s*/);
+    html = removeHeadTag(html, /<meta name="twitter:creator" content=".*?" \/>\s*/);
+
+    html = replaceHeadTag(
+      html,
+      /<link rel="canonical" href=".*?" \/>/,
+      `<link rel="canonical" href="${escapedCanonicalUrl}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta property="article:published_time" content=".*?" \/>/,
+      `<meta property="article:published_time" content="${escapeHtml(getArticleDate(post.publishedAt) || '')}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<meta property="article:modified_time" content=".*?" \/>/,
+      `<meta property="article:modified_time" content="${escapeHtml(getArticleDate(post.updatedAt || post.publishedAt) || '')}" />`
+    );
+    html = replaceHeadTag(
+      html,
+      /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
+      `<script type="application/ld+json">${articleSchema}</script>`
+    );
 
     res.send(html);
   } catch (error) {
