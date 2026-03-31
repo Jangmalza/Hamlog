@@ -601,8 +601,20 @@ test('seo routes ignore non-public posts, escape meta values, and include visibl
     );
 
     const draftMetaResponse = await request(app).get('/posts/meta-draft-post');
-    assert.equal(draftMetaResponse.status, 200);
+    assert.equal(draftMetaResponse.status, 404);
     assert.doesNotMatch(draftMetaResponse.text, /Draft Meta Title/);
+    assert.match(draftMetaResponse.text, /<meta name="robots" content="noindex, nofollow" \/>/);
+    assert.equal(draftMetaResponse.headers['x-robots-tag'], 'noindex, nofollow');
+
+    const missingPostResponse = await request(app).get('/posts/does-not-exist');
+    assert.equal(missingPostResponse.status, 404);
+    assert.match(missingPostResponse.text, /<meta name="robots" content="noindex, nofollow" \/>/);
+    assert.equal(missingPostResponse.headers['x-robots-tag'], 'noindex, nofollow');
+
+    const adminResponse = await request(app).get('/admin');
+    assert.equal(adminResponse.status, 200);
+    assert.match(adminResponse.text, /<meta name="robots" content="noindex, nofollow" \/>/);
+    assert.equal(adminResponse.headers['x-robots-tag'], 'noindex, nofollow');
 
     const rssResponse = await request(app).get('/rss.xml');
     assert.equal(rssResponse.status, 200);
@@ -621,4 +633,25 @@ test('seo routes ignore non-public posts, escape meta values, and include visibl
     const searchResponse = await request(app).get('/api/search?q=scheduled');
     assert.equal(searchResponse.status, 200);
     assert.deepEqual(searchResponse.body.map(post => post.slug), ['meta-scheduled-visible']);
+});
+
+test('home page can expose google site verification meta tag from environment', async () => {
+    const previousVerification = process.env.GOOGLE_SITE_VERIFICATION;
+    process.env.GOOGLE_SITE_VERIFICATION = 'google-verification-token';
+
+    try {
+        const response = await request(app).get('/');
+
+        assert.equal(response.status, 200);
+        assert.match(
+            response.text,
+            /<meta name="google-site-verification" content="google-verification-token" \/>/
+        );
+    } finally {
+        if (previousVerification === undefined) {
+            delete process.env.GOOGLE_SITE_VERIFICATION;
+        } else {
+            process.env.GOOGLE_SITE_VERIFICATION = previousVerification;
+        }
+    }
 });

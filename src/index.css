@@ -27,30 +27,6 @@
   --bg-overlay: none;
 }
 
-[data-theme='dark'] {
-  color-scheme: dark;
-  --bg: #101010;
-  --surface: #1c1c1c;
-  --surface-muted: #2a2a2a;
-  --surface-overlay: rgba(28, 28, 28, 0.86);
-  --surface-strong: rgba(28, 28, 28, 0.92);
-  --text: #e0e0e0;
-  --text-muted: #a0a0a0;
-  --accent: #2dd4bf;
-  --accent-strong: #14b8a6;
-  --accent-soft: rgba(45, 212, 191, 0.25);
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.26);
-  --shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 10px 10px 0 rgba(0, 0, 0, 0.32);
-  --shadow-strong: 0 0 0 1px rgba(45, 212, 191, 0.12), 16px 16px 0 rgba(0, 0, 0, 0.42);
-  --bg-overlay:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    radial-gradient(600px circle at 10% -10%, rgba(15, 118, 110, 0.12), transparent 60%),
-    radial-gradient(500px circle at 90% 10%, rgba(241, 195, 89, 0.18), transparent 55%),
-    radial-gradient(500px circle at 15% 80%, rgba(12, 74, 110, 0.12), transparent 60%);
-}
-
 body {
   font-family: var(--font-body);
   color: var(--text);

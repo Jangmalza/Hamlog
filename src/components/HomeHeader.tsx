@@ -1,5 +1,4 @@
-import { Sun, Moon, Github, Linkedin, Mail, Twitter, Instagram, AtSign, Send } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { Github, Linkedin, Mail, Twitter, Instagram, AtSign, Send } from 'lucide-react';
 import type { SiteMeta } from '../types/blog';
 
 interface HomeHeaderProps {
@@ -11,7 +10,6 @@ interface HomeHeaderProps {
 }
 
 export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, seriesCount }: HomeHeaderProps) => {
-    const { theme, toggleTheme } = useTheme();
     const showContactLinks = (
         (profile.display.showSocialLinks && (
             profile.social.github
@@ -31,13 +29,6 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                     <span className="font-display text-base font-semibold text-[var(--text)]">
                         {profile.title}
                     </span>
-                    <button
-                        onClick={toggleTheme}
-                        className="angular-control rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
-                        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                    >
-                        {theme === 'dark' ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
-                    </button>
                 </nav>
 
                 <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">

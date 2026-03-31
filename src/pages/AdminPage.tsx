@@ -10,9 +10,7 @@ import { useCategoryManagement } from '../hooks/useCategoryManagement';
 import { usePostFilter } from '../hooks/usePostFilter';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { useProfile } from '../hooks/useProfile';
-import { useTheme } from '../hooks/useTheme';
 import { usePostStore } from '../store/postStore';
-import { Sun, Moon } from 'lucide-react';
 import type { Post, PostStatus } from '../data/blogData';
 import type { AdminSection } from '../types/admin';
 import { DEFAULT_CATEGORY } from '../utils/category';
@@ -30,8 +28,6 @@ const AdminPage: React.FC = () => {
   const error = usePostStore(state => state.error);
   const hasLoaded = usePostStore(state => state.hasLoaded);
   const fetchPosts = usePostStore(state => state.fetchPosts);
-
-  const { theme, toggleTheme } = useTheme();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<AdminSection>('posts');
@@ -141,13 +137,6 @@ const AdminPage: React.FC = () => {
         <div className="mx-auto flex max-w-[1700px] items-center justify-between px-4 py-4">
           <h1 className="font-display text-xl font-bold text-[var(--accent)]">HamLog Admin</h1>
           <div className="flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
-              aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
-            </button>
             <Link
               to="/"
               className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)]"

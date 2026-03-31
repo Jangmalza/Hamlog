@@ -20,12 +20,12 @@ export default function SidebarPostList({
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 p-4 text-center text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+      <div className="rounded-lg bg-red-50 p-4 text-center text-sm text-red-600">
         {error}
         <button
           type="button"
           onClick={onReload}
-          className="mt-2 block w-full rounded-lg bg-white py-2 text-xs font-bold shadow-sm transition-transform hover:scale-[1.02] dark:bg-red-900 dark:text-red-100"
+          className="mt-2 block w-full rounded-lg bg-white py-2 text-xs font-bold shadow-sm transition-transform hover:scale-[1.02]"
         >
           다시 시도
         </button>
