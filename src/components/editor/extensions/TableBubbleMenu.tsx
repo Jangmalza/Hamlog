@@ -8,6 +8,7 @@ import {
 
 interface TableBubbleMenuProps {
     editor: Editor | null;
+    enabled?: boolean;
 }
 
 const MenuButton = ({
@@ -41,14 +42,14 @@ const MenuButton = ({
     </button>
 );
 
-export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
+export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor, enabled = true }) => {
     if (!editor) return null;
 
     return (
         <BubbleMenu
             editor={editor}
             tippyOptions={{ duration: 100, maxWidth: 600, placement: 'top' }}
-            shouldShow={({ editor }) => editor.isActive('table')}
+            shouldShow={({ editor }) => enabled && editor.isActive('table')}
             className="flex flex-wrap items-center gap-1 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-200"
         >
             {/* Row Operations */}
