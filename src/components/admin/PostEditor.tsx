@@ -52,6 +52,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
     const [notice, setNotice] = useState('');
     const [previewMode, setPreviewMode] = useState(false);
     const editorRef = useRef<Editor | null>(null);
+    const previewToggleTimeoutRef = useRef<number | null>(null);
     const loadDraftSnapshot = useCallback(() => toDraft(post || undefined), [post]);
 
     // 2. Auto-save Logic (extracted)
@@ -153,6 +154,32 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         editorRef.current = editor;
     }, [editor]);
 
+    useEffect(() => {
+        return () => {
+            if (previewToggleTimeoutRef.current !== null) {
+                window.clearTimeout(previewToggleTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const togglePreviewMode = useCallback(() => {
+        if (previewToggleTimeoutRef.current !== null) {
+            window.clearTimeout(previewToggleTimeoutRef.current);
+            previewToggleTimeoutRef.current = null;
+        }
+
+        if (!previewMode) {
+            editor?.commands.blur();
+            previewToggleTimeoutRef.current = window.setTimeout(() => {
+                setPreviewMode(true);
+                previewToggleTimeoutRef.current = null;
+            }, 0);
+            return;
+        }
+
+        setPreviewMode(false);
+    }, [editor, previewMode]);
+
     // Sync editor content when draft changes
     useEffect(() => {
         if (!editor) return;
@@ -194,7 +221,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
         onSaveDraft: () => handleSave('초안으로 저장되었습니다.', 'draft'),
         onSave: () => handleSave('수동 저장되었습니다.'),
         onPublish: () => handleSave('발행되었습니다.', 'published'),
-        onTogglePreview: () => setPreviewMode(prev => !prev)
+        onTogglePreview: togglePreviewMode
     });
 
     const groupedProps = {
@@ -205,7 +232,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ post, onSaveSuccess, onDeleteSu
             onDelete: () => void handleDelete(),
             onRestoreRevision: (revisionId: string) => void handleRestoreRevision(revisionId),
             updateDraft,
-            setPreviewMode,
+            onTogglePreview: togglePreviewMode,
             onLink: handleLink
         },
         tagHandlers: {
