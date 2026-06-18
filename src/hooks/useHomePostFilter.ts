@@ -59,13 +59,6 @@ export function useHomePostFilter({ posts, managedCategories }: UsePostFilterPro
         return Array.from(tagSet).sort();
     }, [sortedPosts]);
 
-    const seriesCount = useMemo(() => {
-        const series = sortedPosts
-            .map(post => post.series)
-            .filter((value): value is string => Boolean(value));
-        return new Set(series).size;
-    }, [sortedPosts]);
-
     const newSince = useMemo(
         () => Date.now() - NEW_BADGE_DAYS * 24 * 60 * 60 * 1000,
         []
@@ -142,7 +135,6 @@ export function useHomePostFilter({ posts, managedCategories }: UsePostFilterPro
         featuredPosts,
         filteredPosts,
         availableTags,
-        seriesCount,
         categoryTree
     };
 }
