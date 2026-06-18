@@ -32,8 +32,6 @@ const HomePage = () => {
         sortedPosts,
         featuredPosts,
         filteredPosts,
-        availableTags,
-        seriesCount,
         categoryTree
     } = useHomePostFilter({ posts, managedCategories });
 
@@ -76,9 +74,7 @@ const HomePage = () => {
                 <HomeHeader
                     profile={profile}
                     postCount={sortedPosts.length}
-                    tagCount={availableTags.length}
                     categoryCount={categoryTree.allNames.length}
-                    seriesCount={seriesCount}
                 />
 
                 <main>

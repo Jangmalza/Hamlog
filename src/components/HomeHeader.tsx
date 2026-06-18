@@ -4,12 +4,10 @@ import type { SiteMeta } from '../types/blog';
 interface HomeHeaderProps {
     profile: SiteMeta;
     postCount: number;
-    tagCount: number;
     categoryCount: number;
-    seriesCount: number;
 }
 
-export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, seriesCount }: HomeHeaderProps) => {
+export const HomeHeader = ({ profile, postCount, categoryCount }: HomeHeaderProps) => {
     const showContactLinks = (
         (profile.display.showSocialLinks && (
             profile.social.github
@@ -54,22 +52,14 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                         )}
 
                         <div>
-                            <dl className="grid grid-cols-2 gap-3 border-t border-[color:var(--border)] pt-4 sm:grid-cols-4">
+                            <dl className="grid grid-cols-2 gap-3 border-t border-[color:var(--border)] pt-4">
                                 <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Post</dt>
                                     <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{postCount}</dd>
                                 </div>
                                 <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
-                                    <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Tag</dt>
-                                    <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{tagCount}</dd>
-                                </div>
-                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Category</dt>
                                     <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{categoryCount}</dd>
-                                </div>
-                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
-                                    <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Series</dt>
-                                    <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{seriesCount}</dd>
                                 </div>
                             </dl>
                         </div>
