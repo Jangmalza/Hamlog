@@ -61,7 +61,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                     <button
                         type="button"
                         onClick={() => onSelectCategory(isActive ? null : node.name)}
-                        className={`angular-control flex flex-1 items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${isActive
+                        className={`angular-control flex flex-1 items-center justify-between rounded-md border px-2.5 py-1.5 text-xs transition ${isActive
                             ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                             : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
                             }`}
@@ -78,7 +78,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                     </button>
                 </div>
                 {hasChildren && isExpanded && (
-                    <ul className="mt-2 space-y-2">
+                    <ul className="mt-1.5 space-y-1.5">
                         {node.children.map(child => renderCategoryNode(child, depth + 1))}
                     </ul>
                 )}
@@ -87,21 +87,21 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
     };
 
     return (
-        <aside className="space-y-4">
-            <div className="angular-panel rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] lg:sticky lg:top-6">
+        <aside className="space-y-3">
+            <div className="angular-panel rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3.5 shadow-[var(--shadow)] lg:sticky lg:top-6">
                 <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-[var(--text-muted)]">
                         카테고리
                     </p>
                     <span className="text-xs text-[var(--text-muted)]">
                         {categoryTree.allNames.length}개
                     </span>
                 </div>
-                <div className="mt-4 space-y-3">
+                <div className="mt-3 space-y-2">
                     <button
                         type="button"
                         onClick={() => onSelectCategory(null)}
-                        className={`angular-control flex w-full items-center justify-between rounded-lg border px-4 py-2 text-sm transition ${selectedCategory === null
+                        className={`angular-control flex w-full items-center justify-between rounded-md border px-3 py-1.5 text-xs transition ${selectedCategory === null
                             ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                             : 'border-[color:var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
                             }`}
@@ -117,7 +117,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                         <span className="text-xs">{categoryTree.totalCount}</span>
                     </button>
                     {categoryTree.roots.length > 0 ? (
-                        <ul className="space-y-2">
+                        <ul className="space-y-1.5">
                             {categoryTree.roots.map(node => renderCategoryNode(node, 0))}
                         </ul>
                     ) : (

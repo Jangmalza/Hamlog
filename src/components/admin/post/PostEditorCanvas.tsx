@@ -69,7 +69,7 @@ export default function PostEditorCanvas({
       />
 
       {previewMode && (
-        <div className="mx-auto min-h-[720px] w-full max-w-[980px] bg-white px-0 py-10 sm:px-4 lg:px-8">
+        <div className="mx-auto min-h-[560px] w-full max-w-[920px] bg-white px-0 py-6 sm:px-3 lg:px-6">
           {contentHtml.trim() ? (
             <PostContent contentHtml={contentHtml} />
           ) : (
@@ -81,7 +81,7 @@ export default function PostEditorCanvas({
       )}
 
       <div
-        className={`min-h-[720px] bg-white ${previewMode ? 'hidden' : ''}`}
+        className={`min-h-[560px] bg-white ${previewMode ? 'hidden' : ''}`}
         aria-hidden={previewMode}
       >
         {children}
@@ -95,7 +95,7 @@ export default function PostEditorCanvas({
         >
           <EditorContent
             editor={editor}
-            className="mx-auto w-full max-w-[980px] border-none px-0 shadow-none outline-none ring-0 sm:px-4 lg:px-8 [&_.ProseMirror]:min-h-[520px] [&_.ProseMirror]:bg-white [&_.ProseMirror]:px-0 [&_.ProseMirror]:py-8 [&_.ProseMirror]:shadow-none"
+            className="mx-auto w-full max-w-[920px] border-none px-0 shadow-none outline-none ring-0 sm:px-3 lg:px-6 [&_.ProseMirror]:min-h-[420px] [&_.ProseMirror]:bg-white [&_.ProseMirror]:px-0 [&_.ProseMirror]:py-5 [&_.ProseMirror]:shadow-none"
           />
           <TableBubbleMenu editor={editor} enabled={!previewMode} />
           <ColumnBubbleMenu editor={editor} enabled={!previewMode} />

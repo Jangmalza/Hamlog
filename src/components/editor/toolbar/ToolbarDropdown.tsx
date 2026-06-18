@@ -45,7 +45,7 @@ export function ToolbarDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(prev => !prev)}
         disabled={disabled}
-        className={`flex items-center justify-between gap-2 border border-transparent bg-white px-2 py-1.5 text-xs font-medium text-[var(--text)] transition-colors hover:border-[color:var(--border)] disabled:opacity-50 ${width}`}
+        className={`flex h-7 items-center justify-between gap-1.5 border border-transparent bg-white px-1.5 text-[11px] font-medium text-[var(--text)] transition-colors hover:border-[color:var(--border)] disabled:opacity-50 ${width}`}
       >
         <span className="truncate">{currentLabel}</span>
         <ChevronDown size={14} className="opacity-50" />

@@ -12,11 +12,8 @@ import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { usePostForm, toDraft } from '../../hooks/usePostForm';
 import { useAutosave } from '../../hooks/useAutosave';
 import { usePostPersistence } from '../../hooks/usePostPersistence';
-import { usePostRevisions } from '../../hooks/usePostRevisions';
 import { usePostEditorShortcuts } from '../../hooks/usePostEditorShortcuts';
 import { usePostEditorActions } from '../../hooks/usePostEditorActions';
-import { usePostStore } from '../../store/postStore';
-import type { AdminSidebarProps } from './sidebar/types';
 
 const MAX_UPLOAD_MB = 8;
 
@@ -29,7 +26,6 @@ interface PostEditorProps {
     onDeleteSuccess: () => void;
     categoryTree: CategoryTreeResult;
     onLoadCategories: () => void | Promise<void>;
-    sidebarProps: Omit<AdminSidebarProps, 'show'>;
 }
 
 const PostEditor: React.FC<PostEditorProps> = ({
@@ -37,11 +33,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
     onSaveSuccess,
     onDeleteSuccess,
     categoryTree,
-    onLoadCategories,
-    sidebarProps
+    onLoadCategories
 }) => {
     const activeId = post?.id || null;
-    const refreshPosts = usePostStore(state => state.fetchPosts);
 
     // 1. Form Logic (extracted)
     const {
@@ -85,23 +79,6 @@ const PostEditor: React.FC<PostEditorProps> = ({
         setPreviewMode(false);
     }, [post]);
 
-    const {
-        revisions,
-        revisionsLoading,
-        restoringRevisionId,
-        loadRevisions,
-        handleRestoreRevision
-    } = usePostRevisions({
-        activeId,
-        setNotice,
-        onAfterRestore: useCallback(async (restoredPost: Post) => {
-            clearAutosave();
-            setDraft(toDraft(restoredPost));
-            await refreshPosts();
-            onSaveSuccess(restoredPost);
-        }, [clearAutosave, onSaveSuccess, refreshPosts, setDraft])
-    });
-
     // 3. Persistence Logic (extracted)
     const {
         handleSave,
@@ -112,8 +89,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
         activeId,
         onSaveSuccess: useCallback((savedPost: Post) => {
             onSaveSuccess(savedPost);
-            void loadRevisions(savedPost.id);
-        }, [onSaveSuccess, loadRevisions]),
+        }, [onSaveSuccess]),
         onDeleteSuccess,
         setNotice,
         onAfterSave: useCallback(() => {
@@ -234,16 +210,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
     });
 
     const groupedProps = {
-        sidebarProps: {
-            ...sidebarProps,
-            saving
-        },
         editorHandlers: {
             onTitleChange: handleTitleChange,
             onStatusChange: handleStatusChange,
             onSave: (message?: string, statusOverride?: PostStatus) => void handleSave(message, statusOverride),
             onDelete: () => void handleDelete(),
-            onRestoreRevision: (revisionId: string) => void handleRestoreRevision(revisionId),
             updateDraft,
             onTogglePreview: togglePreviewMode,
             onLink: handleLink
@@ -271,8 +242,6 @@ const PostEditor: React.FC<PostEditorProps> = ({
             previewMode,
             uploadingImage,
             uploadError,
-            revisionsLoading,
-            restoringRevisionId,
             onNoticeClick: notice.includes('복구') ? handleRestoreAutosave : undefined,
             hasRestorableDraft,
             autosaveUpdatedAt,
@@ -282,7 +251,6 @@ const PostEditor: React.FC<PostEditorProps> = ({
         data: {
             draft,
             categoryTree,
-            revisions,
             contentStats,
             currentCoverUrl: draft.cover,
             editor

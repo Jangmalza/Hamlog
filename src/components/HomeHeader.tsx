@@ -24,20 +24,20 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
 
     return (
         <header className="border-b border-[color:var(--border)]">
-            <div className="mx-auto max-w-6xl px-4 py-10">
+            <div className="mx-auto max-w-6xl px-4 py-6">
                 <nav className="flex flex-wrap items-center justify-between gap-4 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                     <span className="font-display text-base font-semibold text-[var(--text)]">
                         {profile.title}
                     </span>
                 </nav>
 
-                <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-                    <div className="space-y-8">
+                <div className="mt-6 grid gap-6 lg:grid-cols-[1.7fr_0.9fr]">
+                    <div className="space-y-5">
                         <div>
-                            <h1 className="break-keep font-display text-2xl font-bold leading-tight tracking-tight text-[var(--text)] sm:text-3xl lg:text-4xl">
+                            <h1 className="break-keep font-display text-2xl font-bold leading-tight tracking-tight text-[var(--text)] sm:text-3xl">
                                 {profile.tagline}
                             </h1>
-                            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-muted)] break-keep">
+                            <p className="mt-3 max-w-2xl break-keep text-base leading-relaxed text-[var(--text-muted)]">
                                 {profile.description}
                             </p>
                         </div>
@@ -53,36 +53,36 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                             </div>
                         )}
 
-                        <div className="pt-4">
-                            <dl className="grid grid-cols-4 gap-6 border-t border-[color:var(--border)] pt-6">
-                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+                        <div>
+                            <dl className="grid grid-cols-2 gap-3 border-t border-[color:var(--border)] pt-4 sm:grid-cols-4">
+                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Post</dt>
-                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{postCount}</dd>
+                                    <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{postCount}</dd>
                                 </div>
-                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Tag</dt>
-                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{tagCount}</dd>
+                                    <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{tagCount}</dd>
                                 </div>
-                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Category</dt>
-                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{categoryCount}</dd>
+                                    <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{categoryCount}</dd>
                                 </div>
-                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-3">
+                                <div className="angular-control border border-[color:var(--border)] bg-[var(--surface-muted)] p-2.5">
                                     <dt className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Series</dt>
-                                    <dd className="mt-1 font-display text-xl font-bold text-[var(--text)]">{seriesCount}</dd>
+                                    <dd className="mt-0.5 font-display text-lg font-bold text-[var(--text)]">{seriesCount}</dd>
                                 </div>
                             </dl>
                         </div>
                     </div>
 
                     <div>
-                        <div className="angular-panel-strong space-y-6 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]">
-                            <div className="flex items-center gap-4">
+                        <div className="angular-panel-strong space-y-4 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow)]">
+                            <div className="flex items-center gap-3">
                                 {profile.display.showProfileImage && profile.profileImage && (
                                     <img
                                         src={profile.profileImage}
                                         alt={`${profile.name} portrait`}
-                                        className="angular-control h-16 w-16 rounded-lg object-cover"
+                                        className="angular-control h-12 w-12 rounded-lg object-cover"
                                         loading="lazy"
                                     />
                                 )}
@@ -90,8 +90,8 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                     <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                                         작성자
                                     </p>
-                                    <p className="font-display text-lg font-semibold">{profile.name}</p>
-                                    <p className="text-sm text-[var(--text-muted)]">{profile.role}</p>
+                                    <p className="font-display text-base font-semibold">{profile.name}</p>
+                                    <p className="text-xs text-[var(--text-muted)]">{profile.role}</p>
                                 </div>
                             </div>
 
@@ -180,7 +180,7 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                     <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                                         지금
                                     </p>
-                                    <p className="mt-2 text-sm text-[var(--text-muted)]">{profile.now}</p>
+                                    <p className="mt-1 text-xs text-[var(--text-muted)]">{profile.now}</p>
                                 </div>
                             )}
                             {profile.display.showStack && profile.stack.length > 0 && (
@@ -188,11 +188,11 @@ export const HomeHeader = ({ profile, postCount, tagCount, categoryCount, series
                                     <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                                         주력 스택
                                     </p>
-                                    <div className="mt-3 flex flex-wrap gap-2">
+                                    <div className="mt-2 flex flex-wrap gap-1.5">
                                         {profile.stack.map(item => (
                                             <span
                                                 key={item}
-                                                className="angular-chip rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] text-[var(--text-muted)]"
+                                                className="angular-chip rounded-md border border-[color:var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] text-[var(--text-muted)]"
                                             >
                                                 {item}
                                             </span>

@@ -9,10 +9,10 @@ export const FeaturedSection = ({ posts }: FeaturedSectionProps) => {
     if (posts.length === 0) return null;
 
     return (
-        <section id="spotlight" className="mx-auto max-w-6xl px-4 py-12">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+        <section id="spotlight" className="mx-auto max-w-6xl px-4 py-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <h2 className="mt-2 font-display text-2xl font-semibold">
+                    <h2 className="font-display text-xl font-semibold">
                         추천 글
                     </h2>
                 </div>
@@ -20,7 +20,7 @@ export const FeaturedSection = ({ posts }: FeaturedSectionProps) => {
                     {posts.length}편
                 </span>
             </div>
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post, index) => (
                     <PostCard key={post.id} post={post} variant="featured" index={index} />
                 ))}

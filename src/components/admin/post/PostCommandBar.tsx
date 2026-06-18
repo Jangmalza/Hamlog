@@ -44,9 +44,9 @@ const PostCommandBar: React.FC<PostCommandBarProps> = ({
   onDelete
 }) => {
   return (
-    <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex w-full flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--text-muted)]">
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-6 text-[var(--text-muted)]">
           <span className="font-medium text-[var(--text)]">
             {activeId ? '편집 중' : '새 초안'}
           </span>
@@ -81,11 +81,11 @@ const PostCommandBar: React.FC<PostCommandBarProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <select
           value={status}
           onChange={event => onStatusChange(event.target.value as PostStatus)}
-          className="h-8 border border-[color:var(--border)] bg-white px-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+          className="h-7 border border-[color:var(--border)] bg-white px-2 text-[11px] text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
         >
           {statusOptions.map(option => (
             <option key={option.value} value={option.value}>
@@ -97,7 +97,7 @@ const PostCommandBar: React.FC<PostCommandBarProps> = ({
           type="button"
           onClick={onTogglePreview}
           title={previewMode ? '편집' : '미리보기'}
-          className="inline-flex h-8 items-center gap-1.5 border border-[color:var(--border)] bg-white px-2.5 text-xs text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
+          className="inline-flex h-7 items-center gap-1 border border-[color:var(--border)] bg-white px-2 text-[11px] text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
         >
           {previewMode ? <EyeOff size={14} /> : <Eye size={14} />}
           {previewMode ? '편집' : '미리보기'}
@@ -107,7 +107,7 @@ const PostCommandBar: React.FC<PostCommandBarProps> = ({
           onClick={onSave}
           disabled={saving}
           title="저장"
-          className="inline-flex h-8 items-center gap-1.5 border border-[color:var(--border)] bg-white px-2.5 text-xs text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:opacity-50"
+          className="inline-flex h-7 items-center gap-1 border border-[color:var(--border)] bg-white px-2 text-[11px] text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:opacity-50"
         >
           <Save size={14} />
           {saving ? '저장 중' : '저장'}
@@ -117,7 +117,7 @@ const PostCommandBar: React.FC<PostCommandBarProps> = ({
           onClick={onPublish}
           disabled={saving}
           title="발행"
-          className="inline-flex h-8 items-center gap-1.5 bg-[var(--text)] px-3 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="inline-flex h-7 items-center gap-1 bg-[var(--text)] px-2.5 text-[11px] font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
         >
           <Send size={14} />
           발행
@@ -127,7 +127,7 @@ const PostCommandBar: React.FC<PostCommandBarProps> = ({
             type="button"
             onClick={onDelete}
             title="삭제"
-            className="inline-flex h-8 items-center gap-1.5 border border-red-200 bg-white px-2.5 text-xs text-red-500 transition hover:bg-red-50"
+            className="inline-flex h-7 items-center gap-1 border border-red-200 bg-white px-2 text-[11px] text-red-500 transition hover:bg-red-50"
           >
             <Trash2 size={14} />
             삭제
