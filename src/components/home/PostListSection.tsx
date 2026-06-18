@@ -31,10 +31,10 @@ export const PostListSection = ({
     onClearSearch
 }: PostListSectionProps) => {
     return (
-        <section id="writing" className="mx-auto max-w-6xl px-4 py-12">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+        <section id="writing" className="mx-auto max-w-6xl px-4 py-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <h2 className="mt-2 font-display text-2xl font-semibold">
+                    <h2 className="font-display text-xl font-semibold">
                         전체 글
                     </h2>
                 </div>
@@ -42,16 +42,16 @@ export const PostListSection = ({
                     {filteredPosts.length}편
                 </span>
             </div>
-            <div className="mt-8 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+            <div className="mt-5 grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
                 <CategorySidebar
                     categoryTree={categoryTree}
                     selectedCategory={selectedCategory}
                     onSelectCategory={onSelectCategory}
                 />
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                     {filteredPosts.length > 0 && (
-                        <div className="grid gap-5">
+                        <div className="grid gap-3">
                             {filteredPosts.map((post, index) => (
                                 <PostCard key={post.id} post={post} variant="compact" index={index} />
                             ))}
@@ -59,7 +59,7 @@ export const PostListSection = ({
                     )}
 
                     {filteredPosts.length === 0 && hasLoaded && !loading && !error && (
-                        <div className="angular-panel rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-8 text-center">
+                        <div className="angular-panel rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-6 text-center">
                             <h3 className="font-display text-lg font-semibold">
                                 조건에 맞는 글이 없어요
                             </h3>

@@ -43,10 +43,10 @@ const PostImage: React.FC<{ post: Post; variant: 'featured' | 'compact' }> = ({ 
 
   const wrapperClass = variant === 'featured'
     ? "angular-control relative overflow-hidden rounded-lg"
-    : "angular-control overflow-hidden rounded-lg md:h-32 md:w-48";
+    : "angular-control overflow-hidden rounded-lg md:h-24 md:w-40";
 
   const imgClass = variant === 'featured'
-    ? "h-40 w-full object-cover transition duration-500 group-hover:scale-105"
+    ? "h-32 w-full object-cover transition duration-500 group-hover:scale-105"
     : "h-full w-full object-cover transition duration-500 group-hover:scale-105";
 
   return (
@@ -72,8 +72,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
   const isFeatured = variant === 'featured';
 
   const containerClass = isFeatured
-    ? "angular-panel-strong group flex h-full flex-col gap-3 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow)] transition duration-300 hover:translate-x-1 hover:-translate-y-1 hover:shadow-[var(--shadow-strong)] animate-slide-up"
-    : "angular-panel group flex flex-col gap-4 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5 transition duration-300 hover:translate-x-1 hover:-translate-y-1 hover:shadow-[var(--shadow)] animate-slide-up";
+    ? "angular-panel-strong group flex h-full flex-col gap-2.5 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3.5 shadow-[var(--shadow)] transition duration-300 hover:translate-x-1 hover:-translate-y-1 hover:shadow-[var(--shadow-strong)] animate-slide-up"
+    : "angular-panel group flex flex-col gap-3 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3.5 transition duration-300 hover:translate-x-1 hover:-translate-y-1 hover:shadow-[var(--shadow)] animate-slide-up";
 
   return (
     <Link
@@ -86,7 +86,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
         <>
           <PostImage post={post} variant="featured" />
           <PostMeta post={post} />
-          <h3 className="font-display text-lg font-bold text-[var(--text)] leading-snug">
+          <h3 className="font-display text-base font-bold leading-snug text-[var(--text)]">
             {post.title}
           </h3>
           <p className="text-xs text-[var(--text-muted)] line-clamp-2">{post.summary}</p>
@@ -105,17 +105,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, variant = 'compact', index = 
         // Compact Layout
         <>
           <PostMeta post={post} className="text-xs" />
-          <div className="flex flex-col gap-4 md:flex-row">
+          <div className="flex flex-col gap-3 md:flex-row">
             <PostImage post={post} variant="compact" />
-            <div className="flex flex-1 flex-col gap-3">
-              <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold text-[var(--text)]">
+            <div className="flex flex-1 flex-col gap-2.5">
+              <div className="space-y-1">
+                <h3 className="font-display text-base font-semibold text-[var(--text)]">
                   {post.title}
                 </h3>
-                <p className="text-sm text-[var(--text-muted)]">{post.summary}</p>
+                <p className="line-clamp-2 text-xs leading-relaxed text-[var(--text-muted)]">{post.summary}</p>
               </div>
-              <div className="mt-auto flex flex-wrap items-center gap-2">
-                <CategoryBadge category={post.category} className="px-2.5 py-1 text-[11px]" />
+              <div className="mt-auto flex flex-wrap items-center gap-1.5">
+                <CategoryBadge category={post.category} className="px-2 py-0.5 text-[10px]" />
                 <TagList tags={post.tags} />
                 <span className="ml-auto text-xs font-medium uppercase tracking-[0.2em] text-[var(--accent-strong)]">
                   읽기

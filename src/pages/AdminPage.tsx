@@ -6,12 +6,11 @@ import DashboardSection from '../components/admin/sections/DashboardSection';
 import ProfileSection from '../components/admin/sections/ProfileSection';
 import PostEditor from '../components/admin/PostEditor';
 import { useCategoryManagement } from '../hooks/useCategoryManagement';
-import { usePostFilter } from '../hooks/usePostFilter';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { useProfile } from '../hooks/useProfile';
 import { usePostStore } from '../store/postStore';
 import { LogOut } from 'lucide-react';
-import type { Post, PostStatus } from '../data/blogData';
+import type { Post } from '../data/blogData';
 import type { AdminSection } from '../types/admin';
 import { DEFAULT_CATEGORY } from '../utils/category';
 import * as authApi from '../api/authApi';
@@ -34,7 +33,6 @@ const parseAdminSection = (value: string | null): AdminSection => (
 const AdminPage: React.FC = () => {
   const posts = usePostStore(state => state.posts);
   const loading = usePostStore(state => state.loading);
-  const error = usePostStore(state => state.error);
   const hasLoaded = usePostStore(state => state.hasLoaded);
   const fetchPosts = usePostStore(state => state.fetchPosts);
 
@@ -88,21 +86,6 @@ const AdminPage: React.FC = () => {
     refreshPosts: fetchPosts,
     setNotice: () => { } // Handled in components
   });
-
-  // Post Filter (for Sidebar)
-  const {
-    searchQuery,
-    setSearchQuery,
-    filterStatus,
-    setFilterStatus,
-    filterCategory,
-    setFilterCategory,
-    filterCategoryIncludeDescendants,
-    setFilterCategoryIncludeDescendants,
-    page,
-    setPage,
-    filteredPosts
-  } = usePostFilter({ posts, categoryTree });
 
   // Profile Management
   const {
@@ -265,48 +248,44 @@ const AdminPage: React.FC = () => {
           )}
 
           {activeSection === 'posts' && (
-            <PostEditor
-              post={activePost}
-              onSaveSuccess={handleSaveSuccess}
-              onDeleteSuccess={handleDeleteSuccess}
-              categoryTree={categoryTree}
-              onLoadCategories={loadCategories}
-              sidebarProps={{
-                searchQuery,
-                onSearchChange: (value) => {
-                  setSearchQuery(value);
-                  setPage(1);
-                },
-                filterStatus,
-                onFilterStatusChange: (value) => {
-                  setFilterStatus(value as PostStatus | 'all');
-                  setPage(1);
-                },
-                filterCategory,
-                onFilterCategoryChange: (value) => {
-                  setFilterCategory(value);
-                  setPage(1);
-                },
-                filterCategoryIncludeDescendants,
-                onFilterCategoryIncludeDescendantsChange: (value) => {
-                  setFilterCategoryIncludeDescendants(value);
-                  setPage(1);
-                },
-                page,
-                onPageChange: setPage,
-                onNew: handleNew,
-                saving: false,
-                onSelect: handleSelect,
-                filteredPosts,
-                activeId,
-                loading,
-                error,
-                onReload: fetchPosts,
-                totalCount: filteredPosts.length,
-                statusCount: dashboardStats.statusCount,
-                categoryTree
-              }}
-            />
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--border)] pb-3">
+                <select
+                  value={activeId ?? ''}
+                  onChange={event => {
+                    const post = posts.find(item => item.id === event.target.value);
+                    if (post) {
+                      handleSelect(post);
+                    } else {
+                      handleNew();
+                    }
+                  }}
+                  className="h-8 min-w-[220px] max-w-full border border-[color:var(--border)] bg-white px-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+                >
+                  <option value="">새 글 작성</option>
+                  {posts.map(post => (
+                    <option key={post.id} value={post.id}>
+                      {post.title || '제목 없음'} · {post.status}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleNew}
+                  className="h-8 border border-[color:var(--border)] bg-white px-3 text-xs font-semibold text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
+                >
+                  새 글
+                </button>
+              </div>
+
+              <PostEditor
+                post={activePost}
+                onSaveSuccess={handleSaveSuccess}
+                onDeleteSuccess={handleDeleteSuccess}
+                categoryTree={categoryTree}
+                onLoadCategories={loadCategories}
+              />
+            </div>
           )}
         </section>
       </main>

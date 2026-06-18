@@ -35,7 +35,7 @@ interface EditorToolbarProps {
 }
 
 function ToolbarDivider() {
-  return <div className="mx-1 h-5 w-px bg-[var(--border)]" />;
+  return <div className="mx-0.5 h-4 w-px bg-[var(--border)]" />;
 }
 
 function ToolbarActionGroup({ actions }: { actions: ToolbarActionConfig[] }) {
@@ -86,12 +86,12 @@ export function EditorToolbar({
   });
 
   return (
-    <div className="sticky top-[129px] z-10 border-b border-[color:var(--border)] bg-white/95 py-2 backdrop-blur">
-      <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-1 px-0">
+    <div className="sticky top-[106px] z-10 border-b border-[color:var(--border)] bg-white/95 py-1 backdrop-blur">
+      <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-0.5 px-0">
         <ToolbarActionGroup actions={historyActions} />
         <ToolbarDivider />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <ToolbarDropdown
             label="본문"
             value={headingValue}
