@@ -4,59 +4,11 @@ import type { Post, PostStatus } from '../data/blogData';
 import type { SavePostInput } from '../api/postApi';
 import { usePostStore } from '../store/postStore';
 import { slugify } from '../utils/slugify';
-import { stripHtml } from '../utils/postContent';
+import { hasDocumentContent, stripHtml } from '../utils/postContent';
 import { normalizePostStatus } from '../utils/postStatus';
 import { toIsoDateTime } from '../utils/adminDate';
 import { normalizeDraftCategory, DEFAULT_CATEGORY } from '../utils/category';
 import { isAuthenticationError } from '../api/client';
-
-const hasMeaningfulContentNode = (node: unknown): boolean => {
-    if (!node || typeof node !== 'object') return false;
-
-    const typedNode = node as {
-        type?: string;
-        text?: string;
-        attrs?: Record<string, unknown>;
-        content?: unknown[];
-    };
-
-    if (typedNode.type === 'text') {
-        return typeof typedNode.text === 'string' && typedNode.text.trim().length > 0;
-    }
-
-    if (typedNode.type === 'hardBreak' || typedNode.type === 'horizontalRule') {
-        return true;
-    }
-
-    if (typedNode.type === 'image') {
-        return typeof typedNode.attrs?.src === 'string' && typedNode.attrs.src.trim().length > 0;
-    }
-
-    if (typedNode.type === 'linkCard') {
-        return typeof typedNode.attrs?.url === 'string' && typedNode.attrs.url.trim().length > 0;
-    }
-
-    if (typedNode.type === 'youtube') {
-        return typeof typedNode.attrs?.src === 'string' && typedNode.attrs.src.trim().length > 0;
-    }
-
-    if (typedNode.type === 'math') {
-        return typeof typedNode.attrs?.latex === 'string' && typedNode.attrs.latex.trim().length > 0;
-    }
-
-    if (typedNode.type === 'table' || typedNode.type === 'imageGallery' || typedNode.type === 'columns') {
-        return true;
-    }
-
-    if (Array.isArray(typedNode.content)) {
-        return typedNode.content.some(child => hasMeaningfulContentNode(child));
-    }
-
-    return false;
-};
-
-const hasDocumentContent = (contentJson: PostDraft['contentJson']) =>
-    Boolean(contentJson && hasMeaningfulContentNode(contentJson));
 
 interface UsePostPersistenceProps {
     draft: PostDraft;
@@ -95,28 +47,28 @@ export const usePostPersistence = ({
 
         if (!title) {
             setNotice('제목을 입력하세요.');
-            return;
+            return false;
         }
 
         if (!slug) {
             setNotice('슬러그를 입력하세요.');
-            return;
+            return false;
         }
 
         if (status !== 'draft' && !contentText && !hasContentJson) {
             setNotice('본문 내용을 입력하세요.');
-            return;
+            return false;
         }
 
         if (status === 'scheduled' && !scheduledAtIso) {
             setNotice('예약 발행 날짜를 입력하세요.');
-            return;
+            return false;
         }
 
         const slugTaken = posts.some(p => p.slug === slug && p.id !== activeId);
         if (slugTaken) {
             setNotice('슬러그가 이미 존재합니다.');
-            return;
+            return false;
         }
 
         const tags = draft.tags
@@ -175,11 +127,12 @@ export const usePostPersistence = ({
             // Notify Parent
             onSaveSuccess(saved);
             onAfterSave();
+            return true;
 
         } catch (error) {
             if (isAuthenticationError(error)) {
                 window.location.assign('/admin?auth=required');
-                return;
+                return false;
             }
 
             if (error instanceof Error && error.message) {
@@ -187,6 +140,7 @@ export const usePostPersistence = ({
             } else {
                 setNotice('저장에 실패했습니다.');
             }
+            return false;
         } finally {
             setSaving(false);
         }

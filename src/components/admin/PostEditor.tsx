@@ -1,23 +1,47 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
-import type { JSONContent } from '@tiptap/core';
 import { useTiptapEditor } from '../../hooks/useTiptapEditor';
 import PostEditorSection from './sections/PostEditorSection';
 import { useEditorImageControls } from '../../hooks/useEditorImageControls';
 import { uploadLocalImage } from '../../api/uploadApi';
-import type { Post, PostStatus } from '../../data/blogData';
+import type { Post } from '../../data/blogData';
 import type { CategoryTreeResult } from '../../utils/categoryTree';
 import { usePostForm, toDraft } from '../../hooks/usePostForm';
 import { useAutosave } from '../../hooks/useAutosave';
 import { usePostPersistence } from '../../hooks/usePostPersistence';
 import { usePostEditorShortcuts } from '../../hooks/usePostEditorShortcuts';
 import { usePostEditorActions } from '../../hooks/usePostEditorActions';
+import {
+    normalizeContentHtmlForDirtyCheck,
+    normalizeContentJsonForDirtyCheck
+} from '../../utils/postContent';
 
 const MAX_UPLOAD_MB = 8;
 
-const serializeContentJson = (contentJson?: JSONContent) =>
+const serializeContentJson = (contentJson?: ReturnType<typeof toDraft>['contentJson']) =>
     contentJson ? JSON.stringify(contentJson) : '';
+
+const serializeDraftForDirtyCheck = (draft: ReturnType<typeof toDraft>) => JSON.stringify({
+    title: draft.title,
+    slug: draft.slug,
+    summary: draft.summary,
+    category: draft.category,
+    contentJson: normalizeContentJsonForDirtyCheck(draft.contentJson),
+    contentHtml: normalizeContentHtmlForDirtyCheck(draft.contentHtml),
+    publishedAt: draft.publishedAt,
+    tags: draft.tags,
+    series: draft.series,
+    featured: draft.featured,
+    cover: draft.cover,
+    status: draft.status,
+    scheduledAt: draft.scheduledAt,
+    seoTitle: draft.seoTitle,
+    seoDescription: draft.seoDescription,
+    seoOgImage: draft.seoOgImage,
+    seoCanonicalUrl: draft.seoCanonicalUrl,
+    seoKeywords: draft.seoKeywords
+});
 
 interface PostEditorProps {
     post: Post | null;
@@ -25,6 +49,7 @@ interface PostEditorProps {
     onDeleteSuccess: () => void;
     categoryTree: CategoryTreeResult;
     onLoadCategories: () => void | Promise<void>;
+    onDirtyChange?: (dirty: boolean) => void;
 }
 
 const PostEditor: React.FC<PostEditorProps> = ({
@@ -32,7 +57,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
     onSaveSuccess,
     onDeleteSuccess,
     categoryTree,
-    onLoadCategories
+    onLoadCategories,
+    onDirtyChange
 }) => {
     const activeId = post?.id || null;
 
@@ -133,10 +159,41 @@ const PostEditor: React.FC<PostEditorProps> = ({
         () => serializeContentJson(draft.contentJson),
         [draft.contentJson]
     );
+    const baselineDraftKey = useMemo(
+        () => serializeDraftForDirtyCheck(toDraft(post || undefined)),
+        [post]
+    );
+    const currentDraftKey = useMemo(
+        () => serializeDraftForDirtyCheck(draft),
+        [draft]
+    );
+    const isDirty = currentDraftKey !== baselineDraftKey;
 
     useEffect(() => {
         editorRef.current = editor;
     }, [editor]);
+
+    useEffect(() => {
+        onDirtyChange?.(isDirty);
+    }, [isDirty, onDirtyChange]);
+
+    useEffect(() => {
+        return () => {
+            onDirtyChange?.(false);
+        };
+    }, [onDirtyChange]);
+
+    useEffect(() => {
+        if (!isDirty) return;
+
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty]);
 
     useEffect(() => {
         return () => {
@@ -191,9 +248,15 @@ const PostEditor: React.FC<PostEditorProps> = ({
     });
 
     usePostEditorShortcuts({
-        onSaveDraft: () => handleSave('초안으로 저장되었습니다.', 'draft'),
-        onSave: () => handleSave('수동 저장되었습니다.'),
-        onPublish: () => handleSave('발행되었습니다.', 'published'),
+        onSaveDraft: () => {
+            void handleSave('초안으로 저장되었습니다.', 'draft');
+        },
+        onSave: () => {
+            void handleSave('수동 저장되었습니다.');
+        },
+        onPublish: () => {
+            void handleSave('발행되었습니다.', 'published');
+        },
         onTogglePreview: togglePreviewMode
     });
 
@@ -201,7 +264,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
         editorHandlers: {
             onTitleChange: handleTitleChange,
             onStatusChange: handleStatusChange,
-            onSave: (message?: string, statusOverride?: PostStatus) => void handleSave(message, statusOverride),
+            onSave: handleSave,
             onDelete: () => void handleDelete(),
             updateDraft,
             onTogglePreview: togglePreviewMode,

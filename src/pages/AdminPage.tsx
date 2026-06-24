@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useBlocker, useSearchParams } from 'react-router-dom';
 import AdminNav from '../components/admin/AdminNav';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import CategorySection from '../components/admin/sections/CategorySection';
@@ -25,6 +25,7 @@ const ADMIN_SECTIONS: Array<{ key: AdminSection; label: string }> = [
 ];
 
 const ADMIN_SECTION_KEYS = new Set(ADMIN_SECTIONS.map(section => section.key));
+const UNSAVED_CHANGES_MESSAGE = '저장하지 않은 변경사항이 있습니다. 이동할까요?';
 
 const parseAdminSection = (value: string | null): AdminSection => (
   value && ADMIN_SECTION_KEYS.has(value as AdminSection)
@@ -46,6 +47,7 @@ const AdminPage: React.FC = () => {
   const [adminNoticeTone, setAdminNoticeTone] = useState<'success' | 'error'>('success');
   const [categoriesRequested, setCategoriesRequested] = useState(false);
   const [profileRequested, setProfileRequested] = useState(false);
+  const [editorDirty, setEditorDirty] = useState(false);
   const sectionParam = searchParams.get('section');
   const activeSection = parseAdminSection(sectionParam);
   const activeId = searchParams.get('post');
@@ -77,6 +79,15 @@ const AdminPage: React.FC = () => {
     setAdminNotice(message);
     setAdminNoticeTone(tone);
   }, []);
+
+  const confirmEditorNavigation = useCallback(() => {
+    if (activeSection !== 'posts' || !editorDirty) return true;
+    return window.confirm(UNSAVED_CHANGES_MESSAGE);
+  }, [activeSection, editorDirty]);
+
+  const historyBlocker = useBlocker(({ historyAction }) => (
+    activeSection === 'posts' && editorDirty && historyAction === 'POP'
+  ));
 
   // Category Management (still needed for Sidebar & Category Manager)
   const {
@@ -157,6 +168,17 @@ const AdminPage: React.FC = () => {
   }, [adminNotice]);
 
   useEffect(() => {
+    if (historyBlocker.state !== 'blocked') return;
+
+    if (window.confirm(UNSAVED_CHANGES_MESSAGE)) {
+      historyBlocker.proceed();
+      return;
+    }
+
+    historyBlocker.reset();
+  }, [historyBlocker]);
+
+  useEffect(() => {
     if (!sectionParam) {
       updateAdminLocation({ section: activeSection }, { replace: true });
     }
@@ -169,28 +191,41 @@ const AdminPage: React.FC = () => {
     }
   }, [activeId, hasLoaded, posts, updateAdminLocation]);
 
+  const handleSectionChange = (section: AdminSection) => {
+    if (section === activeSection) return;
+    if (!confirmEditorNavigation()) return;
+    updateAdminLocation({ section });
+  };
+
   const handleSelect = (post: Post) => {
+    if (post.id === activeId) return;
+    if (!confirmEditorNavigation()) return;
     updateAdminLocation({ section: 'posts', post: post.id });
   };
 
   const handleNew = () => {
+    if (!confirmEditorNavigation()) return;
     updateAdminLocation({ section: 'posts', post: null });
   };
 
   // Switch to post tab when clicking dashboard item
   const handleDashboardSelect = (post: Post) => {
+    if (!confirmEditorNavigation()) return;
     updateAdminLocation({ section: 'posts', post: post.id });
   };
 
   const handleSaveSuccess = (savedPost: Post) => {
+    setEditorDirty(false);
     updateAdminLocation({ section: 'posts', post: savedPost.id }, { replace: true });
   };
 
   const handleDeleteSuccess = () => {
+    setEditorDirty(false);
     updateAdminLocation({ post: null }, { replace: true });
   };
 
   const handleLogout = async () => {
+    if (!confirmEditorNavigation()) return;
     setIsLoggingOut(true);
     setLogoutError('');
 
@@ -210,19 +245,16 @@ const AdminPage: React.FC = () => {
   const activePost = activeId ? posts.find(p => p.id === activeId) || null : null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
+    <div className="admin-compact min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
       <header className="sticky top-0 z-10 border-b border-[color:var(--border)] bg-[var(--surface-overlay)] backdrop-blur-md">
         <div className="mx-auto flex max-w-[1700px] flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="min-w-[160px]">
-            <h1 className="font-display text-xl font-bold text-[var(--accent)]">HamLog Admin</h1>
-            {logoutError && (
-              <p className="mt-1 text-xs text-[var(--accent-strong)]">{logoutError}</p>
-            )}
-          </div>
+          {logoutError && (
+            <p className="min-w-[160px] text-xs text-[var(--accent-strong)]">{logoutError}</p>
+          )}
           <AdminNav
             activeSection={activeSection}
             sections={ADMIN_SECTIONS}
-            onChange={(section) => updateAdminLocation({ section })}
+            onChange={handleSectionChange}
           />
           <div className="flex items-center gap-2">
             <button
@@ -235,6 +267,11 @@ const AdminPage: React.FC = () => {
             </button>
             <Link
               to="/"
+              onClick={(event) => {
+                if (!confirmEditorNavigation()) {
+                  event.preventDefault();
+                }
+              }}
               className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)]"
             >
               사이트로 돌아가기
@@ -333,6 +370,7 @@ const AdminPage: React.FC = () => {
                   onDeleteSuccess={handleDeleteSuccess}
                   categoryTree={categoryTree}
                   onLoadCategories={loadCategories}
+                  onDirtyChange={setEditorDirty}
                 />
               </div>
             </div>

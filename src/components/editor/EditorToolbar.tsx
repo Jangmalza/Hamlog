@@ -83,7 +83,7 @@ export function EditorToolbar({
   });
 
   return (
-    <div className="sticky top-[106px] z-10 border-b border-[color:var(--border)] bg-white/95 py-1 backdrop-blur">
+    <div className="static z-10 border-b border-[color:var(--border)] bg-white/95 py-0.5 backdrop-blur lg:sticky lg:top-[calc(var(--admin-header-offset)+36px)]">
       <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-0.5 px-0">
         <ToolbarActionGroup actions={historyActions} />
         <ToolbarDivider />

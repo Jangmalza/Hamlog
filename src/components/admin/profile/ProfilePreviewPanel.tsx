@@ -191,17 +191,6 @@ const ProfilePreviewPanel = ({
         </div>
       </div>
     </div>
-
-    <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">
-        작성 팁
-      </p>
-      <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-muted)]">
-        <li>태그라인은 방문자가 첫 5초 안에 이해할 수 있는 한 문장으로 유지하는 편이 좋습니다.</li>
-        <li>`지금` 필드는 최신 관심사나 진행 중인 프로젝트를 적으면 홈 화면이 덜 정적으로 보입니다.</li>
-        <li>소셜 링크는 많이 넣기보다 실제로 응답 가능한 채널 위주로 남기는 게 좋습니다.</li>
-      </ul>
-    </div>
   </aside>
 );
 
