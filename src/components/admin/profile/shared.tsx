@@ -16,7 +16,7 @@ interface FieldProps {
 }
 
 export const inputClassName =
-  'mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent)]/20';
+  'mt-1.5 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent)]/20';
 
 export const textareaClassName = `${inputClassName} resize-y`;
 
@@ -28,14 +28,14 @@ export const SectionCard = ({
   children
 }: SectionCardProps) => (
   <section
-    className={`rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6 ${className}`}
+    className={`rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-4 ${className}`}
   >
-    <div className="mb-5 space-y-2">
+    <div className="mb-3 space-y-1.5">
       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">
         {eyebrow}
       </p>
       <div>
-        <h3 className="font-display text-xl font-semibold text-[var(--text)]">{title}</h3>
+        <h3 className="font-display text-lg font-semibold text-[var(--text)]">{title}</h3>
         {description && <p className="mt-1 text-sm text-[var(--text-muted)]">{description}</p>}
       </div>
     </div>

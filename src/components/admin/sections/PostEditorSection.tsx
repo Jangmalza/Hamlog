@@ -13,7 +13,7 @@ import CategoryPicker from '../category/CategoryPicker';
 export interface EditorHandlers {
   onTitleChange: (value: string) => void;
   onStatusChange: (value: PostStatus) => void;
-  onSave: (message?: string, statusOverride?: PostStatus) => void;
+  onSave: (message?: string, statusOverride?: PostStatus) => Promise<boolean>;
   onDelete: () => void;
   updateDraft: (patch: Partial<PostDraft>) => void;
   onTogglePreview: () => void;
@@ -81,7 +81,7 @@ interface PublishDialogProps {
   onUpdateDraft: (patch: Partial<PostDraft>) => void;
   onClose: () => void;
   onStatusChange: (status: PostStatus) => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCoverUpload?: (file: File) => Promise<void>;
 }
 
@@ -112,15 +112,23 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
   if (!open) return null;
 
   const isPrivate = status === 'draft';
+  const isScheduled = status === 'scheduled';
   const slug = slugify(draft.slug.trim() || draft.title.trim());
   const postUrl = resolvePostUrl(slug);
+  const confirmLabel = saving
+    ? '저장 중...'
+    : isPrivate
+      ? '비공개 저장'
+      : isScheduled
+        ? '예약 저장'
+        : '공개 발행';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4 py-6">
       <div className="max-h-[calc(100vh-3rem)] w-full max-w-[820px] overflow-y-auto border border-[color:var(--border)] bg-white">
         <div className="flex items-center justify-between border-b border-black px-6 py-4">
-          <h2 className="text-sm font-semibold text-[var(--text)]">발행</h2>
-          <span className="text-xs text-[var(--text-muted)]">CCL 설정</span>
+          <h2 className="text-sm font-semibold text-[var(--text)]">발행 설정</h2>
+          <span className="text-xs text-[var(--text-muted)]">저장 전 메타데이터 확인</span>
         </div>
 
         <div className="grid gap-8 px-6 py-8 md:grid-cols-[minmax(0,1fr)_180px]">
@@ -130,7 +138,7 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
             </p>
 
             <div className="grid grid-cols-[64px_minmax(0,1fr)] items-center border-b border-[color:var(--border)] py-5 text-sm">
-              <span className="font-semibold text-[var(--text)]">기본</span>
+              <span className="font-semibold text-[var(--text)]">상태</span>
               <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
                 <label className="inline-flex items-center gap-1.5">
                   <input
@@ -140,9 +148,13 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
                   />
                   공개
                 </label>
-                <label className="inline-flex items-center gap-1.5 opacity-40">
-                  <input type="radio" disabled />
-                  공개(보호)
+                <label className="inline-flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    checked={isScheduled}
+                    onChange={() => onStatusChange('scheduled')}
+                  />
+                  예약
                 </label>
                 <label className="inline-flex items-center gap-1.5 text-[var(--text)]">
                   <input
@@ -152,12 +164,11 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
                   />
                   비공개
                 </label>
-                <span className="ml-auto text-xs text-[var(--text-muted)]">댓글 허용</span>
               </div>
             </div>
 
             <div className="grid grid-cols-[64px_minmax(0,1fr)] items-center border-b border-[color:var(--border)] py-3 text-sm">
-              <span className="font-semibold text-[var(--text-muted)]">홈주제</span>
+              <span className="font-semibold text-[var(--text-muted)]">카테고리</span>
               <CategoryPicker
                 categoryTree={categoryTree}
                 value={draft.category || DEFAULT_CATEGORY}
@@ -178,6 +189,18 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
                 className="h-9 w-full border border-transparent bg-transparent text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--border)] focus:px-2"
               />
             </div>
+
+            {isScheduled && (
+              <div className="grid grid-cols-[64px_minmax(0,1fr)] items-center border-b border-[color:var(--border)] py-3 text-sm">
+                <span className="font-semibold text-[var(--text-muted)]">예약일</span>
+                <input
+                  type="datetime-local"
+                  value={draft.scheduledAt}
+                  onChange={event => onUpdateDraft({ scheduledAt: event.target.value })}
+                  className="h-9 w-full border border-transparent bg-transparent text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--border)] focus:px-2"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-[64px_minmax(0,1fr)] items-center border-b border-[color:var(--border)] py-3 text-sm">
               <span className="font-semibold text-[var(--text-muted)]">URL</span>
@@ -284,11 +307,11 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
           </button>
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={() => void onConfirm()}
             disabled={saving}
             className="h-11 min-w-36 rounded-full bg-black px-7 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? '저장 중...' : isPrivate ? '비공개 저장' : '공개 발행'}
+            {confirmLabel}
           </button>
         </div>
       </div>
@@ -352,28 +375,30 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
     });
   })();
 
-  const rootCategoryOptions = categoryTree.roots.map(category => category.name);
-  const categoryOptions = rootCategoryOptions.length > 0
-    ? rootCategoryOptions
-    : [draft.category || '미분류'];
-
   const openPublishDialog = () => {
-    setPublishStatus(draft.status === 'published' ? 'published' : 'draft');
+    setPublishStatus(draft.status);
     setPublishDialogOpen(true);
   };
 
-  const confirmPublishDialog = () => {
+  const confirmPublishDialog = async () => {
+    if (saving) return;
     onStatusChange(publishStatus);
-    onSave(
-      publishStatus === 'published' ? '발행되었습니다.' : '비공개로 저장되었습니다.',
+    const saved = await onSave(
+      publishStatus === 'published'
+        ? '발행되었습니다.'
+        : publishStatus === 'scheduled'
+          ? '예약 저장되었습니다.'
+          : '비공개로 저장되었습니다.',
       publishStatus
     );
-    setPublishDialogOpen(false);
+    if (saved) {
+      setPublishDialogOpen(false);
+    }
   };
 
   return (
     <div className="mx-auto max-w-none">
-      <div className="sticky top-[65px] z-20 border-b border-[color:var(--border)] bg-white/95 backdrop-blur">
+      <div className="sticky top-[var(--admin-header-offset)] z-20 border-b border-[color:var(--border)] bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1500px] flex-col gap-1.5 px-3 py-1.5 lg:flex-row lg:items-center lg:justify-between">
           <PostCommandBar
             activeId={activeId}
@@ -388,7 +413,7 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
             onDiscardAutosave={onDiscardAutosave}
             onStatusChange={onStatusChange}
             onTogglePreview={onTogglePreview}
-            onSave={() => onSave('수동 저장되었습니다.')}
+            onSave={() => void onSave('수동 저장되었습니다.')}
             onPublish={openPublishDialog}
             onDelete={onDelete}
           />
@@ -412,17 +437,15 @@ const PostEditorSection: React.FC<PostEditorSectionProps> = ({
           uploadLocalImage={uploadLocalImage}
         >
           <div className="mx-auto w-full max-w-[920px] px-0 pb-3 pt-6 sm:px-3 lg:px-6">
-            <select
+            <CategoryPicker
+              categoryTree={categoryTree}
               value={draft.category}
-              onChange={event => updateDraft({ category: event.target.value })}
-              className="h-7 w-36 border border-[color:var(--border)] bg-white px-2 text-[11px] text-[var(--text-muted)] outline-none transition focus:border-[color:var(--accent)]"
-            >
-              {categoryOptions.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+              onChange={(category) => updateDraft({ category })}
+              defaultOptionLabel={DEFAULT_CATEGORY}
+              recentStorageKey="hamlog:admin:editor-categories"
+              triggerClassName="flex h-8 w-full max-w-[260px] items-center justify-between border border-[color:var(--border)] bg-white px-2.5 text-xs text-[var(--text-muted)] transition hover:border-[color:var(--accent)]"
+              panelClassName="absolute left-0 top-full z-40 mt-2 w-full min-w-[320px] rounded-lg border border-[color:var(--border)] bg-white p-3 shadow-lg"
+            />
 
             <PostEditorHeader
               activeId={activeId}

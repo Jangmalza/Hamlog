@@ -85,6 +85,155 @@ body::before {
       linear-gradient(135deg, rgba(249, 115, 22, 0.08), transparent 34%),
       linear-gradient(180deg, var(--surface), var(--surface-muted));
   }
+
+  .admin-compact {
+    --admin-header-offset: 56px;
+  }
+
+  @media (max-width: 767px) {
+    .admin-compact {
+      --admin-header-offset: 96px;
+    }
+  }
+
+  .admin-compact .rounded-xl {
+    border-radius: 0.5rem !important;
+  }
+
+  .admin-compact .rounded-lg {
+    border-radius: 0.375rem !important;
+  }
+
+  .admin-compact .p-8 {
+    padding: 1.25rem !important;
+  }
+
+  .admin-compact .p-6 {
+    padding: 1rem !important;
+  }
+
+  .admin-compact .p-5 {
+    padding: 0.875rem !important;
+  }
+
+  .admin-compact .p-4 {
+    padding: 0.75rem !important;
+  }
+
+  .admin-compact .p-3 {
+    padding: 0.625rem !important;
+  }
+
+  .admin-compact .px-6 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .admin-compact .py-8 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  .admin-compact .py-6 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .admin-compact .py-5 {
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+  }
+
+  .admin-compact .py-4 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .admin-compact .py-3 {
+    padding-top: 0.625rem !important;
+    padding-bottom: 0.625rem !important;
+  }
+
+  .admin-compact .gap-8 {
+    gap: 1.25rem !important;
+  }
+
+  .admin-compact .gap-6 {
+    gap: 1rem !important;
+  }
+
+  .admin-compact .gap-5,
+  .admin-compact .gap-4 {
+    gap: 0.75rem !important;
+  }
+
+  .admin-compact .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem !important;
+  }
+
+  .admin-compact .space-y-5 > :not([hidden]) ~ :not([hidden]),
+  .admin-compact .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.75rem !important;
+  }
+
+  .admin-compact .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.625rem !important;
+  }
+
+  .admin-compact .h-11 {
+    height: 2.25rem !important;
+  }
+
+  .admin-compact .h-10 {
+    height: 2.125rem !important;
+  }
+
+  .admin-compact .h-9 {
+    height: 2rem !important;
+  }
+
+  .admin-compact .h-8 {
+    height: 1.875rem !important;
+  }
+
+  .admin-compact input:not([type='checkbox']):not([type='radio']),
+  .admin-compact select {
+    min-height: 2rem;
+  }
+
+  .admin-compact textarea {
+    min-height: 5rem;
+  }
+
+  .admin-compact .tiptap-editor {
+    min-height: max(520px, 50vh);
+    padding: 8px 0;
+  }
+
+  .admin-compact .tiptap-editor h1 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .admin-compact .tiptap-editor h2 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .admin-compact .tiptap-editor h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .admin-compact .tiptap-editor p {
+    line-height: 1.65;
+    min-height: 1.55rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .admin-compact .tiptap-editor p:empty {
+    min-height: 1.55rem;
+  }
 }
 
 .post-content {
