@@ -12,8 +12,8 @@ export interface AdminSidebarProps {
   embedded?: boolean;
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  filterStatus: string;
-  onFilterStatusChange: (value: string) => void;
+  filterStatus: PostStatus | 'all';
+  onFilterStatusChange: (value: PostStatus | 'all') => void;
   filterCategory: string;
   onFilterCategoryChange: (value: string) => void;
   filterCategoryIncludeDescendants: boolean;
@@ -43,8 +43,8 @@ export interface SidebarSummaryProps {
 export interface SidebarFiltersProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  filterStatus: string;
-  onFilterStatusChange: (value: string) => void;
+  filterStatus: PostStatus | 'all';
+  onFilterStatusChange: (value: PostStatus | 'all') => void;
   filterCategory: string;
   onFilterCategoryChange: (value: string) => void;
   filterCategoryIncludeDescendants: boolean;

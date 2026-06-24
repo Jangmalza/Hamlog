@@ -29,6 +29,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Verify data integrity
+        run: npm run verify:data
+
       - name: Build
         run: npm run build
 
@@ -135,6 +138,10 @@ jobs:
               -e COOKIE_SAME_SITE="${{ secrets.COOKIE_SAME_SITE }}" \
               -e COOKIE_SECURE="${{ secrets.COOKIE_SECURE }}" \
               -e SITE_URL="${{ secrets.SITE_URL }}" \
+              -e GOOGLE_SITE_VERIFICATION="${{ secrets.GOOGLE_SITE_VERIFICATION }}" \
+              -e NAVER_SITE_VERIFICATION="${{ secrets.NAVER_SITE_VERIFICATION }}" \
+              -e DAUM_SITE_VERIFICATION="${{ secrets.DAUM_SITE_VERIFICATION }}" \
+              -e DAUM_WEBMASTER_PIN="${{ secrets.DAUM_WEBMASTER_PIN }}" \
               "$image"
           }
 

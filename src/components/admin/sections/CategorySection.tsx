@@ -50,29 +50,22 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   );
 
   return (
-    <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-6">
-      <div className="overflow-hidden rounded-xl border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(6,55,48,0.08),rgba(255,255,255,0)_55%),linear-gradient(180deg,var(--surface),var(--surface))] p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.32em] text-[var(--text-muted)]">
+    <div className="space-y-3">
+      <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[var(--text-muted)]">
               카테고리 관리
             </p>
-            <div className="space-y-2">
-              <h2 className="font-display text-2xl font-semibold text-[var(--text)]">
-                트리와 상세 패널로 정리하는 카테고리 운영
-              </h2>
-              <p className="max-w-2xl text-sm leading-6 text-[var(--text-muted)]">
-                검색, 드래그 정렬, 상세 편집을 한 화면에 모아 운영 흐름이 바로 보이도록
-                정리했습니다. 선택한 카테고리의 글 수와 하위 구조도 우측 패널에서 바로
-                확인할 수 있습니다.
-              </p>
-            </div>
+            <h2 className="mt-0.5 font-display text-lg font-semibold text-[var(--text)]">
+              카테고리 트리
+            </h2>
           </div>
           <button
             type="button"
             onClick={onReload}
             disabled={categoriesLoading}
-            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             새로고침
           </button>
@@ -86,7 +79,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
       )}
       {categoriesError && <p className="mt-4 text-xs text-red-500">{categoriesError}</p>}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_360px]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_340px]">
         <CategoryTreePanel
           categoryTree={categoryTree}
           managedCategoryIds={managedCategoryIds}

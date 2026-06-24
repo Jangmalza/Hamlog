@@ -8,27 +8,26 @@ interface AdminNavProps {
 }
 
 const AdminNav: React.FC<AdminNavProps> = ({ activeSection, sections, onChange }) => (
-  <div className="angular-panel rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
-    <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-muted)]">
-      관리 메뉴
-    </p>
-    <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-      {sections.map(item => (
-        <button
-          key={item.key}
-          type="button"
-          onClick={() => onChange(item.key)}
-          className={`angular-control flex items-center justify-center rounded-lg border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${activeSection === item.key
-              ? 'border-[color:var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-              : 'border-[color:var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:text-[var(--text)]'
-            }`}
-          aria-current={activeSection === item.key ? 'page' : undefined}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-  </div>
+  <nav
+    aria-label="관리 메뉴"
+    className="flex flex-wrap items-center gap-1 rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-1"
+  >
+    {sections.map(item => (
+      <button
+        key={item.key}
+        type="button"
+        onClick={() => onChange(item.key)}
+        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+          activeSection === item.key
+            ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+            : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
+        }`}
+        aria-current={activeSection === item.key ? 'page' : undefined}
+      >
+        {item.label}
+      </button>
+    ))}
+  </nav>
 );
 
 export default AdminNav;

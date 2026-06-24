@@ -32,6 +32,26 @@ const HOME_TITLE_SUFFIX = '클라우드 엔지니어링과 개발 기록';
 const HOME_DESCRIPTION = '클라우드 엔지니어링, 인프라, DevOps, 개발 경험을 기록하는 기술 블로그입니다.';
 
 const app = express();
+const cspDirectives = {
+    defaultSrc: ["'self'"],
+    baseUri: ["'self'"],
+    objectSrc: ["'none'"],
+    frameAncestors: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+    connectSrc: ["'self'", 'https:'],
+    frameSrc: ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
+    mediaSrc: ["'self'", 'data:', 'blob:'],
+    manifestSrc: ["'self'"],
+    formAction: ["'self'"]
+};
+
+if (process.env.NODE_ENV === 'production') {
+    cspDirectives.upgradeInsecureRequests = [];
+}
+
 const replaceHeadTag = (html, pattern, replacement) => (
     pattern.test(html)
         ? html.replace(pattern, replacement)
@@ -208,7 +228,9 @@ const injectNoindexAppShell = async (req, res, next) => {
 
 // Middleware
 app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+        directives: cspDirectives
+    },
     crossOriginEmbedderPolicy: false
 }));
 app.use(cors((req, callback) => {
