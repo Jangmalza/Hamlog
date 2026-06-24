@@ -40,7 +40,7 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.45 : 1,
-    paddingLeft: depth * 16
+    paddingLeft: depth * 12
   };
 
   const hasChildren = node.children.length > 0;
@@ -102,25 +102,25 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
 
   return (
     <div ref={setNodeRef} style={style} className="touch-none">
-      <div className="mb-2 flex items-start gap-2">
+      <div className="mb-1.5 flex items-start gap-1.5">
         {hasChildren ? (
           <button
             type="button"
             onClick={() => setIsExpanded(prev => !prev)}
-            className="mt-2 flex h-6 w-6 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+            className="mt-1.5 flex h-5 w-5 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
             aria-label={`${node.name} 토글`}
           >
             <ChevronRight
-              size={14}
+              size={13}
               className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
             />
           </button>
         ) : (
-          <span className="mt-2 block h-6 w-6 flex-shrink-0" />
+          <span className="mt-1.5 block h-5 w-5 flex-shrink-0" />
         )}
 
         <div
-          className={`group flex flex-1 items-start justify-between gap-3 rounded-lg border p-3 transition-all ${
+          className={`group flex flex-1 items-start justify-between gap-2 rounded-lg border px-2.5 py-2 transition-all ${
             isActive
               ? 'border-[color:var(--accent)] bg-[var(--surface)] ring-1 ring-[color:var(--accent-soft)]'
               : 'border-[color:var(--border)] bg-[var(--surface-muted)] hover:border-[color:var(--accent)] hover:bg-[var(--surface)]'
@@ -135,19 +135,19 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
             }
           }}
         >
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               {isManaged && !isDefault && !categorySaving && (
                 <div
                   {...attributes}
                   {...listeners}
-                  className="cursor-grab rounded-lg border border-[color:var(--border)] p-1 text-[var(--text-muted)] transition hover:text-[var(--text)] active:cursor-grabbing"
+                  className="cursor-grab rounded-md border border-[color:var(--border)] p-0.5 text-[var(--text-muted)] transition hover:text-[var(--text)] active:cursor-grabbing"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <GripVertical size={14} />
+                  <GripVertical size={13} />
                 </div>
               )}
-              <p className="truncate text-sm font-semibold text-[var(--text)]">{node.name}</p>
+              <p className="truncate text-[13px] font-semibold text-[var(--text)]">{node.name}</p>
               {isDefault && (
                 <span className="rounded-lg bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
                   기본
@@ -159,14 +159,14 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--text-muted)]">
-              <span className="rounded-lg bg-[var(--surface)] px-2 py-1">
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
+              <span className="rounded-md bg-[var(--surface)] px-1.5 py-0.5">
                 전체 {node.count}개 글
               </span>
-              <span className="rounded-lg bg-[var(--surface)] px-2 py-1">
+              <span className="rounded-md bg-[var(--surface)] px-1.5 py-0.5">
                 직속 {node.directCount}
               </span>
-              <span className="rounded-lg bg-[var(--surface)] px-2 py-1">
+              <span className="rounded-md bg-[var(--surface)] px-1.5 py-0.5">
                 하위 {node.children.length}
               </span>
             </div>
@@ -182,10 +182,10 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
                 onSelectCategory(node.id);
               }}
               disabled={!isManaged || isDefault || categorySaving}
-              className="rounded-lg p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--accent)] disabled:opacity-40"
+              className="rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--accent)] disabled:opacity-40"
               title="하위 카테고리 추가"
             >
-              <Plus size={16} />
+              <Plus size={14} />
             </button>
             <button
               type="button"
@@ -194,10 +194,10 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
                 startEdit();
               }}
               disabled={!isManaged || isDefault || categorySaving}
-              className="rounded-lg p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--accent)] disabled:opacity-40"
+              className="rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--accent)] disabled:opacity-40"
               title="수정"
             >
-              <Edit2 size={15} />
+              <Edit2 size={14} />
             </button>
             <button
               type="button"
@@ -206,18 +206,18 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
                 onDeleteCategory(node);
               }}
               disabled={!isManaged || isDefault || categorySaving}
-              className="rounded-lg p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-red-500 disabled:opacity-40"
+              className="rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-red-500 disabled:opacity-40"
               title="삭제"
             >
-              <Trash2 size={15} />
+              <Trash2 size={14} />
             </button>
           </div>
         </div>
       </div>
 
       {isEditing && (
-        <div className="mb-3 ml-8 rounded-lg border border-dashed border-[color:var(--border)] bg-[var(--surface)] p-4">
-          <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
+        <div className="mb-2 ml-7 rounded-lg border border-dashed border-[color:var(--border)] bg-[var(--surface)] p-3">
+          <div className="grid gap-2 md:grid-cols-[1.4fr_1fr_auto]">
             <div className="space-y-1">
               <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                 이름 수정
@@ -225,7 +225,7 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
               <input
                 value={editingName}
                 onChange={(event) => setEditingName(event.target.value)}
-                className="w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
                 autoFocus
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') void saveEdit();
@@ -240,7 +240,7 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
               <select
                 value={editingParentId}
                 onChange={(event) => setEditingParentId(event.target.value)}
-                className="w-full rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-muted)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
               >
                 <option value="">최상위</option>
                 {parentOptions
@@ -257,14 +257,14 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
                 type="button"
                 onClick={saveEdit}
                 disabled={categorySaving}
-                className="rounded-xl bg-[var(--accent)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-50"
+                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-50"
               >
                 저장
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="rounded-xl border border-[color:var(--border)] px-3 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
+                className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
               >
                 취소
               </button>
@@ -277,9 +277,9 @@ const CategoryTreeItem: React.FC<CategoryTreeItemProps> = ({
         {children}
 
         {isAddingChild && (
-          <div className="mb-2 flex items-center gap-2" style={{ paddingLeft: (depth + 1) * 16 }}>
-            <span className="block h-6 w-6 flex-shrink-0" />
-            <div className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[color:var(--accent)] bg-[var(--surface)] p-3">
+          <div className="mb-1.5 flex items-center gap-1.5" style={{ paddingLeft: (depth + 1) * 12 }}>
+            <span className="block h-5 w-5 flex-shrink-0" />
+            <div className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[color:var(--accent)] bg-[var(--surface)] px-2.5 py-2">
               <span className="text-[var(--accent)]">
                 <Plus size={14} />
               </span>

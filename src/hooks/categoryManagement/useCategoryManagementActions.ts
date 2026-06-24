@@ -34,37 +34,44 @@ export function useCategoryManagementActions({
   setNotice,
   setCategoriesError
 }: CategoryManagementActionsOptions) {
+  const rejectWithCategoryError = useCallback(
+    (message: string): never => {
+      setCategoriesError(message);
+      throw new Error(message);
+    },
+    [setCategoriesError]
+  );
+
   const handleAddCategory = useCallback(
     async (overrideName?: string, overrideParentId?: string | null) => {
-      if (categorySaving) return;
-
-      if (!overrideName) {
-        setCategoriesError('카테고리 이름을 입력하세요.');
+      if (categorySaving) {
         return;
       }
 
-      const normalized = normalizeCategoryName(overrideName);
+      const requestedName = String(overrideName ?? '');
+
+      if (!requestedName) {
+        rejectWithCategoryError('카테고리 이름을 입력하세요.');
+      }
+
+      const normalized = normalizeCategoryName(requestedName);
       if (!normalized) {
-        setCategoriesError('카테고리 이름을 입력하세요.');
-        return;
+        rejectWithCategoryError('카테고리 이름을 입력하세요.');
       }
 
       const key = normalizeCategoryKey(normalized);
       if (key === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-        setCategoriesError('기본 카테고리는 자동으로 포함됩니다.');
-        return;
+        rejectWithCategoryError('기본 카테고리는 자동으로 포함됩니다.');
       }
 
       const exists = availableCategories.some(category => normalizeCategoryKey(category) === key);
       if (exists) {
-        setCategoriesError('이미 존재하는 카테고리입니다.');
-        return;
+        rejectWithCategoryError('이미 존재하는 카테고리입니다.');
       }
 
       const parentId = overrideParentId || null;
       if (parentId && !categoryTree.nodesById.has(parentId)) {
-        setCategoriesError('상위 카테고리가 유효하지 않습니다.');
-        return;
+        rejectWithCategoryError('상위 카테고리가 유효하지 않습니다.');
       }
 
       setCategoriesError('');
@@ -78,6 +85,7 @@ export function useCategoryManagementActions({
             ? error.message
             : '카테고리 추가에 실패했습니다.';
         setCategoriesError(message);
+        throw error;
       }
     },
     [
@@ -85,6 +93,7 @@ export function useCategoryManagementActions({
       availableCategories,
       categorySaving,
       categoryTree.nodesById,
+      rejectWithCategoryError,
       setCategoriesError,
       setNotice
     ]
@@ -92,13 +101,14 @@ export function useCategoryManagementActions({
 
   const handleDeleteCategory = useCallback(
     async (category: { id: string; name: string }) => {
-      if (categorySaving) return;
+      if (categorySaving) {
+        return;
+      }
 
       const normalized = normalizeDraftCategory(category.name, DEFAULT_CATEGORY);
       const key = normalizeCategoryKey(normalized);
       if (key === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-        setCategoriesError('기본 카테고리는 삭제할 수 없습니다.');
-        return;
+        rejectWithCategoryError('기본 카테고리는 삭제할 수 없습니다.');
       }
 
       const node = categoryTree.nodesById.get(category.id);
@@ -131,12 +141,14 @@ export function useCategoryManagementActions({
             ? error.message
             : '카테고리 삭제에 실패했습니다.';
         setCategoriesError(message);
+        throw error;
       }
     },
     [
       categorySaving,
       categoryTree.nodesById,
       draftCategory,
+      rejectWithCategoryError,
       refreshPosts,
       removeCategory,
       setCategoriesError,
@@ -150,35 +162,33 @@ export function useCategoryManagementActions({
       category: { id: string; name: string; parentId: string | null },
       updates: { name?: string; parentId?: string | null }
     ) => {
-      if (categorySaving) return;
+      if (categorySaving) {
+        return;
+      }
 
       const nextName =
         updates.name !== undefined ? normalizeCategoryName(updates.name) : category.name;
       if (!nextName) {
-        setCategoriesError('카테고리 이름을 입력하세요.');
-        return;
+        rejectWithCategoryError('카테고리 이름을 입력하세요.');
       }
 
       const key = normalizeCategoryKey(nextName);
       if (key === normalizeCategoryKey(DEFAULT_CATEGORY)) {
-        setCategoriesError('기본 카테고리는 사용할 수 없습니다.');
-        return;
+        rejectWithCategoryError('기본 카테고리는 사용할 수 없습니다.');
       }
 
       const nameChanged = normalizeCategoryKey(category.name) !== key;
       if (nameChanged) {
         const exists = availableCategories.some(item => normalizeCategoryKey(item) === key);
         if (exists) {
-          setCategoriesError('이미 존재하는 카테고리입니다.');
-          return;
+          rejectWithCategoryError('이미 존재하는 카테고리입니다.');
         }
       }
 
       const parentId =
         updates.parentId !== undefined ? updates.parentId || null : category.parentId ?? null;
       if (parentId && !categoryTree.nodesById.has(parentId)) {
-        setCategoriesError('상위 카테고리를 다시 선택하세요.');
-        return;
+        rejectWithCategoryError('상위 카테고리를 다시 선택하세요.');
       }
 
       const payload: { name?: string; parentId?: string | null } = {};
@@ -208,6 +218,7 @@ export function useCategoryManagementActions({
             ? error.message
             : '카테고리 수정에 실패했습니다.';
         setCategoriesError(message);
+        throw error;
       }
     },
     [
@@ -215,6 +226,7 @@ export function useCategoryManagementActions({
       categorySaving,
       categoryTree.nodesById,
       draftCategory,
+      rejectWithCategoryError,
       refreshPosts,
       setCategoriesError,
       setDraftCategory,
@@ -225,7 +237,9 @@ export function useCategoryManagementActions({
 
   const handleReorderCategory = useCallback(
     async (parentId: string | null, orderedIds: string[]) => {
-      if (categorySaving) return;
+      if (categorySaving) {
+        return;
+      }
 
       setCategoriesError('');
 
@@ -238,6 +252,7 @@ export function useCategoryManagementActions({
             ? error.message
             : '카테고리 순서 변경에 실패했습니다.';
         setCategoriesError(message);
+        throw error;
       }
     },
     [categorySaving, reorderCategories, setCategoriesError, setNotice]

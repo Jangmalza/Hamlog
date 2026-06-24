@@ -840,6 +840,9 @@ test('home page reflects profile SEO metadata and search engine verification', a
         const response = await request(app).get('/');
 
         assert.equal(response.status, 200);
+        assert.match(response.headers['content-security-policy'], /default-src 'self'/);
+        assert.match(response.headers['content-security-policy'], /object-src 'none'/);
+        assert.match(response.headers['content-security-policy'], /frame-ancestors 'self'/);
         assert.match(response.text, /<title>HamLog Ops \| 클라우드 엔지니어링과 개발 기록<\/title>/);
         assert.match(
             response.text,

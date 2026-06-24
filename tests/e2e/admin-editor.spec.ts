@@ -1,10 +1,30 @@
 import { expect, test } from '@playwright/test';
 
+const backendOrigin = `http://127.0.0.1:${process.env.PORT ?? '4000'}`;
 const loginPasswords = Array.from(new Set([
   process.env.ADMIN_PASSWORD,
   'e2e-password',
   'admin1234'
 ].filter(Boolean))) as string[];
+
+test('backend exposes robots and baseline security headers', async ({ request }) => {
+  const homeResponse = await request.get(`${backendOrigin}/`);
+  expect(homeResponse.status()).toBe(200);
+
+  const csp = homeResponse.headers()['content-security-policy'] ?? '';
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("frame-ancestors 'self'");
+
+  const robotsResponse = await request.get(`${backendOrigin}/robots.txt`);
+  expect(robotsResponse.status()).toBe(200);
+  expect(robotsResponse.headers()['content-type']).toContain('text/plain');
+
+  const robots = await robotsResponse.text();
+  expect(robots).toContain('User-agent: *');
+  expect(robots).toContain('Allow: /');
+  expect(robots).toContain('Sitemap: https://tech.hamwoo.co.kr/sitemap.xml');
+});
 
 test('admin can publish a simple post and view it publicly', async ({ page }) => {
   const uniqueId = Date.now();
@@ -61,6 +81,13 @@ test('admin can publish a simple post and view it publicly', async ({ page }) =>
   await page.goto(`/posts/${slug}`);
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await expect(page.getByText(body)).toBeVisible();
+
+  const seoResponse = await page.request.get(`${backendOrigin}/posts/${slug}`);
+  expect(seoResponse.status()).toBe(200);
+  const seoHtml = await seoResponse.text();
+  expect(seoHtml).toContain(`<title>${title}</title>`);
+  expect(seoHtml).toContain(`<meta property="og:type" content="article" />`);
+  expect(seoHtml).toContain(`/posts/${slug}`);
 
   await page.goto('/admin');
   await page.evaluate(async (postSlug) => {

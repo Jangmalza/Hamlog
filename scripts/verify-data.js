@@ -9,6 +9,18 @@ const dataDir = path.join(rootDir, 'server', 'data');
 const postsFilePath = path.join(dataDir, 'posts.json');
 const postsDir = path.join(dataDir, 'posts');
 
+const pathExists = async (targetPath) => {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return false;
+    }
+    throw error;
+  }
+};
+
 const readJsonFile = async (filePath) => {
   const raw = await fs.readFile(filePath, 'utf-8');
   return JSON.parse(raw);
@@ -37,6 +49,13 @@ const verify = async () => {
   const errors = [];
   let indexPosts = [];
   let postFiles = [];
+  const hasPostsIndex = await pathExists(postsFilePath);
+  const hasPostsDirectory = await pathExists(postsDir);
+
+  if (!hasPostsIndex && !hasPostsDirectory) {
+    console.log('데이터 파일이 없어 무결성 점검을 건너뜁니다.');
+    return;
+  }
 
   try {
     indexPosts = await readJsonFile(postsFilePath);
@@ -49,12 +68,16 @@ const verify = async () => {
     indexPosts = [];
   }
 
-  try {
-    postFiles = (await fs.readdir(postsDir))
-      .filter(fileName => fileName.endsWith('.json'))
-      .sort();
-  } catch (error) {
-    errors.push(`개별 글 디렉터리를 읽을 수 없습니다: ${error.message}`);
+  if (hasPostsDirectory) {
+    try {
+      postFiles = (await fs.readdir(postsDir))
+        .filter(fileName => fileName.endsWith('.json'))
+        .sort();
+    } catch (error) {
+      errors.push(`개별 글 디렉터리를 읽을 수 없습니다: ${error.message}`);
+    }
+  } else {
+    errors.push('개별 글 디렉터리를 찾을 수 없습니다.');
   }
 
   addDuplicateErrors(indexPosts, 'id', '글 ID', errors);

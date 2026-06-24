@@ -9,6 +9,8 @@ interface UsePostFilterProps {
     categoryTree: CategoryTreeResult;
 }
 
+const POSTS_PER_PAGE = 10;
+
 export function usePostFilter({ posts, categoryTree }: UsePostFilterProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<PostStatus | 'all'>(() => {
@@ -100,6 +102,17 @@ export function usePostFilter({ posts, categoryTree }: UsePostFilterProps) {
 
         return result;
     }, [posts, filterStatus, filterCategory, matchingCategoryKeys, searchQuery]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [filterCategory, filterCategoryIncludeDescendants, filterStatus, searchQuery]);
+
+    useEffect(() => {
+        const totalPages = Math.max(1, Math.ceil(filteredPosts.length / POSTS_PER_PAGE));
+        if (page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [filteredPosts.length, page]);
 
     return {
         searchQuery,

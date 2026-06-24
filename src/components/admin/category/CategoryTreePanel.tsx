@@ -14,7 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { FolderPlus, Search } from 'lucide-react';
+import { FolderPlus, Plus, Search } from 'lucide-react';
 import type { CategoryNode } from '../../../utils/categoryTree';
 import { flattenCategoryTree, getCategoryPathLabel } from '../../../utils/categoryTree';
 import CategoryTreeItem from './CategoryTreeItem';
@@ -174,8 +174,8 @@ const CategoryTreePanel: React.FC<CategoryTreePanelProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-muted)] p-4">
+    <div className="space-y-3">
+      <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-2">
         <div className="relative">
           <Search
             size={16}
@@ -185,31 +185,25 @@ const CategoryTreePanel: React.FC<CategoryTreePanelProps> = ({
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="카테고리 이름이나 경로 검색"
-            className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface)] py-3 pl-11 pr-4 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
+            className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface)] py-2 pl-10 pr-3 text-sm text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
           />
         </div>
-        <p className="mt-3 text-xs text-[var(--text-muted)]">
-          왼쪽 트리에서는 정렬과 빠른 수정, 오른쪽 패널에서는 선택한 카테고리의 상세
-          편집과 하위 구조를 확인할 수 있습니다.
-        </p>
       </div>
 
-      <div className="rounded-xl border border-[color:var(--border)] bg-[var(--surface)] p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface)] p-3">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
               카테고리 트리
-            </p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
-              드래그 정렬은 같은 깊이의 형제 카테고리끼리만 가능합니다.
             </p>
           </div>
           {!isAddingRoot && (
             <button
               type="button"
               onClick={() => setIsAddingRoot(true)}
-              className="rounded-lg bg-[var(--text)] px-4 py-2 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--text)] px-3 py-1.5 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90"
             >
+              <Plus size={14} />
               새 카테고리
             </button>
           )}
@@ -310,7 +304,7 @@ const CategoryTreePanel: React.FC<CategoryTreePanelProps> = ({
           <button
             type="button"
             onClick={() => setIsAddingRoot(true)}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-[color:var(--border)] px-4 py-3 text-sm text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-[color:var(--border)] px-4 py-2 text-sm text-[var(--text-muted)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
           >
             <FolderPlus size={16} />
             새 최상위 카테고리 추가

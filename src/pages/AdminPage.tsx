@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import AdminNav from '../components/admin/AdminNav';
+import AdminSidebar from '../components/admin/AdminSidebar';
 import CategorySection from '../components/admin/sections/CategorySection';
 import DashboardSection from '../components/admin/sections/DashboardSection';
 import ProfileSection from '../components/admin/sections/ProfileSection';
 import PostEditor from '../components/admin/PostEditor';
 import { useCategoryManagement } from '../hooks/useCategoryManagement';
 import { useDashboardStats } from '../hooks/useDashboardStats';
+import { usePostFilter } from '../hooks/usePostFilter';
 import { useProfile } from '../hooks/useProfile';
 import { usePostStore } from '../store/postStore';
 import { LogOut } from 'lucide-react';
@@ -33,12 +35,17 @@ const parseAdminSection = (value: string | null): AdminSection => (
 const AdminPage: React.FC = () => {
   const posts = usePostStore(state => state.posts);
   const loading = usePostStore(state => state.loading);
+  const postError = usePostStore(state => state.error);
   const hasLoaded = usePostStore(state => state.hasLoaded);
   const fetchPosts = usePostStore(state => state.fetchPosts);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
+  const [adminNotice, setAdminNotice] = useState('');
+  const [adminNoticeTone, setAdminNoticeTone] = useState<'success' | 'error'>('success');
+  const [categoriesRequested, setCategoriesRequested] = useState(false);
+  const [profileRequested, setProfileRequested] = useState(false);
   const sectionParam = searchParams.get('section');
   const activeSection = parseAdminSection(sectionParam);
   const activeId = searchParams.get('post');
@@ -66,6 +73,11 @@ const AdminPage: React.FC = () => {
     }, options);
   }, [setSearchParams]);
 
+  const showAdminNotice = useCallback((message: string, tone: 'success' | 'error' = 'success') => {
+    setAdminNotice(message);
+    setAdminNoticeTone(tone);
+  }, []);
+
   // Category Management (still needed for Sidebar & Category Manager)
   const {
     categoriesLoading,
@@ -84,7 +96,7 @@ const AdminPage: React.FC = () => {
     draftCategory: '', // Not needed for page level
     setDraftCategory: () => { }, // Not needed
     refreshPosts: fetchPosts,
-    setNotice: () => { } // Handled in components
+    setNotice: showAdminNotice
   });
 
   // Profile Management
@@ -100,6 +112,21 @@ const AdminPage: React.FC = () => {
     updateProfileSocial
   } = useProfile();
 
+  const dashboardStats = useDashboardStats(posts, categoryTree);
+  const {
+    searchQuery,
+    setSearchQuery,
+    filterStatus,
+    setFilterStatus,
+    filterCategory,
+    setFilterCategory,
+    filterCategoryIncludeDescendants,
+    setFilterCategoryIncludeDescendants,
+    page,
+    setPage,
+    filteredPosts
+  } = usePostFilter({ posts, categoryTree });
+
   // Initial Data Load
   useEffect(() => {
     if (!hasLoaded && !loading) {
@@ -108,12 +135,26 @@ const AdminPage: React.FC = () => {
   }, [hasLoaded, loading, fetchPosts]);
 
   useEffect(() => {
+    if (categoriesRequested) return;
+    if (!['dashboard', 'posts', 'categories'].includes(activeSection)) return;
+    setCategoriesRequested(true);
     void loadCategories();
-  }, [loadCategories]);
+  }, [activeSection, categoriesRequested, loadCategories]);
 
   useEffect(() => {
+    if (profileRequested || activeSection !== 'profile') return;
+    setProfileRequested(true);
     void loadProfile();
-  }, [loadProfile]);
+  }, [activeSection, loadProfile, profileRequested]);
+
+  useEffect(() => {
+    if (!adminNotice) return;
+    const timeoutId = window.setTimeout(() => {
+      setAdminNotice('');
+    }, 3200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [adminNotice]);
 
   useEffect(() => {
     if (!sectionParam) {
@@ -127,8 +168,6 @@ const AdminPage: React.FC = () => {
       updateAdminLocation({ post: null }, { replace: true });
     }
   }, [activeId, hasLoaded, posts, updateAdminLocation]);
-
-  const dashboardStats = useDashboardStats(posts, categoryTree);
 
   const handleSelect = (post: Post) => {
     updateAdminLocation({ section: 'posts', post: post.id });
@@ -159,9 +198,11 @@ const AdminPage: React.FC = () => {
       await authApi.logout();
       window.location.assign('/admin');
     } catch (logoutActionError) {
-      setLogoutError(logoutActionError instanceof Error
+      const message = logoutActionError instanceof Error
         ? logoutActionError.message
-        : '로그아웃하지 못했습니다. 잠시 후 다시 시도해주세요.');
+        : '로그아웃하지 못했습니다. 잠시 후 다시 시도해주세요.';
+      setLogoutError(message);
+      showAdminNotice(message, 'error');
       setIsLoggingOut(false);
     }
   };
@@ -171,14 +212,19 @@ const AdminPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors duration-300">
       <header className="sticky top-0 z-10 border-b border-[color:var(--border)] bg-[var(--surface-overlay)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1700px] items-center justify-between gap-4 px-4 py-4">
-          <div>
+        <div className="mx-auto flex max-w-[1700px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-[160px]">
             <h1 className="font-display text-xl font-bold text-[var(--accent)]">HamLog Admin</h1>
             {logoutError && (
               <p className="mt-1 text-xs text-[var(--accent-strong)]">{logoutError}</p>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <AdminNav
+            activeSection={activeSection}
+            sections={ADMIN_SECTIONS}
+            onChange={(section) => updateAdminLocation({ section })}
+          />
+          <div className="flex items-center gap-2">
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
@@ -196,13 +242,23 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1700px] space-y-6 px-4 py-8">
-        <AdminNav
-          activeSection={activeSection}
-          sections={ADMIN_SECTIONS}
-          onChange={(section) => updateAdminLocation({ section })}
-        />
-
+      {adminNotice && (
+        <div className="fixed right-4 top-[76px] z-30 max-w-sm rounded-lg border border-[color:var(--border)] bg-[var(--surface)] px-4 py-3 text-sm shadow-lg">
+          <div className="flex items-start justify-between gap-3">
+            <p className={adminNoticeTone === 'error' ? 'text-red-600' : 'text-[var(--text)]'}>
+              {adminNotice}
+            </p>
+            <button
+              type="button"
+              onClick={() => setAdminNotice('')}
+              className="text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text)]"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+      <main className="mx-auto max-w-[1700px] px-4 py-5">
         <section className="space-y-6">
           {activeSection === 'dashboard' && (
             <DashboardSection
@@ -233,13 +289,9 @@ const AdminPage: React.FC = () => {
               categoriesLoading={categoriesLoading}
               categoriesError={categoriesError}
               parentOptions={parentOptions}
-              onAddCategory={(name, parentId) => void handleAddCategory(name, parentId)}
-              onUpdateCategory={(category, updates) =>
-                void handleUpdateCategory(category, updates)
-              }
-              onReorderCategory={(parentId, orderedIds) =>
-                void handleReorderCategory(parentId, orderedIds)
-              }
+              onAddCategory={handleAddCategory}
+              onUpdateCategory={handleUpdateCategory}
+              onReorderCategory={handleReorderCategory}
               onDeleteCategory={(category) => void handleDeleteCategory(category)}
               onReload={() => void loadCategories()}
               categorySaving={categorySaving}
@@ -248,43 +300,41 @@ const AdminPage: React.FC = () => {
           )}
 
           {activeSection === 'posts' && (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--border)] pb-3">
-                <select
-                  value={activeId ?? ''}
-                  onChange={event => {
-                    const post = posts.find(item => item.id === event.target.value);
-                    if (post) {
-                      handleSelect(post);
-                    } else {
-                      handleNew();
-                    }
-                  }}
-                  className="h-8 min-w-[220px] max-w-full border border-[color:var(--border)] bg-white px-2 text-xs text-[var(--text)] outline-none transition focus:border-[color:var(--accent)]"
-                >
-                  <option value="">새 글 작성</option>
-                  {posts.map(post => (
-                    <option key={post.id} value={post.id}>
-                      {post.title || '제목 없음'} · {post.status}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleNew}
-                  className="h-8 border border-[color:var(--border)] bg-white px-3 text-xs font-semibold text-[var(--text)] transition hover:border-[color:var(--accent)] hover:text-[var(--accent-strong)]"
-                >
-                  새 글
-                </button>
-              </div>
-
-              <PostEditor
-                post={activePost}
-                onSaveSuccess={handleSaveSuccess}
-                onDeleteSuccess={handleDeleteSuccess}
+            <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
+              <AdminSidebar
+                show
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                filterStatus={filterStatus}
+                onFilterStatusChange={setFilterStatus}
+                filterCategory={filterCategory}
+                onFilterCategoryChange={setFilterCategory}
+                filterCategoryIncludeDescendants={filterCategoryIncludeDescendants}
+                onFilterCategoryIncludeDescendantsChange={setFilterCategoryIncludeDescendants}
+                page={page}
+                onPageChange={setPage}
+                onNew={handleNew}
+                saving={loading}
+                onSelect={handleSelect}
+                filteredPosts={filteredPosts}
+                activeId={activeId}
+                loading={loading}
+                error={postError}
+                onReload={() => void fetchPosts()}
+                totalCount={posts.length}
+                statusCount={dashboardStats.statusCount}
                 categoryTree={categoryTree}
-                onLoadCategories={loadCategories}
               />
+
+              <div className="min-w-0">
+                <PostEditor
+                  post={activePost}
+                  onSaveSuccess={handleSaveSuccess}
+                  onDeleteSuccess={handleDeleteSuccess}
+                  categoryTree={categoryTree}
+                  onLoadCategories={loadCategories}
+                />
+              </div>
             </div>
           )}
         </section>
