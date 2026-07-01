@@ -9,23 +9,32 @@ const loginPasswords = Array.from(new Set([
 
 async function openAdminEditor(page: Page) {
   await page.goto('/admin?section=posts');
+  const titleInput = page.getByPlaceholder('제목을 입력하세요');
+
+  if (await titleInput.isVisible().catch(() => false)) {
+    return;
+  }
 
   for (const password of loginPasswords) {
-    const passwordInput = page.getByLabel('관리자 비밀번호');
-    if (!(await passwordInput.isVisible().catch(() => false))) break;
+    const loggedIn = await page.evaluate(async (candidate) => {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: candidate })
+      });
+      return response.ok;
+    }, password);
 
-    await passwordInput.fill(password);
-    await page.getByRole('button', { name: '로그인' }).click();
-
-    const titleInput = page.getByPlaceholder('제목을 입력하세요');
-    const loginFailed = await page.getByText('비밀번호가 올바르지 않습니다.').isVisible()
-      .catch(() => false);
-    if (!loginFailed && await titleInput.isVisible().catch(() => false)) {
+    if (loggedIn) {
       break;
     }
   }
 
-  await expect(page.getByPlaceholder('제목을 입력하세요')).toBeVisible();
+  await page.goto('/admin?section=posts');
+  await expect(titleInput).toBeVisible();
 }
 
 function createParagraphDocument(text: string) {
