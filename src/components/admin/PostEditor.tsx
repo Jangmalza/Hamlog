@@ -81,11 +81,16 @@ const PostEditor: React.FC<PostEditorProps> = ({
     const [previewMode, setPreviewMode] = useState(false);
     const editorRef = useRef<Editor | null>(null);
     const previewToggleTimeoutRef = useRef<number | null>(null);
+    const preserveNoticeOnPostChangeRef = useRef(false);
     const loadDraftSnapshot = useCallback(() => toDraft(post || undefined), [post]);
 
     // Reset post-scoped UI before autosave checks can surface a restorable draft notice.
     useEffect(() => {
-        setNotice('');
+        if (preserveNoticeOnPostChangeRef.current) {
+            preserveNoticeOnPostChangeRef.current = false;
+        } else {
+            setNotice('');
+        }
         setPreviewMode(false);
     }, [post]);
 
@@ -113,6 +118,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
         draft,
         activeId,
         onSaveSuccess: useCallback((savedPost: Post) => {
+            preserveNoticeOnPostChangeRef.current = true;
             onSaveSuccess(savedPost);
         }, [onSaveSuccess]),
         onDeleteSuccess,
