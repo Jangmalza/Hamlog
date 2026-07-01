@@ -19,6 +19,7 @@ import { readComments, writeComments } from '../models/commentModel.js';
 import { ensurePostsFile, readPosts, writePosts } from '../models/postModel.js';
 import { readProfile, writeProfile } from '../models/profileModel.js';
 import { readPostRevisions } from '../models/revisionModel.js';
+import { COMMENT_LIMITS } from '../services/commentService.js';
 import { defaultProfile } from '../utils/normalizers/profileNormalizers.js';
 
 const adminPassword = process.env.ADMIN_PASSWORD ?? 'test-password';
@@ -668,6 +669,120 @@ test('comments respect password verification on deletion', async () => {
 
     const remainingComments = await readComments();
     assert.equal(remainingComments.length, 0);
+});
+
+test('comments normalize public input and reject oversized fields', async () => {
+    await writePosts([
+        {
+            id: 'post-comment-limits',
+            slug: 'comment-limits-post',
+            title: 'Comment Limits Post',
+            summary: 'comment target',
+            category: 'Testing',
+            contentHtml: '<p>Hello comments</p>',
+            publishedAt: '2026-03-06',
+            tags: [],
+            status: 'published',
+            sections: []
+        }
+    ]);
+
+    const normalizedCommentResponse = await request(app)
+        .post('/api/comments')
+        .send({
+            postId: 'post-comment-limits',
+            author: ' Reader    Name ',
+            password: ' secret-password ',
+            content: '\u0000Hello\r\n\r\n\r\nWorld\u007F'
+        });
+
+    assert.equal(normalizedCommentResponse.status, 201);
+    assert.equal(normalizedCommentResponse.body.comment.author, 'Reader Name');
+    assert.equal(normalizedCommentResponse.body.comment.content, 'Hello\n\nWorld');
+
+    const deletedNormalizedCommentResponse = await request(app)
+        .delete(`/api/comments/${normalizedCommentResponse.body.comment.id}`)
+        .send({ password: 'secret-password' });
+
+    assert.equal(deletedNormalizedCommentResponse.status, 200);
+
+    const oversizedAuthorResponse = await request(app)
+        .post('/api/comments')
+        .send({
+            postId: 'post-comment-limits',
+            author: 'a'.repeat(COMMENT_LIMITS.author + 1),
+            password: 'secret-password',
+            content: 'Valid comment'
+        });
+
+    assert.equal(oversizedAuthorResponse.status, 400);
+    assert.match(oversizedAuthorResponse.body.message, /이름/);
+
+    const oversizedContentResponse = await request(app)
+        .post('/api/comments')
+        .send({
+            postId: 'post-comment-limits',
+            author: 'Reader',
+            password: 'secret-password',
+            content: 'a'.repeat(COMMENT_LIMITS.content + 1)
+        });
+
+    assert.equal(oversizedContentResponse.status, 400);
+    assert.match(oversizedContentResponse.body.message, /댓글/);
+
+    const storedComments = await readComments();
+    assert.equal(storedComments.length, 0);
+});
+
+test('comments only attach to public visible posts', async () => {
+    const futureScheduledAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    await writePosts([
+        {
+            id: 'post-draft-comments',
+            slug: 'draft-comments-post',
+            title: 'Draft Comments Post',
+            summary: 'hidden comment target',
+            category: 'Testing',
+            contentHtml: '<p>Hidden comments</p>',
+            publishedAt: '2026-03-06',
+            tags: [],
+            status: 'draft',
+            sections: []
+        },
+        {
+            id: 'post-future-comments',
+            slug: 'future-comments-post',
+            title: 'Future Comments Post',
+            summary: 'scheduled comment target',
+            category: 'Testing',
+            contentHtml: '<p>Future comments</p>',
+            publishedAt: futureScheduledAt.slice(0, 10),
+            scheduledAt: futureScheduledAt,
+            tags: [],
+            status: 'scheduled',
+            sections: []
+        }
+    ]);
+
+    for (const postId of ['post-draft-comments', 'post-future-comments', 'post-missing-comments']) {
+        const createCommentResponse = await request(app)
+            .post('/api/comments')
+            .send({
+                postId,
+                author: 'Reader',
+                password: 'secret-password',
+                content: 'Hidden target'
+            });
+
+        assert.equal(createCommentResponse.status, 404);
+
+        const listCommentsResponse = await request(app).get(`/api/comments?postId=${postId}`);
+        assert.equal(listCommentsResponse.status, 404);
+    }
+
+    const storedComments = await readComments();
+    assert.equal(storedComments.length, 0);
 });
 
 test('authenticated write routes reject untrusted origins', async () => {
