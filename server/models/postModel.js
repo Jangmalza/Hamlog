@@ -5,6 +5,7 @@ import { writeJsonAtomic } from '../utils/fsUtils.js';
 import {
     normalizeContentJson,
     hasContentJsonContent,
+    normalizeContentHtml,
     normalizePostStatus,
     normalizePostViews,
     normalizeScheduledAt,
@@ -13,7 +14,7 @@ import {
 import {
     normalizeCategory
 } from '../utils/normalizers/categoryNormalizers.js';
-import { parseHtmlToContentJson } from '../utils/contentRenderer.js';
+import { parseHtmlToContentJson, renderContentJsonToHtml } from '../utils/contentRenderer.js';
 
 function getPostFilePath(slug) {
     const postsRoot = path.resolve(postsDir);
@@ -30,11 +31,22 @@ function normalizePost(post) {
     if (!post || typeof post !== 'object') return post;
     const { readingTime, ...postWithoutReadingTime } = post;
     void readingTime;
+    const contentJson = normalizeContentJson(post.contentJson);
+    let contentHtml = normalizeContentHtml(post.contentHtml) || undefined;
+
+    if (hasContentJsonContent(contentJson)) {
+        try {
+            contentHtml = renderContentJsonToHtml(contentJson) || undefined;
+        } catch (error) {
+            console.error(`[PostModel] Failed to render contentJson for "${post.slug}":`, error);
+        }
+    }
 
     return {
         ...postWithoutReadingTime,
         category: normalizeCategory(post.category),
-        contentJson: normalizeContentJson(post.contentJson),
+        contentJson,
+        contentHtml,
         views: normalizePostViews(post.views),
         status: normalizePostStatus(post.status),
         scheduledAt: normalizeScheduledAt(post.scheduledAt) || undefined,

@@ -283,6 +283,36 @@ test('post slugs are normalized before file persistence', async () => {
     );
 });
 
+test('post contentHtml is derived from contentJson for public feeds', async () => {
+    await writePosts([
+        {
+            id: 'post-content-json-source',
+            slug: 'content-json-source',
+            title: 'Content JSON Source',
+            summary: 'content json source summary',
+            category: 'Security',
+            contentJson: sampleContentJson,
+            contentHtml: '<p><img src=x onerror="alert(1)"></p><script>alert(1)</script>',
+            publishedAt: '2026-03-06',
+            tags: [],
+            status: 'published',
+            sections: []
+        }
+    ]);
+
+    const posts = await readPosts();
+    assert.equal(posts[0].contentHtml, '<h1>Heading</h1><p>Body copy</p>');
+
+    const storedPost = JSON.parse(await readFile(path.join(postsDir, 'content-json-source.json'), 'utf8'));
+    assert.equal(storedPost.contentHtml, '<h1>Heading</h1><p>Body copy</p>');
+
+    const rssResponse = await request(app).get('/rss.xml');
+    assert.equal(rssResponse.status, 200);
+    assert.match(rssResponse.text, /<!\[CDATA\[<h1>Heading<\/h1><p>Body copy<\/p>\]\]>/);
+    assert.doesNotMatch(rssResponse.text, /onerror/);
+    assert.doesNotMatch(rssResponse.text, /<script>/);
+});
+
 test('ensurePostsFile backfills contentJson for legacy html-only posts', async () => {
     await rm(postsDir, { recursive: true, force: true });
 
